@@ -260,6 +260,7 @@ function finish(){
   document.getElementById('maxim').textContent = '“' + MAXIMS[Math.floor(Math.random()*MAXIMS.length)] + '”';
   const modeKey = mode === 'kumite' ? 'kumite'+krange : 'level'+level;
   const newBest = Store.setBest(modeKey, score);
+  Store.logPractice(mode === 'kumite' ? 'kumite' : 'terms');
   const st = Store.markTrained();
   const bits = [newBest ? 'New personal best for this mode!' 
                         : 'Your best for this mode: ' + Store.best(modeKey) + ' / ' + roundLen()];

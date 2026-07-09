@@ -19,6 +19,8 @@ site/
 │                     deep-linkable via hash, e.g. belts.html#5th-kyu
 ├── kata.html         Kata reference — Mara, Sanchin, Rokushu, Naifuanchin from KATA data;
 │                     deep-linkable via hash, e.g. kata.html#sanchin
+├── practice.html     Daily Practice — tick off today's activities from PRACTICE data;
+│                     one activity keeps the streak; 7-day + 30-day view
 ├── assets/
 │   ├── data.js       ALL content data (see schemas below). Content changes happen HERE.
 │   └── store.js      Progress store — streaks, best scores, missed cards (see Persistence).
@@ -73,6 +75,11 @@ GRADES  = [ {slug, key, banner, hex, white, tier, maxim, mind}, ... ]
 SYLLABUS = [ {grade, track, section, item, detail}, ... ]
           // all 159 items in syllabus order. track: "All" | "Adult" | "Junior".
           // Source of truth is the Syllabus 2026 spreadsheet — verify before editing.
+
+PRACTICE = [ {id, name, hint}, ... ]
+          // practice.html activity tiles. Timings in hints come from the Syllabus 2026
+          // Simplified sheet. quiz.html auto-logs 'terms'/'kumite', flashcards.html
+          // auto-logs 'philosophy' on completion.
 
 KATA    = [ {slug, name, translation, hex, white, match, quote?, sections}, ... ]
           // kata.html renders these. match = lowercase substrings used to auto-build

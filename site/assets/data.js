@@ -1499,3 +1499,20 @@ const KATA = [
   ]
  }
 ];
+
+
+// ---- Daily Practice ----
+// practice.html renders these. Timings from Syllabus 2026 (Simplified sheet).
+// One completed activity a day keeps the streak — even just a stretch.
+const PRACTICE = [
+ {id:"stretch",     name:"Stretch",            hint:"Even Part 1 counts"},
+ {id:"mara",        name:"Mara",               hint:"About 1 minute"},
+ {id:"sanchin",     name:"Sanchin",            hint:"About 3 minutes"},
+ {id:"rokushu",     name:"Rokushu",            hint:"About 2 minutes"},
+ {id:"naifuanchin", name:"Naifuanchin",        hint:"About 1 minute"},
+ {id:"kihon",       name:"Kihon",              hint:"A few reps of basics"},
+ {id:"kumite",      name:"Kumite sequences",   hint:"Walk them through solo"},
+ {id:"terms",       name:"Terminology",        hint:"One quiz round"},
+ {id:"philosophy",  name:"Philosophy",         hint:"One flashcard deck"},
+ {id:"other",       name:"Something else",     hint:"Rolling, footwork, reading…"}
+];

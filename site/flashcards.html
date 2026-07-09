@@ -166,6 +166,7 @@ function finishDeck(){
   let sub = laps===0
     ? 'First pass, no repeats. Grading standard.'
     : laps+' card'+(laps===1?'':'s')+' needed a second look. They will come up first next time.';
+  Store.logPractice('philosophy');
   const st = Store.markTrained();
   if(st.count >= 2) sub += ' 🔥 ' + st.count + '-day streak.';
   document.getElementById('doneSub').textContent = sub;

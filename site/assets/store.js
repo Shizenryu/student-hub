@@ -62,5 +62,27 @@ const Store = (function(){
     return 'c' + (h >>> 0).toString(36);
   }
 
-  return {available: ok, markTrained, streakInfo, best, setBest, misses, recordCard, hash};
+  // Daily practice log: { dayNumber: [activityId, ...] }, pruned to the last 60 days.
+  function logPractice(id){
+    const d = load(); const t = day();
+    d.plog = d.plog || {};
+    const arr = d.plog[t] || [];
+    if(!arr.includes(id)){ arr.push(id); d.plog[t] = arr; }
+    Object.keys(d.plog).forEach(k => { if(t - Number(k) > 60) delete d.plog[k]; });
+    save(d);
+  }
+  function unlogPractice(id){
+    const d = load(); const t = day();
+    if(d.plog && d.plog[t]){
+      d.plog[t] = d.plog[t].filter(x => x !== id);
+      if(d.plog[t].length === 0) delete d.plog[t];
+      save(d);
+    }
+  }
+  function practiceOn(dayNum){ const d = load(); return (d.plog || {})[dayNum] || []; }
+  function todayPractice(){ return practiceOn(day()); }
+  function today(){ return day(); }
+
+  return {available: ok, markTrained, streakInfo, best, setBest, misses, recordCard, hash,
+          logPractice, unlogPractice, practiceOn, todayPractice, today};
 })();
