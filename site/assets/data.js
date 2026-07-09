@@ -17,7 +17,7 @@ const TERMS = {
     ["Mawashi-uke","Circular parry"],["Ma-ai","Distance / range"],["Sen no sen","Intercepting as the attack begins"],
     ["Jiyu Kumite","Free play"],["Hansha Kumite","Contact reflex partner work"],["Kakie","Listening hands / push hands"],
     ["Tenti","Moving"],["Tentai","Twisting"],["Tengi","Attacking"]],
- 4:[["Sanchin","Core kata — Sanchin boxing"],["Rokushu","Kata of grip releasing"],["Naifuanchin","Kata of grappling"],
+ 4:[["JJ","Jiu Jitsu — the grappling modules"],["Sanchin","Core kata — Sanchin boxing"],["Rokushu","Kata of grip releasing"],["Naifuanchin","Kata of grappling"],
     ["Ohyo Kumite","Variations on the kumite"],["Tui Shou","Pushing hands"],
     ["Hara","The centre — everything moves from it"],["Gassho","Palms together — salutation"],
     ["Kyu","Student grade"],["Dan","Black-belt degree"],["Mon","Junior tag grades"],

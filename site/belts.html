@@ -120,10 +120,10 @@ function openBelt(i, setHash){
     d.className = 'item';
     let html = '';
     if(s.section !== lastSec){ html += '<span class="sec">'+esc(s.section)+'</span>'; lastSec = s.section; }
-    html += esc(s.item);
+    html += expand(esc(s.item));
     if(s.track==='Adult') html += '<span class="tag adult">ADULTS 16+</span>';
     if(s.track==='Junior') html += '<span class="tag junior">JUNIORS</span>';
-    if(s.detail) html += '<span class="det">'+esc(s.detail)+'</span>';
+    if(s.detail) html += '<span class="det">'+expand(esc(s.detail))+'</span>';
     d.innerHTML = html;
     box.appendChild(d);
   });
@@ -147,6 +147,9 @@ function openBelt(i, setHash){
 function step(d){ openBelt(cur + d, true); }
 function goMenu(){ history.replaceState(null,'',location.pathname); show('menu'); }
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+// Display-time abbreviation expansion — the underlying SYLLABUS data keeps the
+// syllabus' own wording ("JJ"), students see the full name.
+function expand(s){ return s.replace(/\bJJ\b/g,'Jiu Jitsu (JJ)'); }
 function show(id){
   ['menu','guide'].forEach(s=>document.getElementById(s).classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');

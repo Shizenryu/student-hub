@@ -45,6 +45,9 @@ Pages load `assets/data.js` via a plain `<script src>` tag before their inline a
    only; anything naming living third parties critically needs Ian's sign-off first.
 5. **Tone:** warm, disciplined, plain-spoken. No mysticism-for-effect. The club motto is
    `Structure > Discipline > Measure / Accountability = Growth`.
+6. **Abbreviations:** `JJ` in the syllabus means **Jiu Jitsu**. Data keeps the syllabus'
+   own wording ("JJ"); display layers expand it — belts.html has an `expand()` helper
+   that renders "Jiu Jitsu (JJ)". Any new page showing syllabus text must do the same.
 
 ## Data schemas (`site/assets/data.js`)
 
