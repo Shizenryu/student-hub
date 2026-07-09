@@ -1373,3 +1373,129 @@ const SYLLABUS = [
   "detail": ""
  }
 ];
+
+
+// ---- Kata reference pages ----
+// KATA: rendered by kata.html. 'match' lists lowercase substrings used to auto-build
+// the 'In the syllabus' list from SYLLABUS. Section bodies are trusted HTML.
+// Content sources: Retreat Notes May 2026, Tui Shou (Ian Smith), Syllabus 2026.
+const KATA = [
+ {
+  "slug": "mara",
+  "name": "Mara",
+  "translation": "The Shizenryu solo routine",
+  "hex": "#C8102E",
+  "white": true,
+  "match": [
+   "mara"
+  ],
+  "quote": {
+   "text": "Mara was added to the syllabus and even incorporated into pushing hands.",
+   "src": "Retreat Notes, May 2026"
+  },
+  "sections": [
+   {
+    "h": "What it is",
+    "b": "Mara is Shizenryu's own kata \u2014 a structured solo routine created by Ian to bring disciplined, Japanese-style solo training into the pushing-hands practice. It began as a task: one solo karate routine to shape up a club strong in sensitivity but light on structure, drilled every Sunday until it earned its place in the syllabus. It is the first kata a Shizenryu student learns and the last one they stop refining."
+   },
+   {
+    "h": "How it grows with you",
+    "b": "Mara is learned in numbered stages that track the belts: <b>Mara 1\u20134</b> at 9th Kyu, <b>1\u20136</b> at 8th, <b>1\u20138</b> at 7th, <b>1\u201310</b> at 6th, <b>1\u201312</b> at 5th, and <b>complete</b> from 4th Kyu. From there the kata turns inward: 2nd Kyu asks for <i>mastery over subtle body torsion</i>; Shodan asks for <i>improved movement and transitions</i>. A full run-through takes about one minute."
+   },
+   {
+    "h": "Study notes",
+    "b": "From the earliest stages, practise <b>pulling back</b> and using <b>mae-geri to change sides</b>. Mara is not only solo work \u2014 it feeds directly into partner practice as the <b>Mara reflex flow drill</b> (Hansha Kumite), which must be shown complete from 2nd Kyu. If your Mara is hollow, your contact reflexes will be too."
+   }
+  ]
+ },
+ {
+  "slug": "sanchin",
+  "name": "Sanchin",
+  "translation": "Three Conflicts",
+  "hex": "#161616",
+  "white": true,
+  "match": [
+   "sanchin"
+  ],
+  "quote": {
+   "text": "The old masters stated that all Karate begins and ends with Sanchin. It is both basic and advanced.",
+   "src": "Retreat Notes, May 2026"
+  },
+  "sections": [
+   {
+    "h": "What it is",
+    "b": "Sanchin is held as the master kata of all the Naha-te systems and, from all that has been studied in Shizenryu, the root of all kata \u2014 a lens through which to study every other. Outwardly it appears the simplest of kata: repeated movements, nothing outside the normal range of motion. That appearance is the first lesson."
+   },
+   {
+    "h": "The name",
+    "b": "<i>Sanchin</i> means 'three conflicts'. To the less initiated, simply the battle between mind, body and spirit \u2014 but as you peel the onion, more is revealed. The kata carries the sacred geometry of the <b>circle, triangle and square</b> \u2014 in the Zen calligraphic image, creation moving from the unity of the circle, through the triangle, to the manifest form of the square. The old kata carry Buddhist numbers the same way: 18, 36, 54, 72, 108 \u2014 each reducing to nine."
+   },
+   {
+    "h": "The Shizenryu progression",
+    "b": "<b>Opening &amp; closing</b> \u2014 Gassho; dantian; as above, so below; split into a duality, return to one (adults, from 9th Kyu). <b>Footwork</b> \u2014 three steps forward and back, using the body to open and close the gates: knees, ankles, feet. <b>Section 1</b> \u2014 single-limb coordination, isometric and isotonic. <b>Section 2</b> \u2014 add the pelvic swivel; use the floor to feel flat back and S back. <b>Section 3</b> \u2014 Samsau: coordinate three limbs at the same time with clearly defined movement. Finally, <b>the complete kata with three ratios of breathing</b>, timing matched clearly to the breath. A full run takes about three minutes."
+   },
+   {
+    "h": "Across the styles",
+    "b": "Uechi-ryu and Isshin-ryu perform Sanchin with open hands, Goju-ryu with closed fists, and some Shorin-ryu branches keep an open-hand version. Comparing them \u2014 what changes, and what survives every version \u2014 is one of the best study exercises an advanced Shizenryu student can do. In pushing hands, the kata comes alive as <b>Sanchin boxing</b>."
+   }
+  ]
+ },
+ {
+  "slug": "rokushu",
+  "name": "Rokushu",
+  "translation": "Six Hands",
+  "hex": "#9A7D00",
+  "white": true,
+  "match": [
+   "rokushu",
+   "rockushu"
+  ],
+  "quote": {
+   "text": "Six hands \u2014 five animals, plus the snake that grips you.",
+   "src": "Retreat Notes, May 2026"
+  },
+  "sections": [
+   {
+    "h": "What it is",
+    "b": "Rokushu is the kata of <b>grip releasing</b>. Its name means 'six hands': the five animals, plus the snake that grips you. It is understood as a later development \u2014 a play on Sanchin \u2014 and is known in Goju-ryu and Uechi-ryu lines as <i>Tensho</i>."
+   },
+   {
+    "h": "In the Shizenryu syllabus",
+    "b": "Rokushu enters the adult syllabus at 2nd Kyu, where the complete kata is required, and remains a standing requirement through the Dan grades. A full run takes about two minutes. Its applications live inside the kakie curriculum: <b>crane spreads its wings</b>, <b>crane circles its wings</b>, <b>snake vs tiger</b>, <b>snake vs standing dragon</b>, and at Nidan the <b>contra grips</b> for laying dragon, leopard and crane \u2014 Rokushu applications by name."
+   },
+   {
+    "h": "Study notes",
+    "b": "Treat every movement as a grip being received, neutralised and released. If Sanchin teaches the body its structure, Rokushu teaches the hands their freedom \u2014 the two kata are a pair, and the pushing-hands progression runs straight through them: Sanchin boxing, then Rokushu grip releasing."
+   }
+  ]
+ },
+ {
+  "slug": "naifuanchin",
+  "name": "Naifuanchin",
+  "translation": "Internal Divided Conflict",
+  "hex": "#0072CE",
+  "white": true,
+  "match": [
+   "naifuanchin",
+   "naifuanchi"
+  ],
+  "quote": {
+   "text": "Once in contact, they stay in contact. Very different to the karate being taught around the world.",
+   "src": "On Nagamine's kumite drills \u2014 Retreat Notes, May 2026"
+  },
+  "sections": [
+   {
+    "h": "What it is",
+    "b": "Naifuanchin is the <b>grappling kata</b>. Its name translates as 'internal divided conflict' \u2014 the same inner division described in Zen &amp; Karate, written into movement. It holds the same status in the Shorin and Shuri-te systems that Sanchin holds in Naha-te; the presence of both kata across the old lines suggests a single source behind the art."
+   },
+   {
+    "h": "Known elsewhere as",
+    "b": "Naihanchi in Shorin-ryu and Isshin-ryu, part 1 only in Wado-Ryu, and Tekki 1\u20133 in Shotokan. The best-preserved version studied in Shizenryu was identified with the help of Shoshin Nagamine's <i>The Essence of Okinawan Karate</i>."
+   },
+   {
+    "h": "In the Shizenryu syllabus",
+    "b": "Naifuanchin is the summit of the kata curriculum. It first appears at <b>Shodan</b> (Section 1, in the Mon stage-A material) and is a standing kata requirement at Nidan and Sandan, where the <b>NFC grips</b> are studied \u2014 sword grip and scabbard grip, single hand. Those same grips are foreshadowed much earlier: Kumite 11 and 12 at 3rd Kyu are built on the crossed-hand sword and scabbard grips with their takedowns. It is also the final stage of the pushing-hands progression: <b>Naifuanchin grappling</b>."
+   }
+  ]
+ }
+];

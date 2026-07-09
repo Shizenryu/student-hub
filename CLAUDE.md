@@ -17,6 +17,8 @@ site/
 ├── flashcards.html   Philosophy flashcards — flip cards, Again/Got-it queue
 ├── belts.html        Belt study guides — renders any belt from GRADES + SYLLABUS data;
 │                     deep-linkable via hash, e.g. belts.html#5th-kyu
+├── kata.html         Kata reference — Mara, Sanchin, Rokushu, Naifuanchin from KATA data;
+│                     deep-linkable via hash, e.g. kata.html#sanchin
 ├── assets/
 │   └── data.js       ALL content data (see schemas below). Content changes happen HERE.
 └── docs/             Printable PDFs (generated outside this repo, committed as binaries)
@@ -67,6 +69,12 @@ GRADES  = [ {slug, key, banner, hex, white, tier, maxim, mind}, ... ]
 SYLLABUS = [ {grade, track, section, item, detail}, ... ]
           // all 159 items in syllabus order. track: "All" | "Adult" | "Junior".
           // Source of truth is the Syllabus 2026 spreadsheet — verify before editing.
+
+KATA    = [ {slug, name, translation, hex, white, match, quote?, sections}, ... ]
+          // kata.html renders these. match = lowercase substrings used to auto-build
+          // the "In the syllabus" list from SYLLABUS (e.g. ["rokushu","rockushu"]
+          // covers a source spelling variant). sections[].b is TRUSTED HTML —
+          // only simple <b>/<i> markup, authored in this repo, never user input.
 ```
 
 To add content: edit `data.js` only. To add a new page: copy the structure of an
@@ -84,14 +92,4 @@ existing page (header, card UI, footer with `← Shizenryu home` link).
 
 ## Persistence
 
-Currently none (in-memory only) so pages work everywhere. If adding streaks/spaced
-repetition, use `localStorage` with feature detection and graceful fallback — never
-require it, and never store personal data (child users; no names, no accounts).
-
-## Verification before commit
-
-1. `node -e "..."` syntax-check each page's inline script together with data.js
-   (or simply open each page in a browser and play a full round).
-2. Check internal links/hrefs resolve to files in `site/`.
-3. Quiz: run one round of every level and both kumite modes.
-4. Flashcards: complete one deck using bot
+Curr
