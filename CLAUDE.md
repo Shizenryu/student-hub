@@ -15,6 +15,8 @@ site/
 ├── index.html        Landing page: maxim of the day, links to everything
 ├── quiz.html         Dojo Quiz — terminology by belt level + Kumite 1–12 sequences
 ├── flashcards.html   Philosophy flashcards — flip cards, Again/Got-it queue
+├── belts.html        Belt study guides — renders any belt from GRADES + SYLLABUS data;
+│                     deep-linkable via hash, e.g. belts.html#5th-kyu
 ├── assets/
 │   └── data.js       ALL content data (see schemas below). Content changes happen HERE.
 └── docs/             Printable PDFs (generated outside this repo, committed as binaries)
@@ -57,6 +59,14 @@ MAXIMS  = [ "string", ... ]   // shown randomly after quiz rounds; index.html sh
 
 DECKS   = [ {id, name, cls, cards:[[front, back], ...]}, ... ]
           // cls is a colour class defined in flashcards.html (d1–d7)
+
+GRADES  = [ {slug, key, banner, hex, white, tier, maxim, mind}, ... ]
+          // one per belt, syllabus order. slug is the URL hash (e.g. "5th-kyu");
+          // key matches SYLLABUS.grade; tier links to TERMS; white = banner text colour.
+
+SYLLABUS = [ {grade, track, section, item, detail}, ... ]
+          // all 159 items in syllabus order. track: "All" | "Adult" | "Junior".
+          // Source of truth is the Syllabus 2026 spreadsheet — verify before editing.
 ```
 
 To add content: edit `data.js` only. To add a new page: copy the structure of an
@@ -84,18 +94,4 @@ require it, and never store personal data (child users; no names, no accounts).
    (or simply open each page in a browser and play a full round).
 2. Check internal links/hrefs resolve to files in `site/`.
 3. Quiz: run one round of every level and both kumite modes.
-4. Flashcards: complete one deck using both Again and Got it.
-5. If data.js changed: confirm counts shown on menu buttons still make sense.
-
-## Deploy
-
-Push to `main` → Netlify auto-deploys `site/`. No CI, no tests to run in pipeline.
-
-## Roadmap (agreed with Rich, in rough priority order)
-
-- Kata reference pages (Mara, Sanchin, Rokushu, Naifuanchin) — text first, video links later
-- Per-belt study pages mirroring the printed Grade Study Guides
-- Optional streaks / spaced repetition via localStorage
-- QR poster asset for the dojo wall
-- Instructor area is OUT of scope for this repo — student progress tracking lives in
-  the private Excel tracker, not the public site.
+4. Flashcards: complete one deck using bot
