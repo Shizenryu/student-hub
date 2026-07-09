@@ -112,56 +112,8 @@
   <footer><a href="index.html">← Shizenryu home</a><br>Structure &gt; Discipline &gt; Measure = Growth</footer>
 </div>
 
+<script src="assets/data.js"></script>
 <script>
-const TERMS = {
- 1:[["Karate","Empty hand"],["Dojo","Training hall"],["Sensei","Teacher — 'one who has gone before'"],
-    ["Kihon","Foundation / basic"],["Kumite","Meeting of hands"],["Kihon Kumite","Basic partner work"],
-    ["Jun-zuki","Front punch"],["Gyaku-zuki","Reverse punch"],["Uchi-uke","Inside parry"],
-    ["Gedan-uke","Lower parry"],["Mae-geri","Front kick"],["Yori ashi","Front foot slides first"],
-    ["Tsugi ashi","Back foot slides first"]],
- 2:[["Ayumi ashi","Step through to opposite side"],["Sonaba","On the spot"],["Nagashi","Slipping offline"],
-    ["Mawashi-geri","Roundhouse kick"],["Yoko-geri","Side kick"],["Soto-uke","Outside parry"],
-    ["Sekui-uke","Inside lower parry"],["Morote-uke","Double-arm shield"],["Uraken","Backfist"],
-    ["Uke","To receive"],["Jodan","Upper level"],["Chudan","Middle level"],["Gedan","Lower level"]],
- 3:[["Kagi-zuki","Hook punch"],["Tobikomi-zuki","Snap punch from a relaxed state"],["Teisho","Palm heel"],
-    ["Age-empi","Rising elbow"],["Mawashi-empi","Circular elbow"],["Kaki-uke","Hook-hand parry"],
-    ["Mawashi-uke","Circular parry"],["Ma-ai","Distance / range"],["Sen no sen","Intercepting as the attack begins"],
-    ["Jiyu Kumite","Free play"],["Hansha Kumite","Contact reflex partner work"],["Kakie","Listening hands / push hands"],
-    ["Tenti","Moving"],["Tentai","Twisting"],["Tengi","Attacking"]],
- 4:[["Sanchin","Core kata — Sanchin boxing"],["Rokushu","Kata of grip releasing"],["Naifuanchin","Kata of grappling"],
-    ["Ohyo Kumite","Variations on the kumite"],["Tui Shou","Pushing hands"],
-    ["Hara","The centre — everything moves from it"],["Gassho","Palms together — salutation"],
-    ["Kyu","Student grade"],["Dan","Black-belt degree"],["Mon","Junior tag grades"],
-    ["Shodan","First degree — 'first step'"],["Nidan","Second degree"],["Sandan","Third degree"],
-    ["Shihan","Master of instructors"],["Renshi","Polished / trained instructor"],
-    ["Kyoshi","Teacher / expert"],["Hanshi","Model / grandmaster"]]
-};
-const MAXIMS = [
- "Once the kicking distance is closed, keep it closed.",
- "Combinations occur as a response to an opponent's actions, not because they are a favourite set of techniques.",
- "Control and strike the opponent at the same time.",
- "Openings are felt with contact, not seen with the eye.",
- "Seek control of your opponent's posture as a prerequisite to a counterattack.",
- "Always deflect, parry, cover, and trap. These defences are superior to direct blocks.",
- "Footwork and position are a major part of the battle in unbalancing and controlling an opponent.",
- "Everything moves from the hara.",
- "In defence, be like the dragonfly that perches on the stick raised to hit it.",
- "Full mastery of one technique is better than the incomplete mastery of two."
-];
-const KUMITE = [
- {n:1, side:"OS", belt:"9th Kyu",  steps:["jun-zuki","uchi-uke","gyaku-zuki"]},
- {n:2, side:"OS", belt:"8th Kyu",  steps:["mae-geri","gedan-uke","gyaku-zuki"]},
- {n:3, side:"SS", belt:"7th Kyu",  steps:["jun-zuki","nagashi soto-uke","gyaku-zuki"]},
- {n:4, side:"SS", belt:"7th Kyu",  steps:["mae-geri","sekui-uke","gyaku-zuki"]},
- {n:5, side:"OS", belt:"6th Kyu",  steps:["mawashi-geri","nagashi morote-uke","uraken","gyaku-zuki"]},
- {n:6, side:"SS", belt:"6th Kyu",  steps:["gedan mawashi-geri","shin block","jun-zuki","gyaku-zuki"]},
- {n:7, side:"SS", belt:"5th Kyu",  steps:["kagi-zuki","mawashi-uke","kagi-zuki"]},
- {n:8, side:"SS", belt:"5th Kyu",  steps:["kagi-zuki","jodan-uke","lock arm","teisho & takedown"]},
- {n:9, side:"SS", belt:"4th Kyu",  steps:["jun-zuki","kaki-uke","mae-geri","gyaku-zuki"]},
- {n:10,side:"OS", belt:"4th Kyu",  steps:["jun-zuki","sen no sen — nagashi-uke (rear hand)","tobikomi-zuki"]},
- {n:11,side:"SS", belt:"3rd Kyu",  steps:["crossed hand low grip (sword)","underhand grip & takedown"]},
- {n:12,side:"SS", belt:"3rd Kyu",  steps:["crossed hand grip (scabbard)","overhand grip & takedown"]}
-];
 const N_Q = 10;
 let pool = [], qs = [], idx = 0, score = 0, streak = 0, level = 1;
 let mode = 'terms', kqs = [], krange = 12;

@@ -64,15 +64,15 @@
 
   <h2>Study</h2>
   <div class="tiles">
-    <a class="doc" href="study-guides.pdf">
+    <a class="doc" href="docs/study-guides.pdf">
       <div><div class="n">Grade Study Guides</div><div class="s">One page per belt — techniques, terms and mind</div></div>
       <div class="pdf">PDF</div>
     </a>
-    <a class="doc" href="philosophy-guide.pdf">
+    <a class="doc" href="docs/philosophy-guide.pdf">
       <div><div class="n">Philosophy Study Guide</div><div class="s">The deeper elements, for advanced practitioners</div></div>
       <div class="pdf">PDF</div>
     </a>
-    <a class="doc" href="belt-passport.pdf">
+    <a class="doc" href="docs/belt-passport.pdf">
       <div><div class="n">Belt Passport</div><div class="s">Print at A5 — your record of the journey</div></div>
       <div class="pdf">PDF</div>
     </a>
@@ -83,20 +83,8 @@
     Ask your sensei anything — to ask is a moment; not to ask is a lifetime.
   </footer>
 </div>
+<script src="assets/data.js"></script>
 <script>
-const MAXIMS = [
- "Once the kicking distance is closed, keep it closed.",
- "Combinations occur as a response to an opponent's actions, not because they are a favourite set of techniques.",
- "Control and strike the opponent at the same time.",
- "Openings are felt with contact, not seen with the eye.",
- "Seek control of your opponent's posture as a prerequisite to a counterattack.",
- "Always deflect, parry, cover, and trap. These defences are superior to direct blocks.",
- "Footwork and position are a major part of the battle in unbalancing and controlling an opponent.",
- "Dodging, ducking, and weaving are unnecessary if the opponent's attacking limbs are being properly controlled.",
- "Everything moves from the hara.",
- "In defence, be like the dragonfly that perches on the stick raised to hit it.",
- "Full mastery of one technique is better than the incomplete mastery of two."
-];
 // same maxim for everyone on a given day
 const day = Math.floor(Date.now() / 86400000);
 document.getElementById('maxim').textContent = '“' + MAXIMS[day % MAXIMS.length] + '”';

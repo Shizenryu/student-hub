@@ -1,102 +1,59 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shizenryu Philosophy Flashcards</title>
-<style>
-  :root{ --red:#C8102E; --dark:#161616; --paper:#faf7f2; --gold:#9A7D00; --good:#1e8a4c; }
-  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
-  body{font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif; background:var(--paper);
-       min-height:100vh; display:flex; justify-content:center; color:#222;}
-  .app{width:100%; max-width:520px; padding:20px 16px 40px;}
-  header{text-align:center; margin-bottom:18px;}
-  header h1{font-size:1.3rem; letter-spacing:.12em; color:var(--dark);}
-  header .sub{font-size:.72rem; letter-spacing:.2em; color:var(--gold); text-transform:uppercase; margin-top:4px;}
-  .card-ui{background:#fff; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,.08); padding:20px; margin-bottom:14px;}
-  .decks{display:grid; gap:10px;}
-  .deck-btn{border:none; border-radius:10px; padding:14px 16px; font-size:.98rem; font-weight:600;
-    color:#fff; cursor:pointer; display:flex; justify-content:space-between; align-items:center; text-align:left;}
-  .deck-btn small{font-weight:400; opacity:.85; font-size:.7rem; margin-left:10px; text-align:right;}
-  .d1{background:#C8102E;} .d2{background:#161616;} .d3{background:#00843D;}
-  .d4{background:#0072CE;} .d5{background:#702F8A;} .d6{background:#8B5A2B;} .d7{background:#9A7D00;}
-  .meta{display:flex; justify-content:space-between; font-size:.75rem; color:#888; letter-spacing:.08em; margin-bottom:10px;}
-  .scene{perspective:1200px; margin-bottom:14px;}
-  .flash{position:relative; width:100%; min-height:270px; cursor:pointer;
-    transform-style:preserve-3d; transition:transform .5s;}
-  .flash.flipped{transform:rotateY(180deg);}
-  .face{position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden;
-    border-radius:14px; padding:26px 22px; display:flex; flex-direction:column; justify-content:center;
-    text-align:center; box-shadow:0 2px 10px rgba(0,0,0,.10);}
-  .front{background:#fff; border-top:5px solid var(--red);}
-  .back{background:var(--dark); color:#f5f1ea; transform:rotateY(180deg); border-top:5px solid var(--gold);}
-  .face .cat{font-size:.65rem; letter-spacing:.2em; text-transform:uppercase; color:var(--gold); margin-bottom:12px;}
-  .face .txt{font-size:1.05rem; line-height:1.55; font-weight:500;}
-  .back .txt{font-size:.98rem; font-weight:400;}
-  .tapnote{font-size:.68rem; color:#bbb; margin-top:14px; letter-spacing:.1em;}
-  .btns{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
-  .again,.got{padding:14px; border:none; border-radius:10px; font-size:1rem; font-weight:600; cursor:pointer;}
-  .again{background:#fff; color:var(--red); border:2px solid var(--red);}
-  .got{background:var(--good); color:#fff;}
-  .btns.hide{visibility:hidden;}
-  .home-link{display:block; text-align:center; margin-top:16px; font-size:.8rem; color:#999;
-    background:none; border:none; cursor:pointer; width:100%;}
-  .done-big{font-size:2.4rem; text-align:center; margin:10px 0;}
-  .done-msg{text-align:center; font-size:1rem; font-weight:600; margin-bottom:6px;}
-  .done-sub{text-align:center; font-size:.85rem; color:#777; margin-bottom:16px;}
-  .next-btn{width:100%; padding:13px; border:none; border-radius:10px; background:var(--dark);
-    color:#fff; font-size:1rem; font-weight:600; cursor:pointer; margin-top:8px;}
-  footer{text-align:center; font-size:.7rem; color:#bbb; margin-top:20px;}
-  .hidden{display:none;}
-</style>
-</head>
-<body>
-<div class="app">
-  <header>
-    <h1>SHIZENRYU FLASHCARDS</h1>
-    <div class="sub">The ideas behind the art</div>
-  </header>
+// Shizenryu Student Hub — ALL content lives here.
+// Edit this file to add terms, kumite, maxims or flashcard decks.
+// Schemas are documented in CLAUDE.md.
 
-  <div id="menu">
-    <div class="card-ui">
-      <p style="font-size:.85rem; color:#666; margin-bottom:14px; text-align:center;">
-        Read the front, answer in your head, tap to flip.<br>
-        <b>Got it</b> retires the card — <b>Again</b> sends it to the back of the pile.</p>
-      <div class="decks" id="deckList"></div>
-    </div>
-  </div>
+const TERMS = {
+ 1:[["Karate","Empty hand"],["Dojo","Training hall"],["Sensei","Teacher — 'one who has gone before'"],
+    ["Kihon","Foundation / basic"],["Kumite","Meeting of hands"],["Kihon Kumite","Basic partner work"],
+    ["Jun-zuki","Front punch"],["Gyaku-zuki","Reverse punch"],["Uchi-uke","Inside parry"],
+    ["Gedan-uke","Lower parry"],["Mae-geri","Front kick"],["Yori ashi","Front foot slides first"],
+    ["Tsugi ashi","Back foot slides first"]],
+ 2:[["Ayumi ashi","Step through to opposite side"],["Sonaba","On the spot"],["Nagashi","Slipping offline"],
+    ["Mawashi-geri","Roundhouse kick"],["Yoko-geri","Side kick"],["Soto-uke","Outside parry"],
+    ["Sekui-uke","Inside lower parry"],["Morote-uke","Double-arm shield"],["Uraken","Backfist"],
+    ["Uke","To receive"],["Jodan","Upper level"],["Chudan","Middle level"],["Gedan","Lower level"]],
+ 3:[["Kagi-zuki","Hook punch"],["Tobikomi-zuki","Snap punch from a relaxed state"],["Teisho","Palm heel"],
+    ["Age-empi","Rising elbow"],["Mawashi-empi","Circular elbow"],["Kaki-uke","Hook-hand parry"],
+    ["Mawashi-uke","Circular parry"],["Ma-ai","Distance / range"],["Sen no sen","Intercepting as the attack begins"],
+    ["Jiyu Kumite","Free play"],["Hansha Kumite","Contact reflex partner work"],["Kakie","Listening hands / push hands"],
+    ["Tenti","Moving"],["Tentai","Twisting"],["Tengi","Attacking"]],
+ 4:[["Sanchin","Core kata — Sanchin boxing"],["Rokushu","Kata of grip releasing"],["Naifuanchin","Kata of grappling"],
+    ["Ohyo Kumite","Variations on the kumite"],["Tui Shou","Pushing hands"],
+    ["Hara","The centre — everything moves from it"],["Gassho","Palms together — salutation"],
+    ["Kyu","Student grade"],["Dan","Black-belt degree"],["Mon","Junior tag grades"],
+    ["Shodan","First degree — 'first step'"],["Nidan","Second degree"],["Sandan","Third degree"],
+    ["Shihan","Master of instructors"],["Renshi","Polished / trained instructor"],
+    ["Kyoshi","Teacher / expert"],["Hanshi","Model / grandmaster"]]
+};
 
-  <div id="study" class="hidden">
-    <div class="card-ui">
-      <div class="meta"><span id="deckName"></span><span id="remaining"></span></div>
-      <div class="scene">
-        <div class="flash" id="flash" onclick="flip()">
-          <div class="face front"><div class="cat" id="fCat"></div><div class="txt" id="fTxt"></div><div class="tapnote">TAP TO REVEAL</div></div>
-          <div class="face back"><div class="cat" id="bCat"></div><div class="txt" id="bTxt"></div></div>
-        </div>
-      </div>
-      <div class="btns hide" id="btns">
-        <button class="again" onclick="grade(false)">Again</button>
-        <button class="got" onclick="grade(true)">Got it</button>
-      </div>
-      <button class="home-link" onclick="goHome()">← back to decks</button>
-    </div>
-  </div>
+const MAXIMS = [
+ "Once the kicking distance is closed, keep it closed.",
+ "Combinations occur as a response to an opponent's actions, not because they are a favourite set of techniques.",
+ "Control and strike the opponent at the same time.",
+ "Openings are felt with contact, not seen with the eye.",
+ "Seek control of your opponent's posture as a prerequisite to a counterattack.",
+ "Always deflect, parry, cover, and trap. These defences are superior to direct blocks.",
+ "Footwork and position are a major part of the battle in unbalancing and controlling an opponent.",
+ "Everything moves from the hara.",
+ "In defence, be like the dragonfly that perches on the stick raised to hit it.",
+ "Full mastery of one technique is better than the incomplete mastery of two."
+];
 
-  <div id="done" class="hidden">
-    <div class="card-ui">
-      <div class="done-big">☯</div>
-      <div class="done-msg" id="doneMsg"></div>
-      <div class="done-sub" id="doneSub"></div>
-      <button class="next-btn" onclick="restartDeck()">Study again</button>
-      <button class="home-link" onclick="goHome()">← back to decks</button>
-    </div>
-  </div>
+const KUMITE = [
+ {n:1, side:"OS", belt:"9th Kyu",  steps:["jun-zuki","uchi-uke","gyaku-zuki"]},
+ {n:2, side:"OS", belt:"8th Kyu",  steps:["mae-geri","gedan-uke","gyaku-zuki"]},
+ {n:3, side:"SS", belt:"7th Kyu",  steps:["jun-zuki","nagashi soto-uke","gyaku-zuki"]},
+ {n:4, side:"SS", belt:"7th Kyu",  steps:["mae-geri","sekui-uke","gyaku-zuki"]},
+ {n:5, side:"OS", belt:"6th Kyu",  steps:["mawashi-geri","nagashi morote-uke","uraken","gyaku-zuki"]},
+ {n:6, side:"SS", belt:"6th Kyu",  steps:["gedan mawashi-geri","shin block","jun-zuki","gyaku-zuki"]},
+ {n:7, side:"SS", belt:"5th Kyu",  steps:["kagi-zuki","mawashi-uke","kagi-zuki"]},
+ {n:8, side:"SS", belt:"5th Kyu",  steps:["kagi-zuki","jodan-uke","lock arm","teisho & takedown"]},
+ {n:9, side:"SS", belt:"4th Kyu",  steps:["jun-zuki","kaki-uke","mae-geri","gyaku-zuki"]},
+ {n:10,side:"OS", belt:"4th Kyu",  steps:["jun-zuki","sen no sen — nagashi-uke (rear hand)","tobikomi-zuki"]},
+ {n:11,side:"SS", belt:"3rd Kyu",  steps:["crossed hand low grip (sword)","underhand grip & takedown"]},
+ {n:12,side:"SS", belt:"3rd Kyu",  steps:["crossed hand grip (scabbard)","overhand grip & takedown"]}
+];
 
-  <footer><a href="index.html" style="color:#999">← Shizenryu home</a><br>Structure &gt; Discipline &gt; Measure = Growth</footer>
-</div>
-
-<script>
 const DECKS = [
  {id:'maxims', name:'The Maxims', cls:'d1', cards:[
   ["Once the kicking distance is closed…","…keep it closed."],
@@ -172,83 +129,3 @@ const DECKS = [
   ["What are Mon grades?","Coloured tags for juniors — catching-up stages that bring Junior Shodan holders into full alignment with the adult syllabus by Nidan."]
  ]}
 ];
-
-let deck=null, queue=[], total=0, laps=0, flipped=false;
-
-function init(){
-  const list=document.getElementById('deckList');
-  DECKS.forEach((d,i)=>{
-    const b=document.createElement('button');
-    b.className='deck-btn '+d.cls;
-    b.innerHTML=d.name+'<small>'+d.cards.length+' cards</small>';
-    b.onclick=()=>startDeck(i);
-    list.appendChild(b);
-  });
-  const all=document.createElement('button');
-  all.className='deck-btn d7';
-  all.innerHTML='Everything<small>'+DECKS.reduce((n,d)=>n+d.cards.length,0)+' cards</small>';
-  all.onclick=()=>startDeck(-1);
-  list.appendChild(all);
-}
-
-function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
-
-function startDeck(i){
-  if(i===-1){
-    deck={name:'Everything'};
-    queue=shuffle(DECKS.flatMap(d=>d.cards.map(c=>({c,cat:d.name}))));
-  } else {
-    deck=DECKS[i];
-    queue=shuffle(deck.cards.map(c=>({c,cat:deck.name})));
-  }
-  total=queue.length; laps=0;
-  show('study'); renderCard();
-}
-
-function renderCard(){
-  const cur=queue[0];
-  flipped=false;
-  const f=document.getElementById('flash');
-  f.classList.remove('flipped');
-  document.getElementById('btns').classList.add('hide');
-  document.getElementById('deckName').textContent=deck.name.toUpperCase();
-  document.getElementById('remaining').textContent=queue.length+' TO GO';
-  document.getElementById('fCat').textContent=cur.cat;
-  document.getElementById('bCat').textContent=cur.cat;
-  document.getElementById('fTxt').textContent=cur.c[0];
-  document.getElementById('bTxt').textContent=cur.c[1];
-}
-
-function flip(){
-  flipped=!flipped;
-  document.getElementById('flash').classList.toggle('flipped',flipped);
-  if(flipped) document.getElementById('btns').classList.remove('hide');
-}
-
-function grade(got){
-  const cur=queue.shift();
-  if(!got){ queue.push(cur); laps++; }
-  if(queue.length===0){ finishDeck(); } else { renderCard(); }
-}
-
-function finishDeck(){
-  document.getElementById('doneMsg').textContent='Deck complete — '+total+' cards mastered.';
-  document.getElementById('doneSub').textContent= laps===0
-    ? 'First pass, no repeats. Grading standard.'
-    : laps+' card'+(laps===1?'':'s')+' needed a second look. They are the ones to sit with.';
-  show('done');
-}
-
-function restartDeck(){
-  const i=DECKS.findIndex(d=>d.name===deck.name);
-  startDeck(i);
-}
-function goHome(){ show('menu'); }
-function show(id){
-  ['menu','study','done'].forEach(s=>document.getElementById(s).classList.add('hidden'));
-  document.getElementById(id).classList.remove('hidden');
-}
-init();
-</script>
-</body>
-</html>
