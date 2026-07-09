@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shizenryu Dojo Quiz</title>
+<style>
+  :root{
+    --red:#C8102E; --dark:#161616; --paper:#faf7f2; --ink:#222;
+    --good:#1e8a4c; --bad:#c0392b;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  body{font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif; background:var(--paper); color:var(--ink);
+       min-height:100vh; display:flex; justify-content:center;}
+  .app{width:100%; max-width:480px; padding:20px 16px 40px;}
+  header{text-align:center; margin-bottom:18px;}
+  header h1{font-size:1.35rem; letter-spacing:.12em; color:var(--dark);}
+  header .sub{font-size:.75rem; letter-spacing:.2em; color:var(--red); text-transform:uppercase; margin-top:4px;}
+  .card{background:#fff; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,.08); padding:20px; margin-bottom:14px;}
+  .belts{display:grid; gap:10px;}
+  .belt-btn{border:none; border-radius:10px; padding:14px 16px; font-size:1rem; font-weight:600;
+    color:#fff; cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:transform .08s;}
+  .belt-btn:active{transform:scale(.97);}
+  .belt-btn small{font-weight:400; opacity:.85; font-size:.72rem;}
+  .b1{background:linear-gradient(90deg,#C8102E,#ED8B00);}
+  .b2{background:linear-gradient(90deg,#d4b100,#00843D);}
+  .b3{background:linear-gradient(90deg,#0072CE,#702F8A);}
+  .b4{background:linear-gradient(90deg,#8B5A2B,#161616);}
+  .b5{background:linear-gradient(90deg,#C8102E,#161616);}
+  .progress{height:8px; background:#eee; border-radius:4px; overflow:hidden; margin-bottom:14px;}
+  .progress div{height:100%; background:var(--red); width:0%; transition:width .3s;}
+  .qcount{font-size:.75rem; color:#888; letter-spacing:.1em; margin-bottom:8px; display:flex; justify-content:space-between;}
+  .jp{font-size:1.7rem; font-weight:700; text-align:center; margin:14px 0 4px; color:var(--dark);}
+  .jp.seq{font-size:1.05rem; line-height:1.5;}
+  .modehead{font-size:.78rem; letter-spacing:.15em; color:#999; text-transform:uppercase; text-align:center; margin:16px 0 8px;}
+  .hint{text-align:center; font-size:.8rem; color:#999; margin-bottom:16px;}
+  .opts{display:grid; gap:10px;}
+  .opt{border:2px solid #e5e0d8; background:#fff; border-radius:10px; padding:13px 14px; font-size:.95rem;
+    text-align:left; cursor:pointer; transition:border-color .15s, background .15s;}
+  .opt:active{border-color:var(--dark);}
+  .opt.correct{border-color:var(--good); background:#e9f7ef; font-weight:600;}
+  .opt.wrong{border-color:var(--bad); background:#fdecea;}
+  .opt:disabled{cursor:default; opacity:.9;}
+  .feedback{text-align:center; min-height:28px; font-weight:600; margin-top:12px;}
+  .feedback.good{color:var(--good);} .feedback.bad{color:var(--bad);}
+  .next-btn,.home-btn{width:100%; margin-top:14px; padding:13px; border:none; border-radius:10px;
+    background:var(--dark); color:#fff; font-size:1rem; font-weight:600; cursor:pointer;}
+  .home-btn{background:#fff; color:var(--dark); border:2px solid var(--dark);}
+  .score-big{font-size:3rem; font-weight:800; text-align:center; color:var(--red);}
+  .rank{text-align:center; font-size:1.05rem; font-weight:600; margin:6px 0 14px;}
+  .maxim{background:#fbf7f1; border-left:4px solid var(--red); padding:12px 14px; font-style:italic;
+    font-size:.9rem; color:#555; border-radius:0 8px 8px 0; margin-top:6px;}
+  .maxim span{display:block; font-style:normal; font-size:.7rem; letter-spacing:.15em; color:var(--red);
+    margin-bottom:5px; text-transform:uppercase;}
+  .streak{text-align:center; font-size:.8rem; color:#b07d00; height:18px; margin-top:4px;}
+  footer{text-align:center; font-size:.7rem; color:#bbb; margin-top:20px;}
+  footer a{color:#999;}
+  .hidden{display:none;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>SHIZENRYU DOJO QUIZ</h1>
+    <div class="sub">Know the words · Own the art</div>
+  </header>
+
+  <div id="menu">
+    <div class="card">
+      <p style="font-size:.9rem; color:#666; margin-bottom:14px; text-align:center;">
+        10 questions. Choose your level — each level includes everything below it.</p>
+      <div class="belts">
+        <button class="belt-btn b1" onclick="start(1)">Beginner <small>Red &amp; Orange · 9th–8th Kyu</small></button>
+        <button class="belt-btn b2" onclick="start(2)">Intermediate <small>Yellow &amp; Green · 7th–6th Kyu</small></button>
+        <button class="belt-btn b3" onclick="start(3)">Advanced <small>Blue &amp; Purple · 5th–4th Kyu</small></button>
+        <button class="belt-btn b4" onclick="start(4)">Brown &amp; Black <small>3rd Kyu — Dan grades</small></button>
+        <button class="belt-btn b5" onclick="start(0)">Everything <small>Full syllabus, all terms</small></button>
+      </div>
+      <div class="modehead">Kumite Sequences</div>
+      <p style="font-size:.8rem; color:#888; text-align:center; margin-bottom:10px;">
+        What comes next? Which kumite is it? Same side or opposite side?</p>
+      <div class="belts">
+        <button class="belt-btn b2" onclick="startKumite(6)">Kumite 1–6 <small>Red to Green belt</small></button>
+        <button class="belt-btn b4" onclick="startKumite(12)">Kumite 1–12 <small>The full set</small></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="quiz" class="hidden">
+    <div class="card">
+      <div class="qcount"><span id="qnum"></span><span id="scorelive"></span></div>
+      <div class="progress"><div id="bar"></div></div>
+      <div class="jp" id="jp"></div>
+      <div class="hint" id="dirhint"></div>
+      <div class="opts" id="opts"></div>
+      <div class="feedback" id="fb"></div>
+      <div class="streak" id="streak"></div>
+      <button class="next-btn hidden" id="nextBtn" onclick="nextQ()">Next</button>
+    </div>
+  </div>
+
+  <div id="result" class="hidden">
+    <div class="card">
+      <div class="score-big" id="finalScore"></div>
+      <div class="rank" id="rank"></div>
+      <div class="maxim"><span>Maxim of Shizenryu</span><em id="maxim"></em></div>
+      <button class="next-btn" onclick="restart()">Train again</button>
+      <button class="home-btn" onclick="goHome()">Change level</button>
+    </div>
+  </div>
+
+  <footer><a href="index.html">← Shizenryu home</a><br>Structure &gt; Discipline &gt; Measure = Growth</footer>
+</div>
+
+<script>
+const TERMS = {
+ 1:[["Karate","Empty hand"],["Dojo","Training hall"],["Sensei","Teacher — 'one who has gone before'"],
+    ["Kihon","Foundation / basic"],["Kumite","Meeting of hands"],["Kihon Kumite","Basic partner work"],
+    ["Jun-zuki","Front punch"],["Gyaku-zuki","Reverse punch"],["Uchi-uke","Inside parry"],
+    ["Gedan-uke","Lower parry"],["Mae-geri","Front kick"],["Yori ashi","Front foot slides first"],
+    ["Tsugi ashi","Back foot slides first"]],
+ 2:[["Ayumi ashi","Step through to opposite side"],["Sonaba","On the spot"],["Nagashi","Slipping offline"],
+    ["Mawashi-geri","Roundhouse kick"],["Yoko-geri","Side kick"],["Soto-uke","Outside parry"],
+    ["Sekui-uke","Inside lower parry"],["Morote-uke","Double-arm shield"],["Uraken","Backfist"],
+    ["Uke","To receive"],["Jodan","Upper level"],["Chudan","Middle level"],["Gedan","Lower level"]],
+ 3:[["Kagi-zuki","Hook punch"],["Tobikomi-zuki","Snap punch from a relaxed state"],["Teisho","Palm heel"],
+    ["Age-empi","Rising elbow"],["Mawashi-empi","Circular elbow"],["Kaki-uke","Hook-hand parry"],
+    ["Mawashi-uke","Circular parry"],["Ma-ai","Distance / range"],["Sen no sen","Intercepting as the attack begins"],
+    ["Jiyu Kumite","Free play"],["Hansha Kumite","Contact reflex partner work"],["Kakie","Listening hands / push hands"],
+    ["Tenti","Moving"],["Tentai","Twisting"],["Tengi","Attacking"]],
+ 4:[["Sanchin","Core kata — Sanchin boxing"],["Rokushu","Kata of grip releasing"],["Naifuanchin","Kata of grappling"],
+    ["Ohyo Kumite","Variations on the kumite"],["Tui Shou","Pushing hands"],
+    ["Hara","The centre — everything moves from it"],["Gassho","Palms together — salutation"],
+    ["Kyu","Student grade"],["Dan","Black-belt degree"],["Mon","Junior tag grades"],
+    ["Shodan","First degree — 'first step'"],["Nidan","Second degree"],["Sandan","Third degree"],
+    ["Shihan","Master of instructors"],["Renshi","Polished / trained instructor"],
+    ["Kyoshi","Teacher / expert"],["Hanshi","Model / grandmaster"]]
+};
+const MAXIMS = [
+ "Once the kicking distance is closed, keep it closed.",
+ "Combinations occur as a response to an opponent's actions, not because they are a favourite set of techniques.",
+ "Control and strike the opponent at the same time.",
+ "Openings are felt with contact, not seen with the eye.",
+ "Seek control of your opponent's posture as a prerequisite to a counterattack.",
+ "Always deflect, parry, cover, and trap. These defences are superior to direct blocks.",
+ "Footwork and position are a major part of the battle in unbalancing and controlling an opponent.",
+ "Everything moves from the hara.",
+ "In defence, be like the dragonfly that perches on the stick raised to hit it.",
+ "Full mastery of one technique is better than the incomplete mastery of two."
+];
+const KUMITE = [
+ {n:1, side:"OS", belt:"9th Kyu",  steps:["jun-zuki","uchi-uke","gyaku-zuki"]},
+ {n:2, side:"OS", belt:"8th Kyu",  steps:["mae-geri","gedan-uke","gyaku-zuki"]},
+ {n:3, side:"SS", belt:"7th Kyu",  steps:["jun-zuki","nagashi soto-uke","gyaku-zuki"]},
+ {n:4, side:"SS", belt:"7th Kyu",  steps:["mae-geri","sekui-uke","gyaku-zuki"]},
+ {n:5, side:"OS", belt:"6th Kyu",  steps:["mawashi-geri","nagashi morote-uke","uraken","gyaku-zuki"]},
+ {n:6, side:"SS", belt:"6th Kyu",  steps:["gedan mawashi-geri","shin block","jun-zuki","gyaku-zuki"]},
+ {n:7, side:"SS", belt:"5th Kyu",  steps:["kagi-zuki","mawashi-uke","kagi-zuki"]},
+ {n:8, side:"SS", belt:"5th Kyu",  steps:["kagi-zuki","jodan-uke","lock arm","teisho & takedown"]},
+ {n:9, side:"SS", belt:"4th Kyu",  steps:["jun-zuki","kaki-uke","mae-geri","gyaku-zuki"]},
+ {n:10,side:"OS", belt:"4th Kyu",  steps:["jun-zuki","sen no sen — nagashi-uke (rear hand)","tobikomi-zuki"]},
+ {n:11,side:"SS", belt:"3rd Kyu",  steps:["crossed hand low grip (sword)","underhand grip & takedown"]},
+ {n:12,side:"SS", belt:"3rd Kyu",  steps:["crossed hand grip (scabbard)","overhand grip & takedown"]}
+];
+const N_Q = 10;
+let pool = [], qs = [], idx = 0, score = 0, streak = 0, level = 1;
+let mode = 'terms', kqs = [], krange = 12;
+
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+function start(lv){
+  mode = 'terms';
+  level = lv;
+  pool = [];
+  const tiers = lv===0 ? [1,2,3,4] : Array.from({length:lv},(_,i)=>i+1);
+  tiers.forEach(t=>pool.push(...TERMS[t]));
+  qs = shuffle([...pool]).slice(0, N_Q);
+  idx = 0; score = 0; streak = 0;
+  show('quiz'); renderQ();
+}
+
+function startKumite(maxN){
+  mode = 'kumite'; krange = maxN;
+  const ks = KUMITE.filter(k => k.n <= maxN);
+  const allSteps = [...new Set(ks.flatMap(k => k.steps))];
+  const cand = [];
+  ks.forEach(k => {
+    for(let i = 0; i < k.steps.length; i++) cand.push({t:'next', k, i});
+    cand.push({t:'which', k});
+    cand.push({t:'side', k});
+  });
+  kqs = [];
+  for(const c of shuffle(cand)){
+    if(kqs.length >= N_Q) break;
+    const k = c.k;
+    if(c.t === 'next'){
+      const correct = k.steps[c.i];
+      const wrongs = shuffle(allSteps.filter(s => s !== correct)).slice(0,3);
+      kqs.push({
+        prompt: c.i === 0 ? 'Kumite ' + k.n + ' (' + k.side + ') opens with…'
+                          : 'Kumite ' + k.n + ':  ' + k.steps.slice(0,c.i).join('  »  ') + '  »  ?',
+        hint: c.i === 0 ? 'The attack that starts it' : 'What comes next?',
+        correct, opts: shuffle([correct, ...wrongs])
+      });
+    } else if(c.t === 'which'){
+      const correct = 'Kumite ' + k.n;
+      const wrongs = shuffle(ks.filter(o => o.n !== k.n)).slice(0,3).map(o => 'Kumite ' + o.n);
+      kqs.push({ prompt: k.steps.join('  »  '), hint: 'Which kumite is this?',
+                 correct, opts: shuffle([correct, ...wrongs]) });
+    } else {
+      kqs.push({ prompt: 'Kumite ' + k.n + ':  ' + k.steps.join('  »  '),
+                 hint: 'Same side (SS) or opposite side (OS)?',
+                 correct: k.side, opts: shuffle(['OS','SS']) });
+    }
+  }
+  idx = 0; score = 0; streak = 0;
+  show('quiz'); renderQ();
+}
+
+function renderQ(){
+  if(mode === 'kumite'){ renderK(); return; }
+  const [jp, en] = qs[idx];
+  const reverse = Math.random() < 0.3;
+  document.getElementById('qnum').textContent = 'QUESTION ' + (idx+1) + ' / ' + N_Q;
+  document.getElementById('scorelive').textContent = 'SCORE ' + score;
+  document.getElementById('bar').style.width = (idx / N_Q * 100) + '%';
+  document.getElementById('jp').className = 'jp';
+  document.getElementById('jp').textContent = reverse ? en : jp;
+  document.getElementById('dirhint').textContent = reverse ? 'Which term means this?' : 'What does this mean?';
+  document.getElementById('fb').textContent = '';
+  document.getElementById('fb').className = 'feedback';
+  document.getElementById('nextBtn').classList.add('hidden');
+
+  const correct = reverse ? jp : en;
+  const wrongs = shuffle(pool.filter(t => t[0] !== jp)).slice(0,3).map(t => reverse ? t[0] : t[1]);
+  const opts = shuffle([correct, ...wrongs]);
+  const box = document.getElementById('opts');
+  box.innerHTML = '';
+  opts.forEach(o=>{
+    const b = document.createElement('button');
+    b.className = 'opt'; b.textContent = o;
+    b.onclick = ()=>answer(b, o === correct, correct);
+    box.appendChild(b);
+  });
+}
+
+function renderK(){
+  const q = kqs[idx];
+  document.getElementById('qnum').textContent = 'QUESTION ' + (idx+1) + ' / ' + kqs.length;
+  document.getElementById('scorelive').textContent = 'SCORE ' + score;
+  document.getElementById('bar').style.width = (idx / kqs.length * 100) + '%';
+  const jp = document.getElementById('jp');
+  jp.className = 'jp seq';
+  jp.textContent = q.prompt;
+  document.getElementById('dirhint').textContent = q.hint;
+  document.getElementById('fb').textContent = '';
+  document.getElementById('fb').className = 'feedback';
+  document.getElementById('nextBtn').classList.add('hidden');
+  const box = document.getElementById('opts');
+  box.innerHTML = '';
+  q.opts.forEach(o=>{
+    const b = document.createElement('button');
+    b.className = 'opt'; b.textContent = o;
+    b.onclick = ()=>answer(b, o === q.correct, q.correct);
+    box.appendChild(b);
+  });
+}
+
+function answer(btn, ok, correct){
+  document.querySelectorAll('.opt').forEach(b=>{
+    b.disabled = true;
+    if(b.textContent === correct) b.classList.add('correct');
+  });
+  const fb = document.getElementById('fb');
+  if(ok){ score++; streak++;
+    fb.textContent = ['Osu! Correct.','Yes — well done.','Sharp. Correct.','Correct!'][Math.floor(Math.random()*4)];
+    fb.classList.add('good');
+  } else { streak = 0;
+    btn.classList.add('wrong');
+    fb.textContent = 'Not quite — it means: ' + correct;
+    fb.classList.add('bad');
+  }
+  document.getElementById('streak').textContent = streak >= 3 ? '🔥 ' + streak + ' in a row!' : '';
+  document.getElementById('scorelive').textContent = 'SCORE ' + score;
+  document.getElementById('nextBtn').classList.remove('hidden');
+}
+
+function roundLen(){ return mode === 'kumite' ? kqs.length : qs.length; }
+
+function nextQ(){
+  idx++;
+  if(idx >= roundLen()){ finish(); } else { renderQ(); }
+}
+
+function finish(){
+  document.getElementById('bar').style.width = '100%';
+  document.getElementById('finalScore').textContent = score + ' / ' + roundLen();
+  const pct = score / roundLen();
+  const rank = pct === 1 ? 'Perfect — grading standard!' :
+               pct >= .8 ? 'Excellent — nearly there.' :
+               pct >= .6 ? 'Good — keep polishing.' :
+               pct >= .4 ? 'Coming along — train the words like techniques.' :
+                           'Every master was once a beginner. Again!';
+  document.getElementById('rank').textContent = rank;
+  document.getElementById('maxim').textContent = '“' + MAXIMS[Math.floor(Math.random()*MAXIMS.length)] + '”';
+  show('result');
+}
+
+function restart(){ mode === 'kumite' ? startKumite(krange) : start(level); }
+function goHome(){ show('menu'); }
+function show(id){
+  ['menu','quiz','result'].forEach(s=>document.getElementById(s).classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+</script>
+</body>
+</html>
