@@ -20,7 +20,8 @@ site/
 ├── kata.html         Kata reference — Mara, Sanchin, Rokushu, Naifuanchin from KATA data;
 │                     deep-linkable via hash, e.g. kata.html#sanchin
 ├── assets/
-│   └── data.js       ALL content data (see schemas below). Content changes happen HERE.
+│   ├── data.js       ALL content data (see schemas below). Content changes happen HERE.
+│   └── store.js      Progress store — streaks, best scores, missed cards (see Persistence).
 └── docs/             Printable PDFs (generated outside this repo, committed as binaries)
 netlify.toml          Publish config (publish = "site")
 ```
@@ -92,4 +93,4 @@ existing page (header, card UI, footer with `← Shizenryu home` link).
 
 ## Persistence
 
-Curr
+`sit

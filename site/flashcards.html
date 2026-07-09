@@ -55,6 +55,7 @@
   <header>
     <h1>SHIZENRYU FLASHCARDS</h1>
     <div class="sub">The ideas behind the art</div>
+    <div id="streakChip" style="font-size:.75rem;color:#9A7D00;margin-top:6px;min-height:1em;"></div>
   </header>
 
   <div id="menu">
@@ -97,6 +98,7 @@
 </div>
 
 <script src="assets/data.js"></script>
+<script src="assets/store.js"></script>
 <script>
 let deck=null, queue=[], total=0, laps=0, flipped=false;
 
@@ -126,6 +128,8 @@ function startDeck(i){
     deck=DECKS[i];
     queue=shuffle(deck.cards.map(c=>({c,cat:deck.name})));
   }
+  const m = Store.misses();
+  queue.sort((a,b)=>((m[Store.hash(b.c[0])]||0) - (m[Store.hash(a.c[0])]||0)));
   total=queue.length; laps=0;
   show('study'); renderCard();
 }
@@ -152,15 +156,20 @@ function flip(){
 
 function grade(got){
   const cur=queue.shift();
+  Store.recordCard(Store.hash(cur.c[0]), got);
   if(!got){ queue.push(cur); laps++; }
   if(queue.length===0){ finishDeck(); } else { renderCard(); }
 }
 
 function finishDeck(){
   document.getElementById('doneMsg').textContent='Deck complete — '+total+' cards mastered.';
-  document.getElementById('doneSub').textContent= laps===0
+  let sub = laps===0
     ? 'First pass, no repeats. Grading standard.'
-    : laps+' card'+(laps===1?'':'s')+' needed a second look. They are the ones to sit with.';
+    : laps+' card'+(laps===1?'':'s')+' needed a second look. They will come up first next time.';
+  const st = Store.markTrained();
+  if(st.count >= 2) sub += ' 🔥 ' + st.count + '-day streak.';
+  document.getElementById('doneSub').textContent = sub;
+  updateStreakChip();
   show('done');
 }
 
@@ -169,6 +178,13 @@ function restartDeck(){
   startDeck(i);
 }
 function goHome(){ show('menu'); }
+function updateStreakChip(){
+  const s = Store.streakInfo();
+  const el = document.getElementById('streakChip');
+  if(s.count >= 1) el.textContent = '🔥 ' + s.count + '-day streak' + (s.today ? '' : ' — train today to keep it');
+  else el.textContent = '';
+}
+updateStreakChip();
 function show(id){
   ['menu','study','done'].forEach(s=>document.getElementById(s).classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');

@@ -51,6 +51,7 @@
   <div class="nat">Structure &gt; Discipline &gt; Measure / Accountability = Growth</div>
 
   <div class="maxim"><span>Maxim of the day</span><em id="maxim"></em></div>
+  <div id="streakChip" style="text-align:center;font-size:.8rem;color:#9A7D00;margin:-14px 0 20px;min-height:1em;"></div>
 
   <h2>Train</h2>
   <div class="tiles">
@@ -94,10 +95,17 @@
   </footer>
 </div>
 <script src="assets/data.js"></script>
+<script src="assets/store.js"></script>
 <script>
 // same maxim for everyone on a given day
 const day = Math.floor(Date.now() / 86400000);
 document.getElementById('maxim').textContent = '“' + MAXIMS[day % MAXIMS.length] + '”';
+const si = Store.streakInfo();
+if(si.count >= 1){
+  document.getElementById('streakChip').textContent =
+    si.today ? '🔥 ' + si.count + '-day training streak' 
+             : '🔥 ' + si.count + '-day streak — train today to keep it';
+}
 </script>
 </body>
 </html>

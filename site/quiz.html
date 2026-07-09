@@ -63,6 +63,7 @@
   <header>
     <h1>SHIZENRYU DOJO QUIZ</h1>
     <div class="sub">Know the words · Own the art</div>
+    <div id="streakChip" style="font-size:.75rem;color:#9A7D00;margin-top:6px;min-height:1em;"></div>
   </header>
 
   <div id="menu">
@@ -103,6 +104,7 @@
     <div class="card">
       <div class="score-big" id="finalScore"></div>
       <div class="rank" id="rank"></div>
+      <div id="progressLine" style="text-align:center;font-size:.82rem;color:#9A7D00;margin-bottom:12px;min-height:1em;"></div>
       <div class="maxim"><span>Maxim of Shizenryu</span><em id="maxim"></em></div>
       <button class="next-btn" onclick="restart()">Train again</button>
       <button class="home-btn" onclick="goHome()">Change level</button>
@@ -113,6 +115,7 @@
 </div>
 
 <script src="assets/data.js"></script>
+<script src="assets/store.js"></script>
 <script>
 const N_Q = 10;
 let pool = [], qs = [], idx = 0, score = 0, streak = 0, level = 1;
@@ -255,11 +258,26 @@ function finish(){
                            'Every master was once a beginner. Again!';
   document.getElementById('rank').textContent = rank;
   document.getElementById('maxim').textContent = '“' + MAXIMS[Math.floor(Math.random()*MAXIMS.length)] + '”';
+  const modeKey = mode === 'kumite' ? 'kumite'+krange : 'level'+level;
+  const newBest = Store.setBest(modeKey, score);
+  const st = Store.markTrained();
+  const bits = [newBest ? 'New personal best for this mode!' 
+                        : 'Your best for this mode: ' + Store.best(modeKey) + ' / ' + roundLen()];
+  bits.push(st.count >= 2 ? '🔥 ' + st.count + '-day streak' : 'Trained today ✓');
+  document.getElementById('progressLine').textContent = bits.join('  ·  ');
+  updateStreakChip();
   show('result');
 }
 
 function restart(){ mode === 'kumite' ? startKumite(krange) : start(level); }
 function goHome(){ show('menu'); }
+function updateStreakChip(){
+  const s = Store.streakInfo();
+  const el = document.getElementById('streakChip');
+  if(s.count >= 1) el.textContent = '🔥 ' + s.count + '-day streak' + (s.today ? '' : ' — train today to keep it');
+  else el.textContent = '';
+}
+updateStreakChip();
 function show(id){
   ['menu','quiz','result'].forEach(s=>document.getElementById(s).classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
