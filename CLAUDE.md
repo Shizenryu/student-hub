@@ -23,13 +23,33 @@ site/
 │                     one activity keeps the streak; 7-day + 30-day view
 ├── assets/
 │   ├── data.js       ALL content data (see schemas below). Content changes happen HERE.
-│   └── store.js      Progress store — streaks, best scores, missed cards (see Persistence).
+│   ├── store.js      Progress store — streaks, best scores, missed cards (see Persistence).
+│   └── img/          Club imagery — see Imagery below
 └── docs/             Printable PDFs (generated outside this repo, committed as binaries)
 netlify.toml          Publish config (publish = "site")
 ```
 
 Pages load `assets/data.js` via a plain `<script src>` tag before their inline app script
 (no fetch/JSON — that would break file:// usage).
+
+## Imagery (`site/assets/img/`)
+
+| File | What | Used by |
+|---|---|---|
+| `ki.png` | The Ki (氣) logo — black ink, transparent | index.html crest |
+| `shizenryu-calligraphy.png` | Shizenryu (自然流) calligraphy — black ink, transparent | index.html footer seal |
+| `icon.png` | White Ki on an opaque club-red tile | favicon + touch icon, all pages |
+
+Two rules the pages depend on:
+
+- Set `width`/`height` to the image's **intrinsic** pixel size and control the displayed
+  size in CSS, so the browser reserves the space and nothing shifts as the page loads.
+- Keep paths relative (`assets/img/…`), never root-relative, or file:// breaks.
+
+The ink marks sit on the `#faf7f2` paper and so need transparency — a white-background
+JPEG shows as a white box. The app icon is opaque because it sits on a home screen.
+There is no build step, so resize an image before committing it rather than shrinking it
+in CSS, and add `loading="lazy" decoding="async"` to anything below the fold.
 
 ## Content rules — read before writing ANY martial content
 
@@ -88,8 +108,12 @@ KATA    = [ {slug, name, translation, hex, white, match, quote?, sections}, ... 
           // only simple <b>/<i> markup, authored in this repo, never user input.
 ```
 
-To add content: edit `data.js` only. To add a new page: copy the structure of an
-existing page (header, card UI, footer with `← Shizenryu home` link).
+To add content: edit `data.js` only.
+
+To add a new page, copy an existing page rather than starting from scratch, keeping:
+
+- the whole `<head>` block — charset, viewport, title, and the two icon links
+- the header, the card UI, and the footer with its `← Shizenryu home` link
 
 ## Design system
 
@@ -99,7 +123,8 @@ existing page (header, card UI, footer with `← Shizenryu home` link).
   green `#00843D`, blue `#0072CE`, purple `#702F8A`, brown `#8B5A2B`, black `#1A1A1A`
 - System font stack, mobile-first, content max-width 480–520px, cards with
   14px radius and soft shadows. Buttons are big and thumb-friendly.
-- No emojis in content except the existing streak flame and ☯.
+- No emojis in content except the existing streak flame and the ☯ that flashcards.html
+  shows on deck completion. The club mark is the Ki logo (see Imagery), not ☯.
 
 ## Persistence
 
