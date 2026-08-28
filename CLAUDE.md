@@ -33,6 +33,8 @@ src/
 tests/
 ├── build/          build-output assertions
 └── browser/        Vitest Browser Mode
+docs/superpowers/   committed specs and plans — not to be confused with
+                    public/docs/, the student-facing printable PDFs above
 astro.config.mjs  tsconfig.json  vitest.config.ts  vitest.browser.config.ts
 netlify.toml      build command and publish directory
 .github/workflows/ci.yml   PR gate: typecheck, build, and both test suites
@@ -53,9 +55,13 @@ Two rules the pages depend on:
 
 - Set `width`/`height` to the image's **intrinsic** pixel size and control the displayed
   size in CSS, so the browser reserves the space and nothing shifts as the page loads.
-- Keep paths relative (`assets/img/…`), never root-relative — the legacy pages
-  live in `public/` and are served from the site root, so their existing relative
-  paths resolve correctly.
+- Path style differs by where the page lives. The legacy pages in `public/`
+  keep relative paths (`assets/img/…`) — they are served from the site root,
+  so relative resolves correctly there and should not be changed as part of
+  a migration. Astro routes under `src/pages/` must use root-relative paths
+  (`/assets/img/…`), as `src/pages/404.astro` already does — a nested route
+  (e.g. `/belts/5th-kyu`) resolves a relative `assets/img/ki.png` against its
+  own path, not the site root, and the crest breaks.
 
 The ink marks sit on the `#faf7f2` paper and so need transparency — a white-background
 JPEG shows as a white box. The app icon is opaque because it sits on a home screen.
@@ -123,10 +129,13 @@ KATA    = [ {slug, name, translation, hex, white, match, quote?, sections}, ... 
 
 To add content: edit `data.js` only.
 
-To add a new page, copy an existing page rather than starting from scratch, keeping:
+The pages in `public/` are legacy — hand-rolled HTML with inline CSS and JS,
+kept only until each one is migrated into a real Astro route, and being
+migrated out one page per slice. They are not a template to copy.
 
-- the whole `<head>` block — charset, viewport, title, and the two icon links
-- the header, the card UI, and the footer with its `← Shizenryu home` link
+To add a new page, add an Astro route under `src/pages/` (see
+`src/pages/404.astro` for the current pattern), not a new file in `public/`.
+Root-relative asset paths are required there — see Imagery, above.
 
 ## Design system
 

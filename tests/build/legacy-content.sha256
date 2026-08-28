@@ -1,0 +1,27 @@
+# Known-good checksum baseline for site/public — every file below reached
+# this branch as a verified 100% git rename with an identical blob SHA, so
+# it is byte-identical to what is live in production today.
+#
+# tests/build/public-passthrough.test.ts asserts every entry here matches
+# the current file in public/. Entries are removed deliberately, one at a
+# time, as each page migrates out of public/ into a real Astro route in a
+# later slice — a removed line here is an intentional act of that
+# migration, not drift. Do not edit a hash to make a failing test pass;
+# regenerate it only when the corresponding public/ file is deliberately
+# replaced by the maintainer.
+#
+# Format: <sha256>  <path relative to public/, forward slashes>, sorted by path.
+7b9fc9918fd9c49bbfc0423d0bea656be1322faef19798dc9118e75289b89198  assets/data.js
+c152c0de1ba1c09a143a495b7f59a3f85857e3050d88f3af8be0a39bc48d83b1  assets/img/icon.png
+066200e4c56f23f6f87d5677af6abe0b6aa2400e2a22222b16625116c33e2592  assets/img/ki.png
+83983778db8ce0d74644b594afff0f30803410da782dc19f18ddc58d87655e7c  assets/img/shizenryu-calligraphy.png
+f214a7938405e19cef975c73686b59f464f562f70a93af0ee15bd6ed3b174608  assets/store.js
+229a67555289813611b789eb6d2765c7df969cc66bde58a46d0bd04cbb4c2d8b  belts.html
+084dda24148015ba04fc123d31217dee1e9b2abfd0cd151ae121551dcb93a738  docs/belt-passport.pdf
+8e1dc9ed3fe87703c9ab3ef4691a5004f95c3329ff38135758d544796f8a8b5e  docs/philosophy-guide.pdf
+f2c8a380105b4b95be267a796660381a574265b345db7f08416c82f00fb6a61a  docs/study-guides.pdf
+28707164ea876bb9054d9533389caa1bddf11dce9bd9573346b0450acaa35b5e  flashcards.html
+2c05ed1b5920cf24212495ed0dcd82f8741e97ecfed49a73ab1c7b9a24432678  index.html
+8b29135e828a096f89eb86593345e44f8fd46011b10820af5a19ac49e8cbc27a  kata.html
+14c459181f3a2842eda400ba9b306d96de36516226aed87c6a08cc4f484f09a1  practice.html
+7b9c86aa37ee001320b63ed83c9fe7792833fb0931f3a8384d77c407e1e33eff  quiz.html
