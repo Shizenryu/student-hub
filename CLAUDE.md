@@ -41,7 +41,7 @@ netlify.toml      build command and publish directory
 Pages still in `public/` load `assets/data.js` via a plain `<script src>` tag before
 their inline app script, same as before the migration.
 
-## Imagery (`site/assets/img/`)
+## Imagery (`public/assets/img/`)
 
 | File | What | Used by |
 |---|---|---|
@@ -53,12 +53,15 @@ Two rules the pages depend on:
 
 - Set `width`/`height` to the image's **intrinsic** pixel size and control the displayed
   size in CSS, so the browser reserves the space and nothing shifts as the page loads.
-- Keep paths relative (`assets/img/…`), never root-relative, or file:// breaks.
+- Keep paths relative (`assets/img/…`), never root-relative — the legacy pages
+  live in `public/` and are served from the site root, so their existing relative
+  paths resolve correctly.
 
 The ink marks sit on the `#faf7f2` paper and so need transparency — a white-background
 JPEG shows as a white box. The app icon is opaque because it sits on a home screen.
-There is no build step, so resize an image before committing it rather than shrinking it
-in CSS, and add `loading="lazy" decoding="async"` to anything below the fold.
+Astro copies `public/` straight through without processing, so resize an image
+before committing it rather than shrinking it in CSS, and add
+`loading="lazy" decoding="async"` to anything below the fold.
 
 ## Content rules — read before writing ANY martial content
 
@@ -69,7 +72,7 @@ in CSS, and add `loading="lazy" decoding="async"` to anything below the fold.
 2. **Exactness matters.** Kumite steps, OS/SS markings, Japanese spellings and kata names
    must match the syllabus exactly (e.g. `sekui-uke`, `Naifuanchin`, `tobikomi-zuki`).
 3. **Source documents stay out of the repo.** Ian Smith's papers and the syllabus are
-   copyright and partly personal; do not commit them. The generated PDFs in `site/docs/`
+   copyright and partly personal; do not commit them. The generated PDFs in `public/docs/`
    are the publishable derivatives.
 4. **Audience includes children.** Everything public must be junior-appropriate.
    The Retreat Notes contain personal/lineage-dispute material — philosophical content
@@ -80,7 +83,7 @@ in CSS, and add `loading="lazy" decoding="async"` to anything below the fold.
    own wording ("JJ"); display layers expand it — belts.html has an `expand()` helper
    that renders "Jiu Jitsu (JJ)". Any new page showing syllabus text must do the same.
 
-## Data schemas (`site/assets/data.js`)
+## Data schemas (`public/assets/data.js`)
 
 ```js
 TERMS   = { 1:[[japanese, english], ...], 2:[...], 3:[...], 4:[...] }
