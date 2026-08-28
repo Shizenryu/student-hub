@@ -1,36 +1,45 @@
 # CLAUDE.md — Shizenryu Student Hub
 
 Static student hub for Shizenryu Karate ("The Natural Way of Karate").
-Live site deployed to Netlify from `site/`. Repo: github.com/Shizenryu/student-hub
+Live site deployed to Netlify, built from source into `dist/`. Repo: github.com/Shizenryu/student-hub
 
 ## Architecture
 
-**No build step. No framework. No dependencies.** Plain HTML/CSS/JS, one self-contained
-file per page. This is deliberate — the maintainer is a karate instructor, not a developer,
-and every page must also work opened directly from disk (file://). Do not introduce
-bundlers, npm, frameworks, or CDN dependencies without being explicitly asked.
+**Astro, TypeScript, no runtime dependencies of our own.** The site is built by
+Netlify from source on every push to `main`; `dist/` is never committed. Static
+pages ship zero JavaScript; the three interactive pages (quiz, flashcards,
+practice) are React islands.
+
+Pages no longer open from `file://` — run `npm run dev`. See README.md.
+
+Migration in progress: pages not yet ported live untouched in `public/`, which
+Astro copies to the build output verbatim. That directory shrinks to empty as
+slices land, and this note is deleted with the last page.
+
+Do not add runtime dependencies, third-party scripts, analytics, or CDN assets.
+That constraint has not changed and is what keeps this site cheap to own.
+
+TypeScript is pinned to `^6.0.3` — do not upgrade to 7 yet. `@astrojs/check`
+(the type checker behind `npm run typecheck`) declares
+`peerDependencies.typescript: "^5.0.0 || ^6.0.0"`, and TypeScript 7 breaks it outright.
 
 ```
-site/
-├── index.html        Landing page: maxim of the day, links to everything
-├── quiz.html         Dojo Quiz — terminology by belt level + Kumite 1–12 sequences
-├── flashcards.html   Philosophy flashcards — flip cards, Again/Got-it queue
-├── belts.html        Belt study guides — renders any belt from GRADES + SYLLABUS data;
-│                     deep-linkable via hash, e.g. belts.html#5th-kyu
-├── kata.html         Kata reference — Mara, Sanchin, Rokushu, Naifuanchin from KATA data;
-│                     deep-linkable via hash, e.g. kata.html#sanchin
-├── practice.html     Daily Practice — tick off today's activities from PRACTICE data;
-│                     one activity keeps the streak; 7-day + 30-day view
-├── assets/
-│   ├── data.js       ALL content data (see schemas below). Content changes happen HERE.
-│   ├── store.js      Progress store — streaks, best scores, missed cards (see Persistence).
-│   └── img/          Club imagery — see Imagery below
-└── docs/             Printable PDFs (generated outside this repo, committed as binaries)
-netlify.toml          Publish config (publish = "site")
+public/            legacy pages, served verbatim, shrinking each slice
+├── index.html  quiz.html  flashcards.html  belts.html  kata.html  practice.html
+├── assets/         data.js, store.js, img/
+└── docs/           printable PDFs
+src/
+└── pages/404.astro
+tests/
+├── build/          build-output assertions
+└── browser/        Vitest Browser Mode
+astro.config.mjs  tsconfig.json  vitest.config.ts  vitest.browser.config.ts
+netlify.toml      build command and publish directory
+.github/workflows/ci.yml   PR gate: typecheck, build, and both test suites
 ```
 
-Pages load `assets/data.js` via a plain `<script src>` tag before their inline app script
-(no fetch/JSON — that would break file:// usage).
+Pages still in `public/` load `assets/data.js` via a plain `<script src>` tag before
+their inline app script, same as before the migration.
 
 ## Imagery (`site/assets/img/`)
 
