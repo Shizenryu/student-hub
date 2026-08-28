@@ -105,7 +105,8 @@ KATA    = [ {slug, name, translation, hex, white, match, quote?, sections}, ... 
           // kata.html renders these. match = lowercase substrings used to auto-build
           // the "In the syllabus" list from SYLLABUS (e.g. ["rokushu","rockushu"]
           // covers a source spelling variant). sections[].b is TRUSTED HTML —
-          // only simple <b>/<i> markup, authored in this repo, never user input.
+          // only <b>/<i> plus <p>/<ul>/<li> for multi-part sections (kata.html
+          // styles these), authored in this repo, never user input.
 ```
 
 To add content: edit `data.js` only.
