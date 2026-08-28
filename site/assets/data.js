@@ -1396,7 +1396,7 @@ const KATA = [
   "sections": [
    {
     "h": "What it is",
-    "b": "Mara is Shizenryu's own kata \u2014 a structured solo routine created by Ian to give disciplined, Japanese-style solo training without the need to learn a long list of kata that often repeat the same movements. It focuses on the essential tools and body movements required for the partner work of Kumite: essentially a solo boxing drill that develops <b>breath timing</b>, <b>balance</b>, <b>weight shifting</b>, <b>rotational movement</b>, <b>posture and alignment</b>, <b>flow of defence and counter strike</b> and <b>efficiency of movement</b>. It began as a task: one solo karate routine to shape up a club strong in sensitivity but light on structure, drilled every Sunday until it earned its place in the syllabus. It is the first kata a Shizenryu student learns and the last one they stop refining."
+    "b": "<p>Mara is Shizenryu's own kata \u2014 a structured solo routine created by Ian to give disciplined, Japanese-style solo training without the need to learn a long list of kata that often repeat the same movements. It focuses on the essential tools and body movements required for the partner work of Kumite. It is essentially a solo boxing drill that develops:</p><ul><li>Breath timing</li><li>Balance</li><li>Weight shifting</li><li>Rotational movement</li><li>Posture and alignment</li><li>Flow of defence and counter strike</li><li>Efficiency of movement</li></ul><p>It began as a task: one solo karate routine to shape up a club strong in sensitivity but light on structure, drilled every Sunday until it earned its place in the syllabus. It is the first kata a Shizenryu student learns and the last one they stop refining.</p>"
    },
    {
     "h": "How it grows with you",
