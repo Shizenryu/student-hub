@@ -11,6 +11,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "test": "vitest run --config vitest.config.ts",
+    "test:browser": "vitest run --config vitest.browser.config.ts",
     "typecheck": "astro check"
   },
   "dependencies": {
@@ -22,7 +23,12 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "@types/node": "^26.4.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "@vitest/browser": "^4.1.11",
+    "@vitest/browser-playwright": "^4.1.11",
+    "playwright": "^1.62.1",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "vitest-browser-react": "^2.2.0"
   }
 }

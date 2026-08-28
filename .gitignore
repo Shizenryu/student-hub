@@ -8,3 +8,5 @@ dist/
 .astro/
 test-results/
 .superpowers/
+.vitest-attachments/
+tests/browser/__screenshots__/
