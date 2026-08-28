@@ -51,8 +51,8 @@ Create `package.json`:
     "preview": "astro preview"
   },
   "dependencies": {
-    "astro": "^5.0.0",
-    "@astrojs/react": "^4.0.0",
+    "astro": "^7.2.9",
+    "@astrojs/react": "^6.0.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   }
