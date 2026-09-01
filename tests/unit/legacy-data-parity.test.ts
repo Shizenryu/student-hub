@@ -29,14 +29,43 @@ async function loadLegacyData(): Promise<Record<string, unknown>> {
   return new Function(`${source}\nreturn { ${DATASETS.join(', ')} };`)() as Record<string, unknown>;
 }
 
+// Reads the *source text* rather than trusting DATASETS, so it can catch a dataset that
+// was added to data.js but never migrated. Anchored at the start of a line (`^` with the
+// `m` flag) so a `const` nested inside a function body is not mistaken for a top-level
+// dataset declaration.
+function discoverLegacyDatasetNames(source: string): string[] {
+  return [...source.matchAll(/^const\s+([A-Za-z_$][\w$]*)\s*=/gm)]
+    .map((match) => match[1])
+    .filter((name): name is string => name !== undefined);
+}
+
 describe('migrated JSON matches the content students are still served', () => {
   it.each(DATASETS)('%s is identical to the legacy data.js value', async (name) => {
     const legacy = await loadLegacyData();
     expect(MIGRATED[name]).toStrictEqual(legacy[name]);
   });
 
-  it('covers every dataset the legacy file declares', async () => {
-    const legacy = await loadLegacyData();
-    expect(Object.keys(legacy).sort()).toStrictEqual([...DATASETS].sort());
+  it('migrates every dataset the legacy file declares', async () => {
+    const source = await readFile(LEGACY_SOURCE, 'utf8');
+    const declared = discoverLegacyDatasetNames(source);
+    expect(
+      declared.sort(),
+      'public/assets/data.js declares a dataset this suite does not migrate — add it to src/data/ and to DATASETS, or remove it from data.js',
+    ).toStrictEqual([...DATASETS].sort());
+  });
+});
+
+describe('discoverLegacyDatasetNames', () => {
+  it('finds a top-level const declaration that DATASETS does not know about', () => {
+    const syntheticSource = 'const TERMS = {};\nconst NEWDATASET = [];\n';
+
+    expect(discoverLegacyDatasetNames(syntheticSource)).toEqual(['TERMS', 'NEWDATASET']);
+  });
+
+  it('ignores const declarations nested inside a function body', () => {
+    const syntheticSource =
+      'const TERMS = {};\nfunction helper() {\n  const NOT_TOP_LEVEL = 1;\n  return NOT_TOP_LEVEL;\n}\n';
+
+    expect(discoverLegacyDatasetNames(syntheticSource)).toEqual(['TERMS']);
   });
 });
