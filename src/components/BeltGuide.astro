@@ -78,7 +78,7 @@ const terms = termsForTier(grade.tier);
           ← Previous belt
         </a>
       ) : (
-        <span class="nav-btn nav-btn--disabled">← Previous belt</span>
+        <button class="nav-btn" disabled>← Previous belt</button>
       )
     }
     {
@@ -87,7 +87,7 @@ const terms = termsForTier(grade.tier);
           Next belt →
         </a>
       ) : (
-        <span class="nav-btn nav-btn--disabled">Next belt →</span>
+        <button class="nav-btn" disabled>Next belt →</button>
       )
     }
   </div>
@@ -216,6 +216,7 @@ const terms = termsForTier(grade.tier);
     background: var(--surface);
     color: var(--dark);
     border-radius: var(--radius-control);
+    font-family: inherit;
     font-weight: 600;
     font-size: .9rem;
     text-align: center;
@@ -223,7 +224,7 @@ const terms = termsForTier(grade.tier);
     cursor: pointer;
   }
 
-  .nav-btn--disabled {
+  .nav-btn:disabled {
     opacity: .3;
     cursor: default;
   }

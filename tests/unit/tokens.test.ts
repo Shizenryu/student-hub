@@ -1,7 +1,10 @@
-import { readFile } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
+import { join, relative, sep } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const TOKENS_PATH = 'src/styles/tokens.css';
+const SRC_DIR = 'src';
+const SCANNED_EXTENSIONS = ['.css', '.astro'];
 
 // Transcribed from the hand-written pages before migration. If a value here has to
 // change, the rendered site changed too — which during this slice means a bug.
@@ -25,9 +28,8 @@ describe('design tokens match the site as built by hand', () => {
     expect(css).toContain(`${name}: ${value};`);
   });
 
-  it('defines every token the stylesheets reference', async () => {
+  it('defines every token the stylesheets and components reference', async () => {
     const tokens = await readFile(TOKENS_PATH, 'utf8');
-    const app = await readFile('src/styles/app.css', 'utf8');
 
     const names = (source: string, pattern: RegExp): string[] =>
       [...source.matchAll(pattern)]
@@ -35,10 +37,20 @@ describe('design tokens match the site as built by hand', () => {
         .filter((name): name is string => name !== undefined);
 
     const defined = new Set(names(tokens, /^\s*(--[\w-]+):/gm));
-    const used = names(app, /var\((--[\w-]+)/g);
 
-    for (const name of used) {
-      expect(defined, `app.css uses ${name}, which tokens.css does not define`).toContain(name);
+    const entries = await readdir(SRC_DIR, { withFileTypes: true, recursive: true });
+    const scannedFiles = entries
+      .filter((entry) => entry.isFile() && SCANNED_EXTENSIONS.some((ext) => entry.name.endsWith(ext)))
+      .map((entry) => join(entry.parentPath, entry.name));
+
+    for (const file of scannedFiles) {
+      const source = await readFile(file, 'utf8');
+      const used = names(source, /var\((--[\w-]+)/g);
+      const relativePath = relative(SRC_DIR, file).split(sep).join('/');
+
+      for (const name of used) {
+        expect(defined, `${relativePath} uses ${name}, which tokens.css does not define`).toContain(name);
+      }
     }
   });
 });

@@ -48,9 +48,13 @@ function toClaimedUrl(pathWithExtension: string): string {
 // directory's URL, the same way `belts/index.astro` claims `/belts`. Drop any path
 // segment containing `[` before deriving the claimed URL, so `belts/[slug].astro` is
 // checked against `public/belts.html` exactly as `belts/index.astro` would be — that
-// pairing was the guard's blind spot.
-function toRouteClaimedUrl(pathWithExtension: string): string {
+// pairing was the guard's blind spot. A route with no routable segment left (every
+// segment dynamic, e.g. a hypothetical top-level `[slug].astro`) claims no directory
+// at all and is skipped — but `''` alone (the site root, `index.astro`) is a real,
+// routable claim and must not be treated the same way.
+function toRouteClaimedUrl(pathWithExtension: string): string | null {
   const routableSegments = pathWithExtension.split('/').filter((segment) => !segment.includes('['));
+  if (routableSegments.length === 0) return null;
   return toClaimedUrl(routableSegments.join('/'));
 }
 
@@ -118,7 +122,7 @@ describe('migrated routes do not leave their legacy page behind', () => {
 
     for (const route of routes) {
       const claimedUrl = toRouteClaimedUrl(route);
-      if (claimedUrl.length === 0) continue; // a top-level dynamic route has no parent directory to compare
+      if (claimedUrl === null) continue; // wholly dynamic — claims no directory
 
       const legacyPage = legacyUrls.get(claimedUrl);
 

@@ -56,6 +56,27 @@ describe('the belt list route (/belts)', () => {
   it('ships no inline style="" attribute', () => {
     expect(html).not.toContain('style="');
   });
+
+  // legacy-hash.js reads this attribute to upgrade an old /belts.html#<slug>
+  // bookmark to its real route (see the file's own header comment). Nothing
+  // else pins that contract — a renamed attribute or a dropped <script> tag
+  // would silently send every bookmarked student to the generic list.
+  it('wires the bookmark-upgrade script to the built page with no inline body', () => {
+    const scriptMatch = /<script([^>]*)src="([^"]+)"([^>]*)>([\s\S]*?)<\/script>/.exec(html);
+    expect(scriptMatch, 'no <script src="..."> found in the built page').not.toBeNull();
+    if (!scriptMatch) return;
+    const [, before, src, after, body] = scriptMatch;
+    expect(src).toBe('/assets/legacy-hash.js');
+    expect(`${before ?? ''}${after ?? ''}`).not.toContain('src=');
+    expect(body?.trim()).toBe('');
+
+    const attrMatch = /data-belt-slugs="([^"]*)"/.exec(html);
+    expect(attrMatch, 'no data-belt-slugs attribute found in the built page').not.toBeNull();
+    if (!attrMatch) return;
+    const rawSlugs = attrMatch[1] ?? '';
+    const parsedSlugs: unknown = JSON.parse(rawSlugs.replace(/&quot;/g, '"'));
+    expect(parsedSlugs).toEqual(GRADES.map((grade) => grade.slug));
+  });
 });
 
 describe('a belt study guide route (/belts/<slug>)', () => {
@@ -140,12 +161,12 @@ describe('a belt study guide route (/belts/<slug>)', () => {
 });
 
 // Astro adds a scoped-style attribute (data-astro-cid-*) to every element the
-// component renders, so a literal `<span class="...">` match would never hit —
+// component renders, so a literal `<button class="...">` match would never hit —
 // pull out just the .nav block and read tag names off it instead. Note the
-// nav-btn--disabled *rule* always appears in the page's compiled stylesheet
+// `.nav-btn:disabled` *rule* always appears in the page's compiled stylesheet
 // (Astro emits every class the component ever references), so a plain
-// `toContain('nav-btn--disabled')` on the whole document proves nothing about
-// which belt actually rendered a disabled end — this extracts the live markup.
+// `toContain('disabled')` on the whole document proves nothing about which
+// belt actually rendered a disabled end — this extracts the live markup.
 function extractNavBlock(html: string): string {
   const match = /<div class="nav"[^>]*>([\s\S]*?)<\/div>/.exec(html);
   expect(match, 'no <div class="nav"> found in the built page').not.toBeNull();
@@ -161,12 +182,12 @@ describe('prev/next navigation between belts', () => {
     if (!firstSlug || !secondSlug) return;
 
     const nav = extractNavBlock(await readBeltPage(firstSlug));
-    expect(nav).toContain('<span class="nav-btn nav-btn--disabled"');
-    expect(nav).toContain('← Previous belt</span>');
+    expect(nav).toContain('<button class="nav-btn" disabled');
+    expect(nav).toContain('← Previous belt</button>');
     expect(nav).toContain(`<a class="nav-btn" href="/belts/${secondSlug}"`);
     // Exactly one nav-btn is disabled here (the previous link) — the next
     // link stays a real, clickable anchor.
-    expect((nav.match(/nav-btn--disabled/g) ?? []).length).toBe(1);
+    expect((nav.match(/<button class="nav-btn" disabled/g) ?? []).length).toBe(1);
   });
 
   it('disables the next link on the last belt and links back to the second-to-last', async () => {
@@ -177,8 +198,8 @@ describe('prev/next navigation between belts', () => {
     if (!lastSlug || !secondLastSlug) return;
 
     const nav = extractNavBlock(await readBeltPage(lastSlug));
-    expect(nav).toContain('<span class="nav-btn nav-btn--disabled"');
-    expect(nav).toContain('Next belt →</span>');
+    expect(nav).toContain('<button class="nav-btn" disabled');
+    expect(nav).toContain('Next belt →</button>');
     expect(nav).toContain(`<a class="nav-btn" href="/belts/${secondLastSlug}"`);
   });
 
@@ -195,6 +216,6 @@ describe('prev/next navigation between belts', () => {
     const nav = extractNavBlock(await readBeltPage(middle.slug));
     expect(nav).toContain(`<a class="nav-btn" href="/belts/${prev.slug}"`);
     expect(nav).toContain(`<a class="nav-btn" href="/belts/${next.slug}"`);
-    expect(nav).not.toContain('<span');
+    expect(nav).not.toContain('disabled');
   });
 });

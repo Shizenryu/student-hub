@@ -36,7 +36,9 @@
   --font-stack: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
 
   /* Default .app width. Most legacy pages use 520px; PageShell's optional
-     maxWidth prop overrides this per-instance (belts.html and kata.html use
-     560px) via an inline custom property on the .app element. */
+     `width?: 'default' | 'wide'` prop overrides this per-instance (belts.html
+     and kata.html use 560px) by applying the .app--wide modifier class in
+     app.css, not an inline style — a plain CSS class stays compatible with
+     the CSP this site adopts later. */
   --app-max: 520px;
 }

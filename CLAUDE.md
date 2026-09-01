@@ -35,12 +35,17 @@ TypeScript is pinned to `^6.0.3` — do not upgrade to 7 yet. `@astrojs/check`
 ```
 public/            legacy pages, served verbatim, shrinking each slice
 ├── index.html  quiz.html  flashcards.html  kata.html  practice.html
-├── assets/         data.js, store.js, img/
+├── assets/         data.js, store.js, legacy-hash.js, img/
 └── docs/           printable PDFs
 src/
 ├── pages/404.astro, belts/index.astro, belts/[slug].astro
 │                    the belt study guides — real routes, migrated off
 │                    public/belts.html
+├── components/      shared pieces a route composes, e.g. BeltGuide.astro
+├── layouts/         PageShell.astro — the shared page shell every route wraps in
+├── styles/          tokens.css (design tokens, the source of truth for colours,
+│                    radii and widths) and app.css (shell/reset styles); routes
+│                    and components add their own scoped <style> alongside this
 └── data/           typed content — src/data/index.ts is the module pages import
                     content from; the JSON files behind it, plus integrity.ts and
                     parity.ts (cross-reference and legacy-parity build guards)
@@ -169,12 +174,16 @@ Root-relative asset paths are required there — see Imagery, above.
 
 ## Design system
 
+`src/styles/tokens.css` is the single source of truth for these values now — read it
+before hand-copying a hex code or width into a new page.
+
 - Colours: red `#C8102E`, dark `#161616`, paper bg `#faf7f2`, gold `#9A7D00`,
   good `#1e8a4c`, bad `#c0392b`
 - Belt colours: red `#C8102E`, orange `#ED8B00`, yellow `#E3BC00`/`#FFD100`,
   green `#00843D`, blue `#0072CE`, purple `#702F8A`, brown `#8B5A2B`, black `#1A1A1A`
-- System font stack, mobile-first, content max-width 480–520px, cards with
-  14px radius and soft shadows. Buttons are big and thumb-friendly.
+- System font stack, mobile-first, content max-width 480–560px (drifts by page —
+  480px on quiz, 520px on index, 560px on belts and kata; a later slice normalises
+  this), cards with 14px radius and soft shadows. Buttons are big and thumb-friendly.
 - No emojis in content except the existing streak flame and the ☯ that flashcards.html
   shows on deck completion. The club mark is the Ki logo (see Imagery), not ☯.
 
