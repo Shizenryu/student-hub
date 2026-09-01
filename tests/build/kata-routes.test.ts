@@ -63,6 +63,30 @@ describe('the kata list route (/kata)', () => {
   it('ships no inline style="" attribute', () => {
     expect(html).not.toContain('style="');
   });
+
+  // legacy-hash.js (shared with the belts list — see belts-routes.test.ts for
+  // its own copy of this contract) reads these attributes to upgrade an old
+  // /kata.html#<slug> bookmark to its real route. Nothing else pins that
+  // contract on this page — a renamed attribute or a dropped <script> tag
+  // would silently send every bookmarked student to the generic list.
+  it('wires the bookmark-upgrade script to the built page with no inline body', () => {
+    const scriptMatch = /<script([^>]*)src="([^"]+)"([^>]*)>([\s\S]*?)<\/script>/.exec(html);
+    expect(scriptMatch, 'no <script src="..."> found in the built page').not.toBeNull();
+    if (!scriptMatch) return;
+    const [, before, src, after, body] = scriptMatch;
+    expect(src).toBe('/assets/legacy-hash.js');
+    expect(`${before ?? ''}${after ?? ''}`).not.toContain('src=');
+    expect(body?.trim()).toBe('');
+
+    expect(html).toContain('data-legacy-prefix="/kata"');
+
+    const attrMatch = /data-legacy-slugs="([^"]*)"/.exec(html);
+    expect(attrMatch, 'no data-legacy-slugs attribute found in the built page').not.toBeNull();
+    if (!attrMatch) return;
+    const rawSlugs = attrMatch[1] ?? '';
+    const parsedSlugs: unknown = JSON.parse(rawSlugs.replace(/&quot;/g, '"'));
+    expect(parsedSlugs).toEqual(KATA.map((kata) => kata.slug));
+  });
 });
 
 describe('a kata study guide route (/kata/<slug>)', () => {

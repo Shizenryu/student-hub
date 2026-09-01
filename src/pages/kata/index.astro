@@ -18,7 +18,11 @@ import '../../styles/kata.css';
       Four kata carry the art: one to build you, one to root you,<br />one to free your hands,
       one to close the distance.
     </p>
-    <div class="tiles">
+    <div
+      class="tiles"
+      data-legacy-slugs={JSON.stringify(KATA.map((kata) => kata.slug))}
+      data-legacy-prefix="/kata"
+    >
       {
         KATA.map((kata) => (
           <a class="kata-btn kata-colour" data-slug={kata.slug} href={`/kata/${kata.slug}`}>
@@ -29,6 +33,8 @@ import '../../styles/kata.css';
       }
     </div>
   </div>
+
+  <script slot="scripts" is:inline src="/assets/legacy-hash.js" defer></script>
 </PageShell>
 
 <style>

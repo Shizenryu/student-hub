@@ -10,7 +10,7 @@ const PAGES_DIR = 'src/pages';
 const MANIFEST_PATH = 'tests/build/legacy-content.sha256';
 const ROUTABLE_EXTENSIONS = ['.astro', '.md', '.mdx', '.html'];
 
-const LEGACY_PAGES = ['index.html', 'quiz.html', 'flashcards.html', 'kata.html', 'practice.html'];
+const LEGACY_PAGES = ['index.html', 'quiz.html', 'flashcards.html', 'practice.html'];
 
 const LEGACY_ASSETS = [
   'assets/data.js',
