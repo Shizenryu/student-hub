@@ -163,7 +163,7 @@ describe('content cross-references hold', () => {
       assertContentIntegrity(content);
       expect.unreachable('expected assertContentIntegrity to throw');
     } catch (error) {
-      const message = (error as Error).message;
+      const message = error instanceof Error ? error.message : String(error);
       expect(message).toMatch(/belt "Ghost Kyu" has no syllabus rows/);
       expect(message).toMatch(/MAXIMS is empty/);
     }
