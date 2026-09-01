@@ -46,7 +46,7 @@ describe('the belt list route (/belts)', () => {
       expect(html).toContain(`>${grade.key}<`);
     }
     expect(GRADES.length).toBe(12);
-    expect((html.match(/class="belt-btn"/g) ?? []).length).toBe(12);
+    expect((html.match(/class="belt-btn belt-colour"/g) ?? []).length).toBe(12);
   });
 
   it('shows the explanatory paragraph', () => {

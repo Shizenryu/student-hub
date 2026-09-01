@@ -3,15 +3,7 @@
 // its own static route (/belts/<slug>) instead of a JS hash-driven view swap.
 import PageShell from '../../layouts/PageShell.astro';
 import { GRADES } from '../../data';
-
-const textColor = (white: boolean): string => (white ? '#fff' : '#1A1A1A');
-
-// Per-belt tile colours are data, not a fixed, enumerable set of classes —
-// generated here and injected via a real <style> element (set:html), never an
-// inline style="" attribute. See BeltGuide.astro's banner for the same pattern.
-const beltButtonCss = GRADES.map(
-  (grade) => `.belt-btn[data-slug="${grade.slug}"]{background:${grade.hex};color:${textColor(grade.white)};}`,
-).join('\n');
+import '../../styles/belts.css';
 ---
 
 <PageShell
@@ -21,7 +13,6 @@ const beltButtonCss = GRADES.map(
   subheading="What to learn · What it means"
   width="wide"
 >
-  <style set:html={beltButtonCss}></style>
   <div class="card">
     <p class="intro">
       Choose your next belt. Each guide shows everything on the syllabus for that grading, the
@@ -30,7 +21,7 @@ const beltButtonCss = GRADES.map(
     <div class="belts">
       {
         GRADES.map((grade) => (
-          <a class="belt-btn" data-slug={grade.slug} href={`/belts/${grade.slug}`}>
+          <a class="belt-btn belt-colour" data-slug={grade.slug} href={`/belts/${grade.slug}`}>
             {grade.key}
           </a>
         ))

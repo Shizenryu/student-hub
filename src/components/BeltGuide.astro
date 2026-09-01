@@ -4,6 +4,7 @@
 // see that file's <style> block and openBelt() for the source of truth.
 import { SYLLABUS, termsForTier, type Grade, type SyllabusItem } from '../data';
 import { expandAbbreviations } from '../data/display';
+import '../styles/belts.css';
 
 type Props = {
   grade: Grade;
@@ -31,19 +32,9 @@ const renderRows: readonly RenderRow[] = SYLLABUS.filter((item) => item.grade ==
 ).rows;
 
 const terms = termsForTier(grade.tier);
-
-const textColor = (white: boolean): string => (white ? '#fff' : '#1A1A1A');
-
-// The banner's background/text colour is per-belt data, not one of a fixed,
-// enumerable set of classes — generated here and injected via a real <style>
-// element (set:html), never an inline style="" attribute. See PageShell's
-// comment for why an inline attribute is off the table for this project.
-const bannerCss = `.banner{background:${grade.hex};color:${textColor(grade.white)};}`;
 ---
 
-<style set:html={bannerCss}></style>
-
-<div class="banner">
+<div class="banner belt-colour" data-slug={grade.slug}>
   <div><div class="t">{grade.banner}</div></div>
   <div class="s">STUDY GUIDE</div>
 </div>
