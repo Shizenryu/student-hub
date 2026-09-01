@@ -76,3 +76,15 @@ export const GRADES: readonly Grade[] = gradesJson;
 export const SYLLABUS: readonly SyllabusItem[] = syllabusJson;
 export const KATA: readonly Kata[] = kataJson;
 export const PRACTICE: readonly PracticeActivity[] = practiceJson;
+
+// noUncheckedIndexedAccess makes TERMS[String(tier)] possibly undefined. The throw
+// below is genuinely unreachable — assertContentIntegrity() already fails the build
+// when a belt points at a missing tier — but this narrows the value honestly for
+// consumers instead of reaching for a type assertion.
+export function termsForTier(tier: number): readonly TermPair[] {
+  const pairs = TERMS[String(tier)];
+  if (!pairs) {
+    throw new Error(`No terminology tier ${tier} — content integrity should have caught this`);
+  }
+  return pairs;
+}
