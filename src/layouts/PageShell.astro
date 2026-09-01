@@ -1,9 +1,11 @@
 ---
-// maxWidth becomes a `data-app-max` attribute, not `style=""` — both Astro's
-// hand-written style="" and `define:vars` compile to an inline style
-// attribute, which the CSP this site adopts later forbids. A route needing a
-// non-default width matches the attribute from its own stylesheet instead:
-// `:global(.app[data-app-max="560px"]) { --app-max: 560px; }`.
+// width applies a modifier class, not a style="" attribute or Astro's
+// define:vars — both of those compile to an inline style="" attribute (Astro
+// injects it on the component's parent element), which the CSP this site
+// adopts later forbids: style-src covers attribute styles, and unlike a
+// <style> element an inline attribute cannot be hashed. A narrow union keeps
+// every width this site uses enumerable in app.css instead of scattering
+// ad-hoc CSS across each consuming route.
 import '../styles/tokens.css';
 import '../styles/app.css';
 
@@ -12,10 +14,10 @@ type Props = {
   description: string;
   heading: string;
   subheading: string;
-  maxWidth?: string;
+  width?: 'default' | 'wide';
 };
 
-const { title, description, heading, subheading, maxWidth } = Astro.props;
+const { title, description, heading, subheading, width } = Astro.props;
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -28,7 +30,7 @@ const { title, description, heading, subheading, maxWidth } = Astro.props;
 <link rel="apple-touch-icon" href="/assets/img/icon.png">
 </head>
 <body>
-<div class="app" data-app-max={maxWidth}>
+<div class:list={['app', { 'app--wide': width === 'wide' }]}>
   <header>
     <h1>{heading}</h1>
     <div class="sub">{subheading}</div>
