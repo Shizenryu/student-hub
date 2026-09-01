@@ -1,0 +1,42 @@
+/* The Shizenryu design system, as it actually is today.
+   Values are transcribed from the hand-written pages so the migration renders
+   identically. Where pages currently disagree with each other — .app max-width
+   is 480px on quiz, 520px on index, 560px on belts and kata — that drift is
+   deliberately NOT resolved here. Slice 9 normalises it as its own reviewable
+   change, so that any visual difference during the migration is a bug rather
+   than a decision. */
+:root {
+  --red: #C8102E;
+  --dark: #161616;
+  --paper: #faf7f2;
+  --gold: #9A7D00;
+  --good: #1e8a4c;
+  --bad: #c0392b;
+
+  --ink: #222;
+  --ink-soft: #444;
+  --muted: #888;
+  --muted-light: #999;
+  --faint: #bbb;
+  --rule: #f0ebe2;
+
+  --surface: #fff;
+  --surface-warm: #fbf7f1;
+
+  --track-adult: #0072CE;
+  --track-junior: #ED8B00;
+
+  --radius-card: 14px;
+  --radius-control: 10px;
+  --radius-banner: 12px;
+  --radius-tag: 6px;
+
+  --shadow-card: 0 2px 10px rgba(0, 0, 0, .08);
+
+  --font-stack: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+
+  /* Default .app width. Most legacy pages use 520px; PageShell's optional
+     maxWidth prop overrides this per-instance (belts.html and kata.html use
+     560px) via an inline custom property on the .app element. */
+  --app-max: 520px;
+}

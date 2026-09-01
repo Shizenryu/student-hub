@@ -1,0 +1,63 @@
+/* Shared page-shell styles, transcribed from public/belts.html's <style> block —
+   only the reset, body, .app wrapper, header and footer belong here. Belt-specific
+   rules (.belts, .belt-btn, .banner, .item, .tag, .terms, .mind, .maxim, .nav,
+   .home-link, .hidden, h2) stay with the belt route that uses them. */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--font-stack);
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+.app {
+  width: 100%;
+  max-width: var(--app-max, 520px);
+  padding: 20px 16px 40px;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+header h1 {
+  font-size: 1.3rem;
+  letter-spacing: .12em;
+  color: var(--dark);
+}
+
+header .sub {
+  font-size: .72rem;
+  letter-spacing: .2em;
+  color: var(--red);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.card {
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 18px;
+  margin-bottom: 14px;
+}
+
+footer {
+  text-align: center;
+  font-size: .7rem;
+  color: var(--faint);
+  margin-top: 20px;
+}
+
+footer a {
+  color: var(--muted-light);
+}

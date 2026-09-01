@@ -1,0 +1,42 @@
+---
+// maxWidth becomes a `data-app-max` attribute, not `style=""` — both Astro's
+// hand-written style="" and `define:vars` compile to an inline style
+// attribute, which the CSP this site adopts later forbids. A route needing a
+// non-default width matches the attribute from its own stylesheet instead:
+// `:global(.app[data-app-max="560px"]) { --app-max: 560px; }`.
+import '../styles/tokens.css';
+import '../styles/app.css';
+
+type Props = {
+  title: string;
+  description: string;
+  heading: string;
+  subheading: string;
+  maxWidth?: string;
+};
+
+const { title, description, heading, subheading, maxWidth } = Astro.props;
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{title}</title>
+<meta name="description" content={description}>
+<link rel="icon" href="/assets/img/icon.png">
+<link rel="apple-touch-icon" href="/assets/img/icon.png">
+</head>
+<body>
+<div class="app" data-app-max={maxWidth}>
+  <header>
+    <h1>{heading}</h1>
+    <div class="sub">{subheading}</div>
+  </header>
+
+  <slot />
+
+  <footer><a href="/">← Shizenryu home</a><br>Structure &gt; Discipline &gt; Measure = Growth</footer>
+</div>
+</body>
+</html>
