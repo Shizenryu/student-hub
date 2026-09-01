@@ -8,7 +8,8 @@ Live site deployed to Netlify, built from source into `dist/`. Repo: github.com/
 **Astro, TypeScript, no runtime dependencies of our own.** The site is built by
 Netlify from source on every push to `main`; `dist/` is never committed. Static
 pages ship zero JavaScript; the three interactive pages (quiz, flashcards,
-practice) are React islands.
+practice) become React islands as they are migrated. None of them has been yet —
+all six pages are still the original hand-written HTML in `public/`.
 
 Pages no longer open from `file://` — run `npm run dev`. See README.md.
 

@@ -30,9 +30,15 @@ npm run dev   # local site at http://localhost:4321/index.html
 | `npm run preview` | Serve the built `dist/` exactly as Netlify will |
 | `npm run typecheck` | TypeScript and Astro type checking |
 | `npm test` | Node tests (run `npm run build` first) |
-| `npm run test:browser` | Browser tests in Chromium |
+| `npm run test:browser` | Browser tests in Chromium (see below) |
 
 Pages cannot be opened directly from disk any more — use `npm run dev`.
+
+The browser tests need Chromium, which `npm ci` does not download. Once per machine:
+
+```bash
+npx playwright install chromium
+```
 
 `npm run dev` and `npm run preview` both run as background daemons — the command
 returns immediately once the server is up, it does not keep running in your terminal.

@@ -26,9 +26,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Audit dependencies
-        run: npm audit --audit-level=high
-
       - name: Type check
         run: npm run typecheck
 
@@ -43,3 +40,9 @@ jobs:
 
       - name: Browser tests
         run: npm run test:browser
+
+      # Last, because it fails on the advisory database moving rather than on
+      # anything in the diff. Running it here keeps a new advisory from masking
+      # a genuine test failure, while still blocking the merge.
+      - name: Audit dependencies
+        run: npm audit --audit-level=high

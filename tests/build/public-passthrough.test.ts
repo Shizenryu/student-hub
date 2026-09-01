@@ -41,12 +41,13 @@ async function sha256(path: string): Promise<string> {
   return createHash('sha256').update(await readFile(path)).digest('hex');
 }
 
-function toRouteOutputPath(pagesRelativePath: string): string {
-  const withoutExtension = ROUTABLE_EXTENSIONS.reduce(
-    (path, extension) => (path.endsWith(extension) ? path.slice(0, -extension.length) : path),
-    pagesRelativePath,
-  );
-  return `${withoutExtension}.html`;
+// The URL a page claims, so a route and a legacy page can be compared directly.
+// Both `belts.astro` and `belts/index.astro` serve /belts; `public/belts.html` serves
+// /belts.html. Those are different paths, so Astro emits both without warning and the
+// stale page keeps answering old bookmarks — which is the collision worth catching.
+function toClaimedUrl(pathWithExtension: string): string {
+  const withoutExtension = pathWithExtension.replace(/\.(astro|md|mdx|html)$/, '');
+  return withoutExtension.replace(/(^|\/)index$/, '');
 }
 
 type ManifestEntry = { hash: string; path: string };
@@ -97,26 +98,27 @@ describe('legacy pages served through public/', () => {
   });
 });
 
-describe('migrated routes are not shadowed by public/', () => {
-  it('has no src/pages route whose output path collides with a public/ file', async () => {
+describe('migrated routes do not leave their legacy page behind', () => {
+  it('has no src/pages route claiming a URL a public/ page still answers', async () => {
     if (!existsSync(PAGES_DIR)) return;
 
-    const pageFiles = await filesUnder(PAGES_DIR);
-    const publicFiles = new Set(await filesUnder(PUBLIC_DIR));
-
-    const routableFiles = pageFiles.filter((file) =>
-      ROUTABLE_EXTENSIONS.some((extension) => file.endsWith(extension)),
+    const legacyUrls = new Map(
+      (await filesUnder(PUBLIC_DIR))
+        .filter((file) => file.endsWith('.html'))
+        .map((file) => [toClaimedUrl(file), file]),
     );
 
-    for (const pageFile of routableFiles) {
-      if (pageFile.includes('[')) continue;
+    const routes = (await filesUnder(PAGES_DIR)).filter(
+      (file) => ROUTABLE_EXTENSIONS.some((extension) => file.endsWith(extension)) && !file.includes('['),
+    );
 
-      const outputPath = toRouteOutputPath(pageFile);
-      const shadowingPublicFile = publicFiles.has(outputPath) ? outputPath : undefined;
+    for (const route of routes) {
+      const legacyPage = legacyUrls.get(toClaimedUrl(route));
 
       expect(
-        shadowingPublicFile,
-        `src/pages/${pageFile} is shadowed by public/${outputPath} — delete the legacy file to complete the migration`,
+        legacyPage,
+        `src/pages/${route} and public/${legacyPage} both serve the same page — ` +
+          `delete the legacy file to complete the migration, or old links keep getting the stale version`,
       ).toBeUndefined();
     }
   });
