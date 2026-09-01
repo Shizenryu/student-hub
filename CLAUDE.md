@@ -30,10 +30,16 @@ public/            legacy pages, served verbatim, shrinking each slice
 ├── assets/         data.js, store.js, img/
 └── docs/           printable PDFs
 src/
-└── pages/404.astro
+├── pages/404.astro
+└── data/           typed content — src/data/index.ts is the module pages import
+                    content from; the JSON files behind it, plus integrity.ts and
+                    parity.ts (cross-reference and legacy-parity build guards)
+scripts/            extract-legacy-data.mjs — regenerates src/data/*.json from
+                    public/assets/data.js after a content edit
 tests/
 ├── build/          build-output assertions
-└── browser/        Vitest Browser Mode
+├── browser/        Vitest Browser Mode
+└── unit/           content integrity and legacy-parity tests (Node, no browser)
 docs/superpowers/   committed specs and plans — not to be confused with
                     public/docs/, the student-facing printable PDFs above
 astro.config.mjs  tsconfig.json  vitest.config.ts  vitest.browser.config.ts
@@ -128,7 +134,20 @@ KATA    = [ {slug, name, translation, hex, white, match, quote?, sections}, ... 
           // styles these), authored in this repo, never user input.
 ```
 
-To add content: edit `data.js` only.
+To add content:
+
+1. Edit `public/assets/data.js` — it is still the source the legacy pages load and the
+   one place a content edit is made.
+2. Run `node scripts/extract-legacy-data.mjs` to regenerate the typed JSON in `src/data/`
+   from your edit.
+3. Update the `public/assets/data.js` line in `tests/build/legacy-content.sha256` to the
+   new file's checksum. Run `sha256sum public/assets/data.js` (or, on Windows,
+   `certutil -hashfile public/assets/data.js SHA256`) and replace the hash on that line
+   with what it prints, keeping the filename after it unchanged.
+
+Step 3 matters because that checksum records the known-good content — a deliberate
+content change means deliberately re-recording it, so the checksum test keeps catching
+accidental drift without blocking real edits.
 
 The pages in `public/` are legacy — hand-rolled HTML with inline CSS and JS,
 kept only until each one is migrated into a real Astro route, and being

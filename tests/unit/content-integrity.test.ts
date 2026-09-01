@@ -114,6 +114,16 @@ describe('content cross-references hold', () => {
     expect(() => assertContentIntegrity(content)).toThrow(/deck "d1" card 0 is not a front\/back pair/);
   });
 
+  it('rejects a term pair with an extra, over-length element', () => {
+    const content = validContent({ terms: { '1': [['osu', 'push', 'stray note']] } });
+    expect(() => assertContentIntegrity(content)).toThrow(/tier 1 term 0 is not a japanese\/english pair/);
+  });
+
+  it('rejects a deck card with an extra, over-length element', () => {
+    const content = validContent({ decks: [deck({ cards: [['front', 'back', 'extra']] })] });
+    expect(() => assertContentIntegrity(content)).toThrow(/deck "d1" card 0 is not a front\/back pair/);
+  });
+
   it('rejects two belts sharing a slug', () => {
     const content = validContent({
       grades: [grade(), grade({ key: 'Other Kyu' })],
@@ -130,6 +140,22 @@ describe('content cross-references hold', () => {
   it('rejects a kata that matches no syllabus row', () => {
     const content = validContent({ kata: [kata({ match: ['no-such-text'] })] });
     expect(() => assertContentIntegrity(content)).toThrow(/kata "Sanchin" matches no syllabus row/);
+  });
+
+  it('accepts a kata whose match needle appears only in a syllabus row detail', () => {
+    const content = validContent({
+      syllabus: [syllabusItem({ section: 'Kihon', item: 'Jun-zuki', detail: 'Only findable here' })],
+      kata: [kata({ match: ['findable'] })],
+    });
+    expect(() => assertContentIntegrity(content)).not.toThrow();
+  });
+
+  it('accepts a kata whose match needle appears only in a syllabus row item', () => {
+    const content = validContent({
+      syllabus: [syllabusItem({ section: 'Kihon', item: 'Only-findable-here', detail: 'Straight punch' })],
+      kata: [kata({ match: ['only-findable-here'] })],
+    });
+    expect(() => assertContentIntegrity(content)).not.toThrow();
   });
 
   it('rejects a duplicate practice activity id', () => {

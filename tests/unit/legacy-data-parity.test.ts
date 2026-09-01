@@ -1,45 +1,37 @@
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 
-import decks from '../../src/data/decks.json';
-import grades from '../../src/data/grades.json';
-import kata from '../../src/data/kata.json';
-import kumite from '../../src/data/kumite.json';
-import maxims from '../../src/data/maxims.json';
-import practice from '../../src/data/practice.json';
-import syllabus from '../../src/data/syllabus.json';
-import terms from '../../src/data/terms.json';
+import { DECKS, GRADES, KATA, KUMITE, MAXIMS, PRACTICE, SYLLABUS, TERMS } from '../../src/data';
+import {
+  DATASETS,
+  type DatasetName,
+  LEGACY_SOURCE,
+  discoverLegacyDatasetNames,
+  extractLegacyDatasets,
+} from '../../src/data/parity';
 
-const LEGACY_SOURCE = 'public/assets/data.js';
-const DATASETS = ['TERMS', 'MAXIMS', 'KUMITE', 'DECKS', 'GRADES', 'SYLLABUS', 'KATA', 'PRACTICE'] as const;
-
-const MIGRATED: Record<(typeof DATASETS)[number], unknown> = {
-  TERMS: terms,
-  MAXIMS: maxims,
-  KUMITE: kumite,
-  DECKS: decks,
-  GRADES: grades,
-  SYLLABUS: syllabus,
-  KATA: kata,
-  PRACTICE: practice,
+// The contract the *next* slice consumes is src/data/index.ts's exports, not the raw
+// JSON files behind them — so that is what parity is proved against here. Today the
+// mapping from JSON to these exports is identity, but a future derivation in index.ts
+// (a sort, a dedupe, a filter, the "JJ" expansion applied at module level) would only be
+// caught by pointing this test at the exports themselves.
+const MIGRATED: Record<DatasetName, unknown> = {
+  TERMS,
+  MAXIMS,
+  KUMITE,
+  DECKS,
+  GRADES,
+  SYLLABUS,
+  KATA,
+  PRACTICE,
 };
 
 async function loadLegacyData(): Promise<Record<string, unknown>> {
   const source = await readFile(LEGACY_SOURCE, 'utf8');
-  return new Function(`${source}\nreturn { ${DATASETS.join(', ')} };`)() as Record<string, unknown>;
+  return extractLegacyDatasets(source);
 }
 
-// Reads the *source text* rather than trusting DATASETS, so it can catch a dataset that
-// was added to data.js but never migrated. Anchored at the start of a line (`^` with the
-// `m` flag) so a `const` nested inside a function body is not mistaken for a top-level
-// dataset declaration.
-function discoverLegacyDatasetNames(source: string): string[] {
-  return [...source.matchAll(/^const\s+([A-Za-z_$][\w$]*)\s*=/gm)]
-    .map((match) => match[1])
-    .filter((name): name is string => name !== undefined);
-}
-
-describe('migrated JSON matches the content students are still served', () => {
+describe('migrated content matches what the legacy pages are still served', () => {
   it.each(DATASETS)('%s is identical to the legacy data.js value', async (name) => {
     const legacy = await loadLegacyData();
     expect(MIGRATED[name]).toStrictEqual(legacy[name]);
@@ -62,7 +54,7 @@ describe('discoverLegacyDatasetNames', () => {
     expect(discoverLegacyDatasetNames(syntheticSource)).toEqual(['TERMS', 'NEWDATASET']);
   });
 
-  it('ignores const declarations nested inside a function body', () => {
+  it('ignores indented const declarations', () => {
     const syntheticSource =
       'const TERMS = {};\nfunction helper() {\n  const NOT_TOP_LEVEL = 1;\n  return NOT_TOP_LEVEL;\n}\n';
 

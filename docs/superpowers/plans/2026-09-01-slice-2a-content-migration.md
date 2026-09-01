@@ -210,7 +210,7 @@ git commit -m "feat: extract content datasets to JSON with a parity proof agains
 - Produces: `src/data/index.ts` exporting typed `TERMS`, `MAXIMS`, `KUMITE`, `DECKS`, `GRADES`, `SYLLABUS`, `KATA`, `PRACTICE`, plus the types `Grade`, `SyllabusItem`, `Kumite`, `Deck`, `Kata`, `PracticeActivity`, `TermPair`, `Tier`. Slice 2b's `/belts/[slug]` route imports from here and nowhere else.
 - Produces: `assertContentIntegrity()` from `src/data/integrity.ts`, called both by the test suite and at build time.
 
-Why hand-rolled rather than Zod: the shapes are already proven correct by Task 1's parity test, so runtime shape parsing buys nothing today. What genuinely needs guarding is the cross-references a future content edit could break — a belt whose `key` no longer matches any syllabus row renders an empty study guide with no error at all. That is a handful of set comparisons, not a schema library, and adding a dependency to express it would contradict the project's zero-dependency rule for no gain.
+Why hand-rolled rather than Zod: the shapes are already proven correct by Task 1's parity test, so runtime shape parsing buys nothing today. What genuinely needs guarding is the cross-references a future content edit could break — a belt whose `key` no longer matches any syllabus row renders an empty study guide with no error at all. That is a handful of set comparisons, not a schema library. (Zod itself would add no dependency — it ships transitively with Astro and is re-exported as `import { z } from 'astro:content'` — but it is still the wrong tool here: reaching for a schema library to express a handful of set comparisons is no gain over hand-rolling them.)
 
 - [ ] **Step 1: Write the typed accessor module**
 
