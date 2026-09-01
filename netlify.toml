@@ -5,6 +5,11 @@
 [build.environment]
   NODE_VERSION = "22"
 
+[[redirects]]
+  from = "/belts.html"
+  to = "/belts"
+  status = 301
+
 [[headers]]
   for = "/*"
   [headers.values]

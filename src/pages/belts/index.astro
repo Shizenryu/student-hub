@@ -18,7 +18,7 @@ import '../../styles/belts.css';
       Choose your next belt. Each guide shows everything on the syllabus for that grading, the
       key terms, and the mind behind the movement.
     </p>
-    <div class="belts">
+    <div class="belts" data-belt-slugs={JSON.stringify(GRADES.map((grade) => grade.slug))}>
       {
         GRADES.map((grade) => (
           <a class="belt-btn belt-colour" data-slug={grade.slug} href={`/belts/${grade.slug}`}>
@@ -29,6 +29,23 @@ import '../../styles/belts.css';
     </div>
   </div>
 </PageShell>
+
+<script>
+  // Old bookmarks like /belts.html#5th-kyu survive the Netlify redirect to /belts as
+  // /belts#5th-kyu — fragments never reach the server, so only the browser can carry
+  // them, and only client script can act on them. Upgrade a known belt fragment to its
+  // real route; an unknown or absent fragment leaves the list rendering normally.
+  const belts = document.querySelector('[data-belt-slugs]');
+  const rawSlugs = belts instanceof HTMLElement ? belts.dataset.beltSlugs : undefined;
+  const slug = location.hash.slice(1);
+
+  if (typeof rawSlugs === 'string' && slug.length > 0) {
+    const slugs = JSON.parse(rawSlugs);
+    if (Array.isArray(slugs) && slugs.includes(slug)) {
+      location.replace(`/belts/${slug}`);
+    }
+  }
+</script>
 
 <style>
   .intro {

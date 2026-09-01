@@ -9,7 +9,15 @@ Live site deployed to Netlify, built from source into `dist/`. Repo: github.com/
 Netlify from source on every push to `main`; `dist/` is never committed. Static
 pages ship zero JavaScript; the three interactive pages (quiz, flashcards,
 practice) become React islands as they are migrated. None of them has been yet —
-all six pages are still the original hand-written HTML in `public/`.
+five pages are still the original hand-written HTML in `public/`.
+
+Belt study guides are the first page out: they are real Astro routes at
+`/belts` and `/belts/<slug>` (one per grade), statically generated from
+`src/data`. `public/belts.html` is gone; `netlify.toml` 301s `/belts.html` to
+`/belts` for old bookmarks, and a small script on `/belts` upgrades a belt
+fragment (`/belts.html#5th-kyu` → `/belts#5th-kyu` → `/belts/5th-kyu`), since
+the redirect alone cannot see the fragment — browsers never send it to the
+server.
 
 Pages no longer open from `file://` — run `npm run dev`. See README.md.
 
@@ -26,11 +34,13 @@ TypeScript is pinned to `^6.0.3` — do not upgrade to 7 yet. `@astrojs/check`
 
 ```
 public/            legacy pages, served verbatim, shrinking each slice
-├── index.html  quiz.html  flashcards.html  belts.html  kata.html  practice.html
+├── index.html  quiz.html  flashcards.html  kata.html  practice.html
 ├── assets/         data.js, store.js, img/
 └── docs/           printable PDFs
 src/
-├── pages/404.astro
+├── pages/404.astro, belts/index.astro, belts/[slug].astro
+│                    the belt study guides — real routes, migrated off
+│                    public/belts.html
 └── data/           typed content — src/data/index.ts is the module pages import
                     content from; the JSON files behind it, plus integrity.ts and
                     parity.ts (cross-reference and legacy-parity build guards)
