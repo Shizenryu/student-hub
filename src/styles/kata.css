@@ -1,0 +1,20 @@
+/* Per-kata colour, transcribed from src/data/kata.json (hex/white per kata).
+   Same mechanism as src/styles/belts.css — a rule keyed by [data-slug] so one
+   rule colours both the /kata list tile and the /kata/<slug> banner (see
+   KataGuide.astro and src/pages/kata/index.astro, both of which apply
+   class="kata-colour" data-slug="<slug>" to the element that needs it).
+
+   Kept as its own class and file rather than reusing .belt-colour: belts and
+   kata are different collections with their own slug spaces (a collision is
+   possible in principle, e.g. a future belt and kata sharing a slug), and the
+   class name "belt-colour" applied to a kata element would read as a mistake
+   in the markup. The attribute-selector technique is identical; only the
+   class name and the values differ.
+
+   kata.json is the source of truth; tests/unit/kata-colours.test.ts reads
+   both this file and KATA and fails if they diverge, so this file cannot
+   silently drift from the content it transcribes. */
+.kata-colour[data-slug="mara"] { background: #C8102E; color: #fff; }
+.kata-colour[data-slug="sanchin"] { background: #161616; color: #fff; }
+.kata-colour[data-slug="rokushu"] { background: #9A7D00; color: #fff; }
+.kata-colour[data-slug="naifuanchin"] { background: #0072CE; color: #fff; }

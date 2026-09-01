@@ -1,0 +1,252 @@
+---
+// Renders one kata's study guide: banner, prose, quote, syllabus matches and
+// prev/next navigation. Transcribed from public/kata.html's #view — see that
+// file's <style> block and openKata() for the source of truth.
+//
+// Section prose comes from the kata content collection (src/content/kata/) as
+// one flowing rendered document, not the per-section {h, b} pairs in
+// src/data/kata.json — see this task's brief for why the DOM can no longer
+// match the original section-by-section, and src/styles/kata.css's ".prose"
+// rules below for how the original .body spacing is reproduced anyway. All
+// other fields (name, translation, hex, white, quote, match) still come from
+// src/data/kata.json, the same source belts.html's migration used for GRADES.
+//
+// Unlike the belts page, the original never reads k.white — .kata-btn and
+// .banner hardcode color:#fff in the CSS regardless of what the data says.
+// Every kata in kata.json today is white:true, so deriving the banner/tile
+// colour from `white` (kata-colour, the same mechanism belts.css uses)
+// renders identically to that hardcoded value. Preserved as-is rather than
+// "fixed" — see CLAUDE.md and the task brief on not tidying the original.
+import { getEntry, render } from 'astro:content';
+import { SYLLABUS, type Kata } from '../data';
+import '../styles/kata.css';
+
+type Props = {
+  kata: Kata;
+  prev: Kata | null;
+  next: Kata | null;
+};
+
+const { kata, prev, next } = Astro.props;
+
+// Section prose is a content-collection concern, kept local to this component
+// rather than threaded through as a pre-rendered prop from [slug].astro's
+// getStaticPaths — the same "fetch what you render, next to where you render
+// it" shape belts.html's migration used for SYLLABUS/termsForTier.
+const entry = await getEntry('kata', kata.slug);
+if (!entry) {
+  throw new Error(`No content collection entry for kata "${kata.slug}" — expected src/content/kata/${kata.slug}.md`);
+}
+const { Content } = await render(entry);
+
+const syllabusRows = SYLLABUS.filter((item) => {
+  const blob = `${item.section} ${item.item} ${item.detail}`.toLowerCase();
+  return kata.match.some((needle) => blob.includes(needle));
+});
+---
+
+<div class="banner kata-colour" data-slug={kata.slug}>
+  <div class="n">{kata.name}</div>
+  <div class="t">{kata.translation}</div>
+</div>
+<div class="card">
+  <div class="prose">
+    <Content />
+  </div>
+  {
+    kata.quote && (
+      <div class="quote">
+        <em>“{kata.quote.text}”</em>
+        <span class="src">— {kata.quote.src}</span>
+      </div>
+    )
+  }
+  <h2>In the syllabus</h2>
+  <div>
+    {
+      syllabusRows.map((item) => (
+        <div class="syl">
+          <span class="g">{item.grade}</span> {item.item}
+          {item.track === 'Adult' && <span class="tag adult">ADULTS 16+</span>}
+          {item.track === 'Junior' && <span class="tag junior">JUNIORS</span>}
+        </div>
+      ))
+    }
+  </div>
+  <div class="nav">
+    {
+      prev ? (
+        <a class="nav-btn" href={`/kata/${prev.slug}`}>
+          ← Previous
+        </a>
+      ) : (
+        <button class="nav-btn" disabled>← Previous</button>
+      )
+    }
+    {
+      next ? (
+        <a class="nav-btn" href={`/kata/${next.slug}`}>
+          Next →
+        </a>
+      ) : (
+        <button class="nav-btn" disabled>Next →</button>
+      )
+    }
+  </div>
+  <a class="home-link" href="/kata">← all kata</a>
+</div>
+
+<style>
+  .banner {
+    border-radius: var(--radius-banner);
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+
+  .banner .n {
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: .04em;
+  }
+
+  .banner .t {
+    font-size: .78rem;
+    opacity: .85;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  /* :global — the per-section headings come from the kata content collection's
+     <Content />, rendered outside this component's own template, so they never
+     receive Astro's scoping attribute and a scoped `h2 { ... }` selector would
+     silently miss them. Safe to make fully global: this stylesheet is bundled
+     only onto /kata/<slug> pages, which have no other h2 to catch. */
+  :global(h2) {
+    font-size: .78rem;
+    letter-spacing: .2em;
+    color: var(--muted-light);
+    text-transform: uppercase;
+    margin: 18px 0 8px;
+  }
+
+  .prose {
+    font-size: .9rem;
+    line-height: 1.6;
+    color: #333;
+  }
+
+  .prose :global(h2:first-child) {
+    margin-top: 0;
+  }
+
+  .prose :global(p + p),
+  .prose :global(p + ul),
+  .prose :global(ul + p) {
+    margin-top: 10px;
+  }
+
+  .prose :global(ul) {
+    padding-left: 20px;
+  }
+
+  .prose :global(li) {
+    margin-top: 4px;
+  }
+
+  .quote {
+    background: var(--surface-warm);
+    border-left: 4px solid var(--red);
+    padding: 12px 14px;
+    font-style: italic;
+    font-size: .88rem;
+    color: #555;
+    border-radius: 0 10px 10px 0;
+    margin: 14px 0;
+  }
+
+  .quote .src {
+    display: block;
+    font-style: normal;
+    font-size: .7rem;
+    color: var(--gold);
+    margin-top: 5px;
+    letter-spacing: .08em;
+  }
+
+  .syl {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--rule);
+    font-size: .85rem;
+  }
+
+  .syl:last-child {
+    border-bottom: none;
+  }
+
+  .syl .g {
+    display: inline-block;
+    min-width: 64px;
+    font-weight: 700;
+    font-size: .72rem;
+    color: var(--red);
+    letter-spacing: .05em;
+  }
+
+  .tag {
+    font-size: .6rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: var(--radius-tag);
+    color: var(--surface);
+    margin-left: 6px;
+  }
+
+  .tag.adult {
+    background: var(--track-adult);
+  }
+
+  .tag.junior {
+    background: var(--track-junior);
+  }
+
+  .nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .nav-btn {
+    display: block;
+    padding: 12px;
+    border: 2px solid var(--dark);
+    background: var(--surface);
+    color: var(--dark);
+    border-radius: var(--radius-control);
+    font-family: inherit;
+    font-weight: 600;
+    font-size: .9rem;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .nav-btn:disabled {
+    opacity: .3;
+    cursor: default;
+  }
+
+  .home-link {
+    display: block;
+    text-align: center;
+    margin-top: 16px;
+    font-size: .8rem;
+    color: var(--muted-light);
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    text-decoration: none;
+  }
+</style>
