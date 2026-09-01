@@ -12,7 +12,7 @@ The digital home for students of Shizenryu Karate — *The Natural Way of Karate
 | `public/quiz.html` | Dojo Quiz — Japanese terminology by belt level, plus Kumite 1–12 sequence training |
 | `public/flashcards.html` | Philosophy flashcards — the Maxims, Zen & Karate, Tui Shou, and more |
 | `public/docs/` | Printable PDFs: grade study guides, philosophy study guide, belt passport |
-| `public/assets/data.js` | All quiz/flashcard content — edit here to add material |
+| `public/assets/data.js` | All quiz/flashcard content — see CLAUDE.md's "To add content" procedure before editing |
 
 ## Working on this repo
 

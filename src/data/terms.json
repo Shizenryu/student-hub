@@ -1,0 +1,246 @@
+{
+  "1": [
+    [
+      "Karate",
+      "Empty hand"
+    ],
+    [
+      "Dojo",
+      "Training hall"
+    ],
+    [
+      "Sensei",
+      "Teacher — 'one who has gone before'"
+    ],
+    [
+      "Kihon",
+      "Foundation / basic"
+    ],
+    [
+      "Kumite",
+      "Meeting of hands"
+    ],
+    [
+      "Kihon Kumite",
+      "Basic partner work"
+    ],
+    [
+      "Jun-zuki",
+      "Front punch"
+    ],
+    [
+      "Gyaku-zuki",
+      "Reverse punch"
+    ],
+    [
+      "Uchi-uke",
+      "Inside parry"
+    ],
+    [
+      "Gedan-uke",
+      "Lower parry"
+    ],
+    [
+      "Mae-geri",
+      "Front kick"
+    ],
+    [
+      "Yori ashi",
+      "Front foot slides first"
+    ],
+    [
+      "Tsugi ashi",
+      "Back foot slides first"
+    ]
+  ],
+  "2": [
+    [
+      "Ayumi ashi",
+      "Step through to opposite side"
+    ],
+    [
+      "Sonaba",
+      "On the spot"
+    ],
+    [
+      "Nagashi",
+      "Slipping offline"
+    ],
+    [
+      "Mawashi-geri",
+      "Roundhouse kick"
+    ],
+    [
+      "Yoko-geri",
+      "Side kick"
+    ],
+    [
+      "Soto-uke",
+      "Outside parry"
+    ],
+    [
+      "Sekui-uke",
+      "Inside lower parry"
+    ],
+    [
+      "Morote-uke",
+      "Double-arm shield"
+    ],
+    [
+      "Uraken",
+      "Backfist"
+    ],
+    [
+      "Uke",
+      "To receive"
+    ],
+    [
+      "Jodan",
+      "Upper level"
+    ],
+    [
+      "Chudan",
+      "Middle level"
+    ],
+    [
+      "Gedan",
+      "Lower level"
+    ]
+  ],
+  "3": [
+    [
+      "Kagi-zuki",
+      "Hook punch"
+    ],
+    [
+      "Tobikomi-zuki",
+      "Snap punch from a relaxed state"
+    ],
+    [
+      "Teisho",
+      "Palm heel"
+    ],
+    [
+      "Age-empi",
+      "Rising elbow"
+    ],
+    [
+      "Mawashi-empi",
+      "Circular elbow"
+    ],
+    [
+      "Kaki-uke",
+      "Hook-hand parry"
+    ],
+    [
+      "Mawashi-uke",
+      "Circular parry"
+    ],
+    [
+      "Ma-ai",
+      "Distance / range"
+    ],
+    [
+      "Sen no sen",
+      "Intercepting as the attack begins"
+    ],
+    [
+      "Jiyu Kumite",
+      "Free play"
+    ],
+    [
+      "Hansha Kumite",
+      "Contact reflex partner work"
+    ],
+    [
+      "Kakie",
+      "Listening hands / push hands"
+    ],
+    [
+      "Tenti",
+      "Moving"
+    ],
+    [
+      "Tentai",
+      "Twisting"
+    ],
+    [
+      "Tengi",
+      "Attacking"
+    ]
+  ],
+  "4": [
+    [
+      "JJ",
+      "Jiu Jitsu — the grappling modules"
+    ],
+    [
+      "Sanchin",
+      "Core kata — Sanchin boxing"
+    ],
+    [
+      "Rokushu",
+      "Kata of grip releasing"
+    ],
+    [
+      "Naifuanchin",
+      "Kata of grappling"
+    ],
+    [
+      "Ohyo Kumite",
+      "Variations on the kumite"
+    ],
+    [
+      "Tui Shou",
+      "Pushing hands"
+    ],
+    [
+      "Hara",
+      "The centre — everything moves from it"
+    ],
+    [
+      "Gassho",
+      "Palms together — salutation"
+    ],
+    [
+      "Kyu",
+      "Student grade"
+    ],
+    [
+      "Dan",
+      "Black-belt degree"
+    ],
+    [
+      "Mon",
+      "Junior tag grades"
+    ],
+    [
+      "Shodan",
+      "First degree — 'first step'"
+    ],
+    [
+      "Nidan",
+      "Second degree"
+    ],
+    [
+      "Sandan",
+      "Third degree"
+    ],
+    [
+      "Shihan",
+      "Master of instructors"
+    ],
+    [
+      "Renshi",
+      "Polished / trained instructor"
+    ],
+    [
+      "Kyoshi",
+      "Teacher / expert"
+    ],
+    [
+      "Hanshi",
+      "Model / grandmaster"
+    ]
+  ]
+}

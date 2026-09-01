@@ -1,0 +1,124 @@
+[
+  {
+    "n": 1,
+    "side": "OS",
+    "belt": "9th Kyu",
+    "steps": [
+      "jun-zuki",
+      "uchi-uke",
+      "gyaku-zuki"
+    ]
+  },
+  {
+    "n": 2,
+    "side": "OS",
+    "belt": "8th Kyu",
+    "steps": [
+      "mae-geri",
+      "gedan-uke",
+      "gyaku-zuki"
+    ]
+  },
+  {
+    "n": 3,
+    "side": "SS",
+    "belt": "7th Kyu",
+    "steps": [
+      "jun-zuki",
+      "nagashi soto-uke",
+      "gyaku-zuki"
+    ]
+  },
+  {
+    "n": 4,
+    "side": "SS",
+    "belt": "7th Kyu",
+    "steps": [
+      "mae-geri",
+      "sekui-uke",
+      "gyaku-zuki"
+    ]
+  },
+  {
+    "n": 5,
+    "side": "OS",
+    "belt": "6th Kyu",
+    "steps": [
+      "mawashi-geri",
+      "nagashi morote-uke",
+      "uraken",
+      "gyaku-zuki"
+    ]
+  },
+  {
+    "n": 6,
+    "side": "SS",
+    "belt": "6th Kyu",
+    "steps": [
+      "gedan mawashi-geri",
+      "shin block",
+      "jun-zuki",
+      "gyaku-zuki"
+    ]
+  },
+  {
+    "n": 7,
+    "side": "SS",
+    "belt": "5th Kyu",
+    "steps": [
+      "kagi-zuki",
+      "mawashi-uke",
+      "kagi-zuki"
+    ]
+  },
+  {
+    "n": 8,
+    "side": "SS",
+    "belt": "5th Kyu",
+    "steps": [
+      "kagi-zuki",
+      "jodan-uke",
+      "lock arm",
+      "teisho & takedown"
+    ]
+  },
+  {
+    "n": 9,
+    "side": "SS",
+    "belt": "4th Kyu",
+    "steps": [
+      "jun-zuki",
+      "kaki-uke",
+      "mae-geri",
+      "gyaku-zuki"
+    ]
+  },
+  {
+    "n": 10,
+    "side": "OS",
+    "belt": "4th Kyu",
+    "steps": [
+      "jun-zuki",
+      "sen no sen — nagashi-uke (rear hand)",
+      "tobikomi-zuki"
+    ]
+  },
+  {
+    "n": 11,
+    "side": "SS",
+    "belt": "3rd Kyu",
+    "steps": [
+      "crossed hand low grip (sword)",
+      "underhand grip & takedown"
+    ]
+  },
+  {
+    "n": 12,
+    "side": "SS",
+    "belt": "3rd Kyu",
+    "steps": [
+      "crossed hand grip (scabbard)",
+      "overhand grip & takedown"
+    ]
+  }
+]

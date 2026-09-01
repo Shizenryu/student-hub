@@ -1,0 +1,122 @@
+[
+  {
+    "slug": "9th-kyu",
+    "key": "9th Kyu",
+    "banner": "RED BELT · 9TH KYU",
+    "hex": "#C8102E",
+    "white": true,
+    "tier": 1,
+    "maxim": "Full mastery of one technique is better than the incomplete mastery of two.",
+    "mind": "Welcome to the first step. In Shizenryu, karate is not fundamentally about fighting — it is a discipline of self-mastery. The ability to deal with conflict is a by-product of a deeper process: learning control, awareness, and appropriate response."
+  },
+  {
+    "slug": "8th-kyu",
+    "key": "8th Kyu",
+    "banner": "ORANGE BELT · 8TH KYU",
+    "hex": "#ED8B00",
+    "white": false,
+    "tier": 1,
+    "maxim": "Everything moves from the hara.",
+    "mind": "Training meets two of our deepest needs at once: certainty — the safety of structure, etiquette and repetition — and variety, the challenge that makes us feel alive. Let the routine of basics become your foundation, and let each new technique stretch you."
+  },
+  {
+    "slug": "7th-kyu",
+    "key": "7th Kyu",
+    "banner": "YELLOW BELT · 7TH KYU",
+    "hex": "#E3BC00",
+    "white": false,
+    "tier": 2,
+    "maxim": "Footwork and position are a major part of the battle in unbalancing and controlling an opponent who is committed to attack.",
+    "mind": "When we stop growing, we die. Anything you want to keep — your skill, your health, your confidence — must be cultivated and expanded, or it degenerates. Every class is a chance to grow a little; consistency beats intensity."
+  },
+  {
+    "slug": "6th-kyu",
+    "key": "6th Kyu",
+    "banner": "GREEN BELT · 6TH KYU",
+    "hex": "#00843D",
+    "white": true,
+    "tier": 2,
+    "maxim": "Always deflect, parry, cover, and trap. These defences are superior to direct blocks.",
+    "mind": "Significance, used well, raises your standards. Compare yourself to who you were last month, not to the person beside you. Hierarchies of better and worse disconnect us; shared practice connects us."
+  },
+  {
+    "slug": "5th-kyu",
+    "key": "5th Kyu",
+    "banner": "BLUE BELT · 5TH KYU",
+    "hex": "#0072CE",
+    "white": true,
+    "tier": 3,
+    "maxim": "Openings are felt with contact, not seen with the eye.",
+    "mind": "You now begin to touch the listening skills of Shizenryu. Pushing hands bridges the gap between kata and spontaneous application: learning to detect, redirect and counter force through tactile sensitivity rather than strength. Yield to force and bend its angle."
+  },
+  {
+    "slug": "4th-kyu",
+    "key": "4th Kyu",
+    "banner": "PURPLE BELT · 4TH KYU",
+    "hex": "#702F8A",
+    "white": true,
+    "tier": 3,
+    "maxim": "Combinations occur as a response to an opponent's actions, not because they are a favourite set of techniques.",
+    "mind": "The martial arts, in their highest form, reconcile apparent opposites: stillness and movement, softness and hardness, yielding and force, mind and body. These are not conflicting forces but complementary aspects of a unified whole."
+  },
+  {
+    "slug": "3rd-kyu",
+    "key": "3rd Kyu",
+    "banner": "BROWN BELT · 3RD KYU",
+    "hex": "#8B5A2B",
+    "white": true,
+    "tier": 4,
+    "maxim": "Seek control of your opponent's posture as a prerequisite to a counterattack.",
+    "mind": "Partner work at this level — takedowns, rolling, ground work — is built on trust and connection. You cannot learn to receive force from someone you don't trust, and they cannot learn from you unless you give them honest, controlled attacks."
+  },
+  {
+    "slug": "2nd-kyu",
+    "key": "2nd Kyu",
+    "banner": "BROWN BELT · 2ND KYU",
+    "hex": "#7A4A21",
+    "white": true,
+    "tier": 4,
+    "maxim": "Control and strike the opponent at the same time.",
+    "mind": "Contribution completes training. A life — and a dojo — is incomplete without giving back. Help the junior grades; teaching a technique is the fastest way to discover what you don't yet understand about it."
+  },
+  {
+    "slug": "1st-kyu",
+    "key": "1st Kyu",
+    "banner": "BROWN BELT · 1ST KYU",
+    "hex": "#6B3F1D",
+    "white": true,
+    "tier": 4,
+    "maxim": "Once the kicking distance is closed, keep it closed.",
+    "mind": "Our greatest opponent is rarely another person, but our own loss of equilibrium. Aggression, fear and the need to dominate are expressions of internal imbalance. True training is the cultivation of clear action free from unnecessary disturbance."
+  },
+  {
+    "slug": "shodan",
+    "key": "Shodan",
+    "banner": "BLACK BELT · SHODAN",
+    "hex": "#1A1A1A",
+    "white": true,
+    "tier": 4,
+    "maxim": "In defence, be like the dragonfly that perches on the stick raised to hit it.",
+    "mind": "Shodan means 'first step'. The black belt is not the end of the path — it marks the point where real study begins. To do exactly what needs to be done, when it needs to be done: this is the standard you now train towards."
+  },
+  {
+    "slug": "nidan",
+    "key": "Nidan",
+    "banner": "BLACK BELT · NIDAN",
+    "hex": "#1A1A1A",
+    "white": true,
+    "tier": 4,
+    "maxim": "Dodging, ducking, and weaving require a high degree of physical stamina and are unnecessary if the opponent's attacking limbs are being properly controlled.",
+    "mind": "Move beyond rigid models, habitual reactions and emotional compulsion. Respond with clarity and appropriateness. This applies equally to the smallest and largest acts in life — from a difficult decision to responding under pressure."
+  },
+  {
+    "slug": "sandan",
+    "key": "Sandan",
+    "banner": "BLACK BELT · SANDAN",
+    "hex": "#1A1A1A",
+    "white": true,
+    "tier": 4,
+    "maxim": "Structure > Discipline > Measure / Accountability = Growth",
+    "mind": "Zen and karate are not separate disciplines. They are two expressions of the same pursuit: the integration of the divided self into harmonious action. Individual — indivisible duality."
+  }
+]
