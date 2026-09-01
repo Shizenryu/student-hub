@@ -1,0 +1,66 @@
+---
+// The belt list — replaces public/belts.html's #menu view. Each tile links to
+// its own static route (/belts/<slug>) instead of a JS hash-driven view swap.
+import PageShell from '../../layouts/PageShell.astro';
+import { GRADES } from '../../data';
+import '../../styles/belts.css';
+---
+
+<PageShell
+  title="Shizenryu Belt Study Guides"
+  description="Choose a belt to see everything on the syllabus for that grading, the key terms, and the mind behind the movement."
+  heading="BELT STUDY GUIDES"
+  subheading="What to learn · What it means"
+  width="wide"
+>
+  <div class="card">
+    <p class="intro">
+      Choose your next belt. Each guide shows everything on the syllabus for that grading, the
+      key terms, and the mind behind the movement.
+    </p>
+    <div class="belts" data-belt-slugs={JSON.stringify(GRADES.map((grade) => grade.slug))}>
+      {
+        GRADES.map((grade) => (
+          <a class="belt-btn belt-colour" data-slug={grade.slug} href={`/belts/${grade.slug}`}>
+            {grade.key}
+          </a>
+        ))
+      }
+    </div>
+  </div>
+
+  <script slot="scripts" is:inline src="/assets/legacy-hash.js" defer></script>
+</PageShell>
+
+<style>
+  .intro {
+    font-size: .85rem;
+    color: #666;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+
+  .belts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .belt-btn {
+    display: block;
+    border: none;
+    border-radius: var(--radius-control);
+    padding: 16px 12px;
+    font-size: .95rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    letter-spacing: .03em;
+    transition: transform .08s;
+    text-decoration: none;
+  }
+
+  .belt-btn:active {
+    transform: scale(.96);
+  }
+</style>

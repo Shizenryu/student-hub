@@ -1,0 +1,21 @@
+/* Per-belt colour, transcribed from src/data/grades.json (hex/white per grade).
+   Keyed by slug rather than by element type so the same rule colours both the
+   /belts list tile and the /belts/<slug> banner — see BeltGuide.astro and
+   src/pages/belts/index.astro, both of which apply class="belt-colour"
+   data-slug="<slug>" to the element that needs it.
+
+   grades.json is the source of truth; tests/unit/belt-colours.test.ts reads
+   both this file and GRADES and fails if they diverge, so this file cannot
+   silently drift from the content it transcribes. */
+.belt-colour[data-slug="9th-kyu"] { background: #C8102E; color: #fff; }
+.belt-colour[data-slug="8th-kyu"] { background: #ED8B00; color: #1A1A1A; }
+.belt-colour[data-slug="7th-kyu"] { background: #E3BC00; color: #1A1A1A; }
+.belt-colour[data-slug="6th-kyu"] { background: #00843D; color: #fff; }
+.belt-colour[data-slug="5th-kyu"] { background: #0072CE; color: #fff; }
+.belt-colour[data-slug="4th-kyu"] { background: #702F8A; color: #fff; }
+.belt-colour[data-slug="3rd-kyu"] { background: #8B5A2B; color: #fff; }
+.belt-colour[data-slug="2nd-kyu"] { background: #7A4A21; color: #fff; }
+.belt-colour[data-slug="1st-kyu"] { background: #6B3F1D; color: #fff; }
+.belt-colour[data-slug="shodan"] { background: #1A1A1A; color: #fff; }
+.belt-colour[data-slug="nidan"] { background: #1A1A1A; color: #fff; }
+.belt-colour[data-slug="sandan"] { background: #1A1A1A; color: #fff; }

@@ -1,0 +1,244 @@
+---
+// Renders one belt's study guide: banner, syllabus items, key terms, mind panel
+// and prev/next navigation. Transcribed from public/belts.html's #guide view —
+// see that file's <style> block and openBelt() for the source of truth.
+import { SYLLABUS, termsForTier, type Grade, type SyllabusItem } from '../data';
+import { expandAbbreviations } from '../data/display';
+import '../styles/belts.css';
+
+type Props = {
+  grade: Grade;
+  prev: Grade | null;
+  next: Grade | null;
+};
+
+const { grade, prev, next } = Astro.props;
+
+type RenderRow = { readonly item: SyllabusItem; readonly showSection: boolean };
+
+// A syllabus section heading is shown only when the section differs from the
+// previous row — the original tracks this with a `lastSec` variable across the
+// forEach loop; this reduce carries the same state functionally.
+const renderRows: readonly RenderRow[] = SYLLABUS.filter((item) => item.grade === grade.key).reduce<{
+  rows: RenderRow[];
+  lastSection: string | null;
+}>(
+  (acc, item) => {
+    acc.rows.push({ item, showSection: item.section !== acc.lastSection });
+    acc.lastSection = item.section;
+    return acc;
+  },
+  { rows: [], lastSection: null },
+).rows;
+
+const terms = termsForTier(grade.tier);
+---
+
+<div class="banner belt-colour" data-slug={grade.slug}>
+  <div><div class="t">{grade.banner}</div></div>
+  <div class="s">STUDY GUIDE</div>
+</div>
+<div class="card">
+  <h2>What you will learn</h2>
+  <div class="items">
+    {
+      renderRows.map(({ item, showSection }) => (
+        <div class="item">
+          {showSection && <span class="sec">{item.section}</span>}
+          {expandAbbreviations(item.item)}
+          {item.track === 'Adult' && <span class="tag adult">ADULTS 16+</span>}
+          {item.track === 'Junior' && <span class="tag junior">JUNIORS</span>}
+          {item.detail && <span class="det">{expandAbbreviations(item.detail)}</span>}
+        </div>
+      ))
+    }
+  </div>
+  <h2>Key terms at this stage</h2>
+  <div class="terms">
+    {
+      terms.map((pair) => {
+        const [japanese, english] = pair;
+        return (
+          <div>
+            <b>{japanese}</b> — {english}
+          </div>
+        );
+      })
+    }
+  </div>
+  <h2>Mind</h2>
+  <div class="mind">
+    <span>{grade.mind}</span>
+    <div class="maxim">“{grade.maxim}”</div>
+  </div>
+  <div class="nav">
+    {
+      prev ? (
+        <a class="nav-btn" href={`/belts/${prev.slug}`}>
+          ← Previous belt
+        </a>
+      ) : (
+        <button class="nav-btn" disabled>← Previous belt</button>
+      )
+    }
+    {
+      next ? (
+        <a class="nav-btn" href={`/belts/${next.slug}`}>
+          Next belt →
+        </a>
+      ) : (
+        <button class="nav-btn" disabled>Next belt →</button>
+      )
+    }
+  </div>
+  <a class="home-link" href="/belts">← all belts</a>
+</div>
+
+<style>
+  .banner {
+    border-radius: var(--radius-banner);
+    padding: 16px 18px;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .banner .t {
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: .04em;
+  }
+
+  .banner .s {
+    font-size: .65rem;
+    letter-spacing: .18em;
+    opacity: .85;
+  }
+
+  h2 {
+    font-size: .78rem;
+    letter-spacing: .2em;
+    color: var(--muted-light);
+    text-transform: uppercase;
+    margin: 18px 0 8px;
+  }
+
+  .card h2:first-child {
+    margin-top: 0;
+  }
+
+  .item {
+    padding: 9px 0;
+    border-bottom: 1px solid var(--rule);
+    font-size: .9rem;
+  }
+
+  .item:last-child {
+    border-bottom: none;
+  }
+
+  .item .sec {
+    font-weight: 700;
+    font-size: .72rem;
+    letter-spacing: .12em;
+    color: var(--red);
+    text-transform: uppercase;
+    display: block;
+    margin: 10px 0 4px;
+  }
+
+  .item .det {
+    display: block;
+    font-size: .78rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .tag {
+    font-size: .62rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: var(--radius-tag);
+    color: var(--surface);
+    vertical-align: middle;
+    margin-left: 6px;
+    letter-spacing: .05em;
+  }
+
+  .tag.adult {
+    background: var(--track-adult);
+  }
+
+  .tag.junior {
+    background: var(--track-junior);
+  }
+
+  .terms {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 14px;
+    font-size: .82rem;
+  }
+
+  .terms div b {
+    color: var(--dark);
+  }
+
+  .mind {
+    background: var(--surface-warm);
+    border-left: 4px solid var(--gold);
+    padding: 13px 15px;
+    font-size: .88rem;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    border-radius: 0 10px 10px 0;
+  }
+
+  .maxim {
+    margin-top: 10px;
+    font-style: italic;
+    color: var(--red);
+    font-size: .88rem;
+  }
+
+  .nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .nav-btn {
+    display: block;
+    padding: 12px;
+    border: 2px solid var(--dark);
+    background: var(--surface);
+    color: var(--dark);
+    border-radius: var(--radius-control);
+    font-family: inherit;
+    font-weight: 600;
+    font-size: .9rem;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .nav-btn:disabled {
+    opacity: .3;
+    cursor: default;
+  }
+
+  .home-link {
+    display: block;
+    text-align: center;
+    margin-top: 16px;
+    font-size: .8rem;
+    color: var(--muted-light);
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    text-decoration: none;
+  }
+</style>

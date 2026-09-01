@@ -10,14 +10,7 @@ const PAGES_DIR = 'src/pages';
 const MANIFEST_PATH = 'tests/build/legacy-content.sha256';
 const ROUTABLE_EXTENSIONS = ['.astro', '.md', '.mdx', '.html'];
 
-const LEGACY_PAGES = [
-  'index.html',
-  'quiz.html',
-  'flashcards.html',
-  'belts.html',
-  'kata.html',
-  'practice.html',
-];
+const LEGACY_PAGES = ['index.html', 'quiz.html', 'flashcards.html', 'kata.html', 'practice.html'];
 
 const LEGACY_ASSETS = [
   'assets/data.js',
@@ -48,6 +41,21 @@ async function sha256(path: string): Promise<string> {
 function toClaimedUrl(pathWithExtension: string): string {
   const withoutExtension = pathWithExtension.replace(/\.(astro|md|mdx|html)$/, '');
   return withoutExtension.replace(/(^|\/)index$/, '');
+}
+
+// A dynamic route file (its name contains `[`) does not claim a URL by itself — Astro
+// expands it per param at build time. But the directory it lives in still claims that
+// directory's URL, the same way `belts/index.astro` claims `/belts`. Drop any path
+// segment containing `[` before deriving the claimed URL, so `belts/[slug].astro` is
+// checked against `public/belts.html` exactly as `belts/index.astro` would be — that
+// pairing was the guard's blind spot. A route with no routable segment left (every
+// segment dynamic, e.g. a hypothetical top-level `[slug].astro`) claims no directory
+// at all and is skipped — but `''` alone (the site root, `index.astro`) is a real,
+// routable claim and must not be treated the same way.
+function toRouteClaimedUrl(pathWithExtension: string): string | null {
+  const routableSegments = pathWithExtension.split('/').filter((segment) => !segment.includes('['));
+  if (routableSegments.length === 0) return null;
+  return toClaimedUrl(routableSegments.join('/'));
 }
 
 type ManifestEntry = { hash: string; path: string };
@@ -108,12 +116,15 @@ describe('migrated routes do not leave their legacy page behind', () => {
         .map((file) => [toClaimedUrl(file), file]),
     );
 
-    const routes = (await filesUnder(PAGES_DIR)).filter(
-      (file) => ROUTABLE_EXTENSIONS.some((extension) => file.endsWith(extension)) && !file.includes('['),
+    const routes = (await filesUnder(PAGES_DIR)).filter((file) =>
+      ROUTABLE_EXTENSIONS.some((extension) => file.endsWith(extension)),
     );
 
     for (const route of routes) {
-      const legacyPage = legacyUrls.get(toClaimedUrl(route));
+      const claimedUrl = toRouteClaimedUrl(route);
+      if (claimedUrl === null) continue; // wholly dynamic — claims no directory
+
+      const legacyPage = legacyUrls.get(claimedUrl);
 
       expect(
         legacyPage,

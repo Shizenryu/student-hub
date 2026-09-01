@@ -1,0 +1,36 @@
+---
+// One study guide per belt, statically generated — replaces public/belts.html's
+// #guide view, which switched on location.hash. Prev/next are ordinary links now.
+import BeltGuide from '../../components/BeltGuide.astro';
+import PageShell from '../../layouts/PageShell.astro';
+import { GRADES, type Grade } from '../../data';
+
+export function getStaticPaths() {
+  return GRADES.map((grade, index) => ({
+    params: { slug: grade.slug },
+    props: {
+      grade,
+      prev: index > 0 ? (GRADES[index - 1] ?? null) : null,
+      next: index < GRADES.length - 1 ? (GRADES[index + 1] ?? null) : null,
+    },
+  }));
+}
+
+type Props = {
+  grade: Grade;
+  prev: Grade | null;
+  next: Grade | null;
+};
+
+const { grade, prev, next } = Astro.props;
+---
+
+<PageShell
+  title={`${grade.banner} — Shizenryu Belt Study Guide`}
+  description={`Syllabus, key terms and the mind behind the movement for ${grade.key} at Shizenryu Karate.`}
+  heading="BELT STUDY GUIDES"
+  subheading="What to learn · What it means"
+  width="wide"
+>
+  <BeltGuide grade={grade} prev={prev} next={next} />
+</PageShell>

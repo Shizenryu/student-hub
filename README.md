@@ -11,6 +11,7 @@ The digital home for students of Shizenryu Karate — *The Natural Way of Karate
 | `public/index.html` | Landing page — maxim of the day, links to everything |
 | `public/quiz.html` | Dojo Quiz — Japanese terminology by belt level, plus Kumite 1–12 sequence training |
 | `public/flashcards.html` | Philosophy flashcards — the Maxims, Zen & Karate, Tui Shou, and more |
+| `/belts`, `/belts/<slug>` | Belt study guides — syllabus, key terms and the mind behind the movement for each grade. A real Astro route now; `public/belts.html` is gone and `belts.html` redirects here for old bookmarks |
 | `public/docs/` | Printable PDFs: grade study guides, philosophy study guide, belt passport |
 | `public/assets/data.js` | All quiz/flashcard content — see CLAUDE.md's "To add content" procedure before editing |
 
@@ -27,7 +28,7 @@ npm run dev   # local site at http://localhost:4321/index.html
 |---|---|
 | `npm run dev` | Local development server with live reload |
 | `npm run build` | Production build into `dist/` |
-| `npm run preview` | Serve the built `dist/` exactly as Netlify will |
+| `npm run preview` | Serve the built `dist/` locally — does not apply `netlify.toml` redirects/headers |
 | `npm run typecheck` | TypeScript and Astro type checking |
 | `npm test` | Node tests (run `npm run build` first) |
 | `npm run test:browser` | Browser tests in Chromium (see below) |

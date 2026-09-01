@@ -1,6 +1,6 @@
-# Known-good checksum baseline for site/public — every file below reached
-# this branch as a verified 100% git rename with an identical blob SHA, so
-# it is byte-identical to what is live in production today.
+# Known-good checksum baseline for everything under public/ — most of it frozen
+# legacy content carried forward unchanged, plus any build-adjacent file (e.g.
+# a small script served straight to the browser) that has to live there too.
 #
 # tests/build/public-passthrough.test.ts asserts every entry here matches
 # the current file in public/. Entries are removed deliberately, one at a
@@ -16,13 +16,13 @@
 c152c0de1ba1c09a143a495b7f59a3f85857e3050d88f3af8be0a39bc48d83b1  assets/img/icon.png
 066200e4c56f23f6f87d5677af6abe0b6aa2400e2a22222b16625116c33e2592  assets/img/ki.png
 83983778db8ce0d74644b594afff0f30803410da782dc19f18ddc58d87655e7c  assets/img/shizenryu-calligraphy.png
+cf18839429408fc81d1a1c7f260a428bc4310085f32115aef791374a2abfb098  assets/legacy-hash.js
 61f4bca537c343045bc2cdd1509fbfad66b7736f94719e8cf3d8cf6f44ebaf9c  assets/store.js
-9a4b9d8de90cee580664775bb5283dd31851fb6e739176497b8806af21d049d5  belts.html
 250eba5a9d845efa9be198ae993c52b34d5473795d686c348346ed4242df87cc  docs/belt-passport.pdf
 e271f18b2ab64e5bfc06a91d5874cceedbece7d98c0fb8f6c53d3d5cb8eef749  docs/philosophy-guide.pdf
 4e204378d640be22773eca7a22027f9afc61ce5654ed20f6d1cd6a1ee6e94a82  docs/study-guides.pdf
 ba3efb5a926ba2a9f653be1a231a3ebcf1a026fa9ccef9ee7bbb66ee84847d33  flashcards.html
-453cc8ba9a763a63eec2007a7c490596ba966847e0b9f90a9a599c45d5a3f6f9  index.html
+3bfbb372fc5935d0678cfaf9dd8c9f415041c0c1ad0e4fd9eed160093b7acf47  index.html
 a13735f45693d9cac261b2bf6982cdd31266de97ca0965e7fb6b506459820e6c  kata.html
 af0fd5adac5bc0a1668248a989726c530991ba9f73ecb83792cd049f0b0e43ca  practice.html
 3e0b262e90c0446a06d7ab0f29d17a79394e2d15db6762a081a853cbc4b02b59  quiz.html
