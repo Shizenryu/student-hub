@@ -191,3 +191,93 @@ describe('prev/next navigation between kata', () => {
     expect(nav).not.toContain('disabled');
   });
 });
+
+// The prose text itself, character for character — none of the tests above ever
+// read a paragraph or list item, only headings and syllabus rows, so a
+// transformation that silently rewrites the body prose (e.g. a markdown
+// processor's smart-punctuation pass turning straight quotes into curly ones)
+// would pass every test above while changing what students actually read on
+// the page. public/kata.html injects the authored HTML with innerHTML, so the
+// browser shows the literal characters written in data.js — the built route
+// must show exactly the same characters, not a typographically "improved" copy.
+//
+// Deliberately NOT using kata-prose-parity.test.ts's normalizeText, which folds
+// curly quotes back to straight ones — the right call for Task 1's fidelity
+// proof (it compares two renderers of the same semantic content) but the wrong
+// call here: this test's whole job is to catch exactly that folding happening
+// for real, unauthorised, in the shipped page.
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&');
+}
+
+function collapseWhitespace(text: string): string {
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+function stripTags(html: string): string {
+  return html.replace(/<[^>]+>/g, ' ');
+}
+
+// kata.json's sections carry heading and body separately; the rendered page's
+// headings live inside the same flowing document (see KataGuide.astro's
+// ".prose" comment), so headings are dropped from the rendered side before
+// comparing, to compare body prose against body prose only.
+function stripHeadings(html: string): string {
+  return html.replace(/<h2[^>]*>[\s\S]*?<\/h2>/g, ' ');
+}
+
+function visibleText(html: string): string {
+  return collapseWhitespace(decodeHtmlEntities(stripTags(html)));
+}
+
+// Captures everything inside KataGuide.astro's <div class="prose">, up to the
+// closing tag that immediately precedes the quote block or the "In the
+// syllabus" heading — the prose itself contains no nested <div>, so the first
+// </div> after the opening tag is genuinely the matching close.
+function extractProseHtml(html: string): string {
+  const match = /<div class="prose"[^>]*>([\s\S]*?)<\/div>(?:<div class="quote"|<h2)/.exec(html);
+  expect(match, 'no <div class="prose"> found in the built page').not.toBeNull();
+  return match?.[1] ?? '';
+}
+
+describe("a kata's rendered prose matches src/data/kata.json, character for character", () => {
+  it.each(KATA.map((kata) => kata.slug))("%s: every section's visible text matches exactly", async (slug) => {
+    const kata = KATA.find((entry) => entry.slug === slug);
+    expect(kata).toBeDefined();
+    if (!kata) return;
+
+    const html = await readKataPage(slug);
+    const actual = visibleText(stripHeadings(extractProseHtml(html)));
+    const expected = visibleText(kata.sections.map((section) => section.b).join(' '));
+
+    expect(actual).toBe(expected);
+  });
+
+  // Mara's "What it is" is the only section with paragraphs and a bullet list
+  // together — named explicitly since it exercises both block types at once.
+  it("mara: 'What it is' section text matches exactly, including its bullet list", async () => {
+    const mara = KATA.find((entry) => entry.slug === 'mara');
+    expect(mara).toBeDefined();
+    if (!mara) return;
+
+    const section = mara.sections.find((entry) => entry.h === 'What it is');
+    expect(section).toBeDefined();
+    if (!section) return;
+
+    const html = await readKataPage('mara');
+    const prose = extractProseHtml(html);
+    // "What it is" is Mara's first section, so its body runs from the start
+    // of the prose to the next <h2> (the "How it grows with you" heading).
+    const firstSectionMatch = /^[\s\S]*?<\/h2>([\s\S]*?)<h2/.exec(prose);
+    expect(firstSectionMatch, "could not isolate the first section's body").not.toBeNull();
+    const actual = visibleText(firstSectionMatch?.[1] ?? '');
+    const expected = visibleText(section.b);
+
+    expect(actual).toBe(expected);
+  });
+});
