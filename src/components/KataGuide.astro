@@ -11,12 +11,14 @@
 // other fields (name, translation, hex, white, quote, match) still come from
 // src/data/kata.json, the same source belts.html's migration used for GRADES.
 //
-// Unlike the belts page, the original never reads k.white — .kata-btn and
-// .banner hardcode color:#fff in the CSS regardless of what the data says.
-// Every kata in kata.json today is white:true, so deriving the banner/tile
-// colour from `white` (kata-colour, the same mechanism belts.css uses)
-// renders identically to that hardcoded value. Preserved as-is rather than
-// "fixed" — see CLAUDE.md and the task brief on not tidying the original.
+// The original never reads k.white — .kata-btn and .banner hardcode
+// color:#fff in the CSS regardless of what the data says. This component
+// does NOT reproduce that: text colour comes entirely from the kata-colour
+// class (src/styles/kata.css), derived from `white` via textColorForWhite,
+// same as belts.css. Every kata in kata.json today is white:true, so the
+// rendered output is byte-identical to the original's hardcoded value —
+// deriving it honestly costs nothing today, and means a future white:false
+// kata renders correctly instead of shipping unreadable white-on-light text.
 import { getEntry, render } from 'astro:content';
 import { SYLLABUS, type Kata } from '../data';
 import '../styles/kata.css';

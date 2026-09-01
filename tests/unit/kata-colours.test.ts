@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 
 import { KATA } from '../../src/data';
+import { textColorForWhite } from '../../src/data/display';
 
 const KATA_CSS_PATH = 'src/styles/kata.css';
 
@@ -17,7 +18,7 @@ describe('kata.css carries every kata\'s exact colour from kata.json', () => {
     if (!kata) return;
 
     const css = await readFile(KATA_CSS_PATH, 'utf8');
-    const expectedTextColor = kata.white ? '#fff' : '#1A1A1A';
+    const expectedTextColor = textColorForWhite(kata.white);
     const rulePattern = new RegExp(`\\.kata-colour\\[data-slug="${slug}"\\]\\s*\\{[^}]*\\}`);
     const match = rulePattern.exec(css);
 
@@ -28,5 +29,19 @@ describe('kata.css carries every kata\'s exact colour from kata.json', () => {
     expect(rule, `${slug}'s rule does not set color: ${expectedTextColor}`).toContain(
       `color: ${expectedTextColor};`,
     );
+  });
+});
+
+// Every kata in kata.json today is white:true, so the suite above alone can't
+// tell a genuine derivation from one that just hardcodes #fff for everything.
+// This pins the derivation itself, including the white:false branch no real
+// kata currently exercises.
+describe('textColorForWhite', () => {
+  it('maps white to #fff', () => {
+    expect(textColorForWhite(true)).toBe('#fff');
+  });
+
+  it('maps not-white to #1A1A1A', () => {
+    expect(textColorForWhite(false)).toBe('#1A1A1A');
   });
 });
