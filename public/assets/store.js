@@ -17,7 +17,17 @@ const Store = (function(){
     mem = d;
     if(ok){ try { localStorage.setItem(KEY, JSON.stringify(d)); } catch(e){} }
   }
-  function day(){ return Math.floor(Date.now() / 86400000); }
+  // Day number for the LOCAL calendar date, not the UTC one. Date.now() alone (the
+  // previous implementation) is a UTC day number: during British Summer Time, a student
+  // training at 00:30 local is at 23:30 UTC the previous day, so Date.now()-based logging
+  // would credit yesterday and later see a gap that resets a streak never actually broken.
+  // getFullYear/getMonth/getDate read the LOCAL date; Date.UTC then turns those parts back
+  // into a stable day number — exact across daylight-saving transitions, unlike offset
+  // arithmetic on Date.now(). Do not "simplify" this back to Date.now()/86400000.
+  function day(){
+    const d = new Date();
+    return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+  }
 
   // Call when a quiz round or flashcard deck is completed.
   function markTrained(){
