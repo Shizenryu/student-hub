@@ -1,38 +1,50 @@
 # CLAUDE.md — Shizenryu Student Hub
 
 Static student hub for Shizenryu Karate ("The Natural Way of Karate").
-Live site deployed to Netlify from `site/`. Repo: github.com/Shizenryu/student-hub
+Live site deployed to Netlify, built from source into `dist/`. Repo: github.com/Shizenryu/student-hub
 
 ## Architecture
 
-**No build step. No framework. No dependencies.** Plain HTML/CSS/JS, one self-contained
-file per page. This is deliberate — the maintainer is a karate instructor, not a developer,
-and every page must also work opened directly from disk (file://). Do not introduce
-bundlers, npm, frameworks, or CDN dependencies without being explicitly asked.
+**Astro, TypeScript, no runtime dependencies of our own.** The site is built by
+Netlify from source on every push to `main`; `dist/` is never committed. Static
+pages ship zero JavaScript; the three interactive pages (quiz, flashcards,
+practice) become React islands as they are migrated. None of them has been yet —
+all six pages are still the original hand-written HTML in `public/`.
+
+Pages no longer open from `file://` — run `npm run dev`. See README.md.
+
+Migration in progress: pages not yet ported live untouched in `public/`, which
+Astro copies to the build output verbatim. That directory shrinks to empty as
+slices land, and this note is deleted with the last page.
+
+Do not add runtime dependencies, third-party scripts, analytics, or CDN assets.
+That constraint has not changed and is what keeps this site cheap to own.
+
+TypeScript is pinned to `^6.0.3` — do not upgrade to 7 yet. `@astrojs/check`
+(the type checker behind `npm run typecheck`) declares
+`peerDependencies.typescript: "^5.0.0 || ^6.0.0"`, and TypeScript 7 breaks it outright.
 
 ```
-site/
-├── index.html        Landing page: maxim of the day, links to everything
-├── quiz.html         Dojo Quiz — terminology by belt level + Kumite 1–12 sequences
-├── flashcards.html   Philosophy flashcards — flip cards, Again/Got-it queue
-├── belts.html        Belt study guides — renders any belt from GRADES + SYLLABUS data;
-│                     deep-linkable via hash, e.g. belts.html#5th-kyu
-├── kata.html         Kata reference — Mara, Sanchin, Rokushu, Naifuanchin from KATA data;
-│                     deep-linkable via hash, e.g. kata.html#sanchin
-├── practice.html     Daily Practice — tick off today's activities from PRACTICE data;
-│                     one activity keeps the streak; 7-day + 30-day view
-├── assets/
-│   ├── data.js       ALL content data (see schemas below). Content changes happen HERE.
-│   ├── store.js      Progress store — streaks, best scores, missed cards (see Persistence).
-│   └── img/          Club imagery — see Imagery below
-└── docs/             Printable PDFs (generated outside this repo, committed as binaries)
-netlify.toml          Publish config (publish = "site")
+public/            legacy pages, served verbatim, shrinking each slice
+├── index.html  quiz.html  flashcards.html  belts.html  kata.html  practice.html
+├── assets/         data.js, store.js, img/
+└── docs/           printable PDFs
+src/
+└── pages/404.astro
+tests/
+├── build/          build-output assertions
+└── browser/        Vitest Browser Mode
+docs/superpowers/   committed specs and plans — not to be confused with
+                    public/docs/, the student-facing printable PDFs above
+astro.config.mjs  tsconfig.json  vitest.config.ts  vitest.browser.config.ts
+netlify.toml      build command and publish directory
+.github/workflows/ci.yml   PR gate: typecheck, build, and both test suites
 ```
 
-Pages load `assets/data.js` via a plain `<script src>` tag before their inline app script
-(no fetch/JSON — that would break file:// usage).
+Pages still in `public/` load `assets/data.js` via a plain `<script src>` tag before
+their inline app script, same as before the migration.
 
-## Imagery (`site/assets/img/`)
+## Imagery (`public/assets/img/`)
 
 | File | What | Used by |
 |---|---|---|
@@ -44,12 +56,19 @@ Two rules the pages depend on:
 
 - Set `width`/`height` to the image's **intrinsic** pixel size and control the displayed
   size in CSS, so the browser reserves the space and nothing shifts as the page loads.
-- Keep paths relative (`assets/img/…`), never root-relative, or file:// breaks.
+- Path style differs by where the page lives. The legacy pages in `public/`
+  keep relative paths (`assets/img/…`) — they are served from the site root,
+  so relative resolves correctly there and should not be changed as part of
+  a migration. Astro routes under `src/pages/` must use root-relative paths
+  (`/assets/img/…`), as `src/pages/404.astro` already does — a nested route
+  (e.g. `/belts/5th-kyu`) resolves a relative `assets/img/ki.png` against its
+  own path, not the site root, and the crest breaks.
 
 The ink marks sit on the `#faf7f2` paper and so need transparency — a white-background
 JPEG shows as a white box. The app icon is opaque because it sits on a home screen.
-There is no build step, so resize an image before committing it rather than shrinking it
-in CSS, and add `loading="lazy" decoding="async"` to anything below the fold.
+Astro copies `public/` straight through without processing, so resize an image
+before committing it rather than shrinking it in CSS, and add
+`loading="lazy" decoding="async"` to anything below the fold.
 
 ## Content rules — read before writing ANY martial content
 
@@ -60,7 +79,7 @@ in CSS, and add `loading="lazy" decoding="async"` to anything below the fold.
 2. **Exactness matters.** Kumite steps, OS/SS markings, Japanese spellings and kata names
    must match the syllabus exactly (e.g. `sekui-uke`, `Naifuanchin`, `tobikomi-zuki`).
 3. **Source documents stay out of the repo.** Ian Smith's papers and the syllabus are
-   copyright and partly personal; do not commit them. The generated PDFs in `site/docs/`
+   copyright and partly personal; do not commit them. The generated PDFs in `public/docs/`
    are the publishable derivatives.
 4. **Audience includes children.** Everything public must be junior-appropriate.
    The Retreat Notes contain personal/lineage-dispute material — philosophical content
@@ -71,7 +90,7 @@ in CSS, and add `loading="lazy" decoding="async"` to anything below the fold.
    own wording ("JJ"); display layers expand it — belts.html has an `expand()` helper
    that renders "Jiu Jitsu (JJ)". Any new page showing syllabus text must do the same.
 
-## Data schemas (`site/assets/data.js`)
+## Data schemas (`public/assets/data.js`)
 
 ```js
 TERMS   = { 1:[[japanese, english], ...], 2:[...], 3:[...], 4:[...] }
@@ -111,10 +130,13 @@ KATA    = [ {slug, name, translation, hex, white, match, quote?, sections}, ... 
 
 To add content: edit `data.js` only.
 
-To add a new page, copy an existing page rather than starting from scratch, keeping:
+The pages in `public/` are legacy — hand-rolled HTML with inline CSS and JS,
+kept only until each one is migrated into a real Astro route, and being
+migrated out one page per slice. They are not a template to copy.
 
-- the whole `<head>` block — charset, viewport, title, and the two icon links
-- the header, the card UI, and the footer with its `← Shizenryu home` link
+To add a new page, add an Astro route under `src/pages/` (see
+`src/pages/404.astro` for the current pattern), not a new file in `public/`.
+Root-relative asset paths are required there — see Imagery, above.
 
 ## Design system
 

@@ -1,0 +1,9 @@
+# Line endings are pinned so a file hashes identically on every machine.
+# The site is authored on Windows and built on Linux, and tests/build/legacy-content.sha256
+# records checksums of the legacy pages — without this, those checksums would encode
+# whichever platform generated them rather than the content itself.
+* text=auto eol=lf
+
+# Never touch the club imagery or the printable PDFs.
+*.png binary
+*.pdf binary
