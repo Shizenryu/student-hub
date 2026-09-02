@@ -9,11 +9,18 @@
 import '../styles/tokens.css';
 import '../styles/app.css';
 
+// heading/subheading are optional because the home route replaces the whole
+// header with its own masthead (crest image, three lines) via the named
+// `masthead` slot below, rather than the h1/.sub pair every inner page uses —
+// so it never reads these props. `footer` is the same shape of override: the
+// home page's footer text is different content, not a link back to itself.
+// Both slots fall back to today's markup so belts/kata (and any future inner
+// page) keep working unchanged with no slot supplied.
 type Props = {
   title: string;
   description: string;
-  heading: string;
-  subheading: string;
+  heading?: string;
+  subheading?: string;
   width?: 'default' | 'wide';
 };
 
@@ -32,13 +39,19 @@ const { title, description, heading, subheading, width } = Astro.props;
 <body>
 <div class:list={['app', { 'app--wide': width === 'wide' }]}>
   <header>
-    <h1>{heading}</h1>
-    <div class="sub">{subheading}</div>
+    <slot name="masthead">
+      <h1>{heading}</h1>
+      <div class="sub">{subheading}</div>
+    </slot>
   </header>
 
   <slot />
 
-  <footer><a href="/">← Shizenryu home</a><br>Structure &gt; Discipline &gt; Measure = Growth</footer>
+  <footer>
+    <slot name="footer">
+      <a href="/">← Shizenryu home</a><br>Structure &gt; Discipline &gt; Measure = Growth
+    </slot>
+  </footer>
 </div>
 <slot name="scripts" />
 </body>
