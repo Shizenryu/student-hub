@@ -9,15 +9,26 @@ Live site deployed to Netlify, built from source into `dist/`. Repo: github.com/
 Netlify from source on every push to `main`; `dist/` is never committed. Static
 pages ship zero JavaScript; the three interactive pages (quiz, flashcards,
 practice) become React islands as they are migrated. None of them has been yet —
-five pages are still the original hand-written HTML in `public/`.
+four pages are still the original hand-written HTML in `public/`.
 
-Belt study guides are the first page out: they are real Astro routes at
-`/belts` and `/belts/<slug>` (one per grade), statically generated from
-`src/data`. `public/belts.html` is gone; `netlify.toml` 301s `/belts.html` to
-`/belts` for old bookmarks, and a small script on `/belts` upgrades a belt
-fragment (`/belts.html#5th-kyu` → `/belts#5th-kyu` → `/belts/5th-kyu`), since
-the redirect alone cannot see the fragment — browsers never send it to the
-server.
+Belt study guides and kata reference are the first pages out: they are real
+Astro routes at `/belts`, `/belts/<slug>`, `/kata` and `/kata/<slug>`,
+statically generated from `src/data`. Kata prose itself is authored as
+markdown in `src/content/kata/` — a content collection, not hand-written
+HTML — and it must stay in step with `public/assets/data.js`'s `KATA` array
+until that file retires; `astro.config.mjs`'s `astro:build:start` hook enforces
+this on every build via `assertKataProseParity()` in `src/data/kata-prose.ts`
+(the same check `tests/unit/kata-prose-parity.test.ts` runs, without a build).
+`public/belts.html` and `public/kata.html` are both gone;
+`netlify.toml` 301s `/belts.html` to `/belts` and `/kata.html` to `/kata` for
+old bookmarks, and a shared script (`public/assets/legacy-hash.js`) upgrades a
+belt or kata fragment (e.g. `/belts.html#5th-kyu` → `/belts#5th-kyu` →
+`/belts/5th-kyu`) on either page, since the redirect alone cannot see the
+fragment — browsers never send it to the server. The script is generic across
+any list page: each page marks one element with the slugs it considers valid
+and the route prefix to send them to (`data-legacy-slugs`,
+`data-legacy-prefix`), so a future migrated page needs no script change, only
+those two attributes.
 
 Pages no longer open from `file://` — run `npm run dev`. See README.md.
 
@@ -34,27 +45,34 @@ TypeScript is pinned to `^6.0.3` — do not upgrade to 7 yet. `@astrojs/check`
 
 ```
 public/            legacy pages, served verbatim, shrinking each slice
-├── index.html  quiz.html  flashcards.html  kata.html  practice.html
+├── index.html  quiz.html  flashcards.html  practice.html
 ├── assets/         data.js, store.js, legacy-hash.js, img/
 └── docs/           printable PDFs
 src/
-├── pages/404.astro, belts/index.astro, belts/[slug].astro
-│                    the belt study guides — real routes, migrated off
-│                    public/belts.html
-├── components/      shared pieces a route composes, e.g. BeltGuide.astro
+├── pages/404.astro, belts/index.astro, belts/[slug].astro,
+│                    kata/index.astro, kata/[slug].astro
+│                    the belt study guides and kata reference — real routes,
+│                    migrated off public/belts.html and public/kata.html
+├── content/kata/    kata prose as markdown, one file per kata, validated
+│                    against a content collection schema at build time
+├── components/      shared pieces a route composes, e.g. BeltGuide.astro,
+│                    KataGuide.astro
 ├── layouts/         PageShell.astro — the shared page shell every route wraps in
 ├── styles/          tokens.css (design tokens, the source of truth for colours,
 │                    radii and widths) and app.css (shell/reset styles); routes
 │                    and components add their own scoped <style> alongside this
 └── data/           typed content — src/data/index.ts is the module pages import
-                    content from; the JSON files behind it, plus integrity.ts and
-                    parity.ts (cross-reference and legacy-parity build guards)
+                    content from; the JSON files behind it, plus integrity.ts,
+                    parity.ts and kata-prose.ts (cross-reference, legacy-parity
+                    and kata prose/markdown build guards)
 scripts/            extract-legacy-data.mjs — regenerates src/data/*.json from
                     public/assets/data.js after a content edit
 tests/
 ├── build/          build-output assertions
 ├── browser/        Vitest Browser Mode
-└── unit/           content integrity and legacy-parity tests (Node, no browser)
+└── unit/           content integrity, legacy-parity and kata-prose-parity tests
+                    (Node, no browser) — the last of these keeps src/content/kata/
+                    in step with data.js's KATA array word for word
 docs/superpowers/   committed specs and plans — not to be confused with
                     public/docs/, the student-facing printable PDFs above
 astro.config.mjs  tsconfig.json  vitest.config.ts  vitest.browser.config.ts
@@ -108,8 +126,14 @@ before committing it rather than shrinking it in CSS, and add
 5. **Tone:** warm, disciplined, plain-spoken. No mysticism-for-effect. The club motto is
    `Structure > Discipline > Measure / Accountability = Growth`.
 6. **Abbreviations:** `JJ` in the syllabus means **Jiu Jitsu**. Data keeps the syllabus'
-   own wording ("JJ"); display layers expand it — belts.html has an `expand()` helper
-   that renders "Jiu Jitsu (JJ)". Any new page showing syllabus text must do the same.
+   own wording ("JJ"); display layers expand it — `expandAbbreviations` in
+   `src/data/display.ts` (formerly `belts.html`'s own `expand()` helper, before that
+   page migrated) renders "Jiu Jitsu (JJ)". A new page showing syllabus text should call
+   it, same as `/belts/<slug>` does — with one deliberate exception: `/kata/<slug>`
+   does NOT expand JJ, matching `public/kata.html`, the page it replaced, which never
+   called `expand()` either. That is a known deferral, not a bug — a later normalisation
+   slice may decide belts and kata should agree — so do not "fix" kata's syllabus rows to
+   expand JJ without raising that decision first.
 
 ## Data schemas (`public/assets/data.js`)
 
@@ -142,11 +166,18 @@ PRACTICE = [ {id, name, hint}, ... ]
           // auto-logs 'philosophy' on completion.
 
 KATA    = [ {slug, name, translation, hex, white, match, quote?, sections}, ... ]
-          // kata.html renders these. match = lowercase substrings used to auto-build
-          // the "In the syllabus" list from SYLLABUS (e.g. ["rokushu","rockushu"]
+          // /kata and /kata/<slug> are real Astro routes now; public/kata.html
+          // is gone. This array is still the source of truth data.js loads and
+          // extract-legacy-data.mjs reads from — the prose itself is authored
+          // as markdown in src/content/kata/ and must say the same thing word
+          // for word; astro.config.mjs fails the build if it drifts
+          // (assertKataProseParity in src/data/kata-prose.ts — same check as
+          // tests/unit/kata-prose-parity.test.ts, without a build).
+          // match = lowercase substrings used to auto-build the "In
+          // the syllabus" list from SYLLABUS (e.g. ["rokushu","rockushu"]
           // covers a source spelling variant). sections[].b is TRUSTED HTML —
-          // only <b>/<i> plus <p>/<ul>/<li> for multi-part sections (kata.html
-          // styles these), authored in this repo, never user input.
+          // only <b>/<i> plus <p>/<ul>/<li> for multi-part sections, authored
+          // in this repo, never user input.
 ```
 
 To add content:
@@ -163,6 +194,13 @@ To add content:
 Step 3 matters because that checksum records the known-good content — a deliberate
 content change means deliberately re-recording it, so the checksum test keeps catching
 accidental drift without blocking real edits.
+
+A change to a `KATA` entry's `sections[].b` prose is a fourth step: update the matching
+kata's markdown file in `src/content/kata/` too, word for word — `data.js` and the
+markdown are two authored copies of the same prose until `data.js` retires, and the
+build fails the moment they disagree (`assertKataProseParity()` in
+`src/data/kata-prose.ts`, run from `astro.config.mjs`'s `astro:build:start` hook;
+`tests/unit/kata-prose-parity.test.ts` proves the same thing without a build).
 
 The pages in `public/` are legacy — hand-rolled HTML with inline CSS and JS,
 kept only until each one is migrated into a real Astro route, and being

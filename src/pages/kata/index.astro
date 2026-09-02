@@ -1,0 +1,79 @@
+---
+// The kata list — replaces public/kata.html's #menu view. Each tile links to
+// its own static route (/kata/<slug>) instead of a JS hash-driven view swap.
+import PageShell from '../../layouts/PageShell.astro';
+import { KATA } from '../../data';
+import '../../styles/kata.css';
+---
+
+<PageShell
+  title="Shizenryu Kata Reference"
+  description="Four kata carry the art: one to build you, one to root you, one to free your hands, one to close the distance."
+  heading="KATA REFERENCE"
+  subheading="The root forms of Shizenryu"
+  width="wide"
+>
+  <div class="card">
+    <p class="intro">
+      Four kata carry the art: one to build you, one to root you,<br />one to free your hands,
+      one to close the distance.
+    </p>
+    <div
+      class="tiles"
+      data-legacy-slugs={JSON.stringify(KATA.map((kata) => kata.slug))}
+      data-legacy-prefix="/kata"
+    >
+      {
+        KATA.map((kata) => (
+          <a class="kata-btn kata-colour" data-slug={kata.slug} href={`/kata/${kata.slug}`}>
+            <div class="n">{kata.name}</div>
+            <div class="t">{kata.translation}</div>
+          </a>
+        ))
+      }
+    </div>
+  </div>
+
+  <script slot="scripts" is:inline src="/assets/legacy-hash.js" defer></script>
+</PageShell>
+
+<style>
+  .intro {
+    font-size: .85rem;
+    color: #666;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+
+  .tiles {
+    display: grid;
+    gap: 10px;
+  }
+
+  .kata-btn {
+    display: block;
+    border: none;
+    border-radius: var(--radius-control);
+    padding: 16px;
+    cursor: pointer;
+    text-align: left;
+    transition: transform .08s;
+    text-decoration: none;
+  }
+
+  .kata-btn:active {
+    transform: scale(.97);
+  }
+
+  .kata-btn .n {
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: .04em;
+  }
+
+  .kata-btn .t {
+    font-size: .75rem;
+    opacity: .85;
+    margin-top: 2px;
+  }
+</style>

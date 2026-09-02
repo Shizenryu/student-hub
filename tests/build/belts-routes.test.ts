@@ -57,7 +57,7 @@ describe('the belt list route (/belts)', () => {
     expect(html).not.toContain('style="');
   });
 
-  // legacy-hash.js reads this attribute to upgrade an old /belts.html#<slug>
+  // legacy-hash.js reads these attributes to upgrade an old /belts.html#<slug>
   // bookmark to its real route (see the file's own header comment). Nothing
   // else pins that contract — a renamed attribute or a dropped <script> tag
   // would silently send every bookmarked student to the generic list.
@@ -70,8 +70,10 @@ describe('the belt list route (/belts)', () => {
     expect(`${before ?? ''}${after ?? ''}`).not.toContain('src=');
     expect(body?.trim()).toBe('');
 
-    const attrMatch = /data-belt-slugs="([^"]*)"/.exec(html);
-    expect(attrMatch, 'no data-belt-slugs attribute found in the built page').not.toBeNull();
+    expect(html).toContain('data-legacy-prefix="/belts"');
+
+    const attrMatch = /data-legacy-slugs="([^"]*)"/.exec(html);
+    expect(attrMatch, 'no data-legacy-slugs attribute found in the built page').not.toBeNull();
     if (!attrMatch) return;
     const rawSlugs = attrMatch[1] ?? '';
     const parsedSlugs: unknown = JSON.parse(rawSlugs.replace(/&quot;/g, '"'));

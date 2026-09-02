@@ -10,6 +10,11 @@
   to = "/belts"
   status = 301
 
+[[redirects]]
+  from = "/kata.html"
+  to = "/kata"
+  status = 301
+
 [[headers]]
   for = "/*"
   [headers.values]

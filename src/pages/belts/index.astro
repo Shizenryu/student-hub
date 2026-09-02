@@ -18,7 +18,11 @@ import '../../styles/belts.css';
       Choose your next belt. Each guide shows everything on the syllabus for that grading, the
       key terms, and the mind behind the movement.
     </p>
-    <div class="belts" data-belt-slugs={JSON.stringify(GRADES.map((grade) => grade.slug))}>
+    <div
+      class="belts"
+      data-legacy-slugs={JSON.stringify(GRADES.map((grade) => grade.slug))}
+      data-legacy-prefix="/belts"
+    >
       {
         GRADES.map((grade) => (
           <a class="belt-btn belt-colour" data-slug={grade.slug} href={`/belts/${grade.slug}`}>

@@ -1,0 +1,36 @@
+---
+// One study guide per kata, statically generated — replaces public/kata.html's
+// #view, which switched on location.hash. Prev/next are ordinary links now.
+import KataGuide from '../../components/KataGuide.astro';
+import PageShell from '../../layouts/PageShell.astro';
+import { KATA, type Kata } from '../../data';
+
+export function getStaticPaths() {
+  return KATA.map((kata, index) => ({
+    params: { slug: kata.slug },
+    props: {
+      kata,
+      prev: index > 0 ? (KATA[index - 1] ?? null) : null,
+      next: index < KATA.length - 1 ? (KATA[index + 1] ?? null) : null,
+    },
+  }));
+}
+
+type Props = {
+  kata: Kata;
+  prev: Kata | null;
+  next: Kata | null;
+};
+
+const { kata, prev, next } = Astro.props;
+---
+
+<PageShell
+  title={`${kata.name} — Shizenryu Kata Reference`}
+  description={`${kata.translation}: what it is, how it grows with you, and where it appears on the Shizenryu syllabus.`}
+  heading="KATA REFERENCE"
+  subheading="The root forms of Shizenryu"
+  width="wide"
+>
+  <KataGuide kata={kata} prev={prev} next={next} />
+</PageShell>

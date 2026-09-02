@@ -12,6 +12,7 @@ The digital home for students of Shizenryu Karate — *The Natural Way of Karate
 | `public/quiz.html` | Dojo Quiz — Japanese terminology by belt level, plus Kumite 1–12 sequence training |
 | `public/flashcards.html` | Philosophy flashcards — the Maxims, Zen & Karate, Tui Shou, and more |
 | `/belts`, `/belts/<slug>` | Belt study guides — syllabus, key terms and the mind behind the movement for each grade. A real Astro route now; `public/belts.html` is gone and `belts.html` redirects here for old bookmarks |
+| `/kata`, `/kata/<slug>` | Kata reference — what each kata is, what its name means, and where it lives in the syllabus. A real Astro route now; `public/kata.html` is gone and `kata.html` redirects here for old bookmarks. Kata prose is authored as markdown in `src/content/kata/` |
 | `public/docs/` | Printable PDFs: grade study guides, philosophy study guide, belt passport |
 | `public/assets/data.js` | All quiz/flashcard content — see CLAUDE.md's "To add content" procedure before editing |
 
