@@ -266,4 +266,28 @@ import { MAXIMS } from '../data';
     border-radius: var(--radius-tag);
     letter-spacing: .08em;
   }
+
+  /* PageShell's shared footer rule (app.css) sets a smaller font-size, a
+     smaller margin-top and no line-height at all — this page's original
+     footer set its own value for all four declarations below (color happens
+     to already match the shared rule's --faint token exactly, but is
+     restated here so this override is self-contained). Without it the two
+     footer lines sit measurably closer together and higher up than in
+     production.
+
+     :global() is required, not stylistic: the <footer> tag itself is
+     rendered by PageShell.astro, not by this file — only its slotted text
+     content is authored here. A scoped `footer { ... }` rule compiles to
+     `footer[data-astro-cid-<this-file>]`, which never matches an element
+     PageShell rendered, so it silently did nothing (confirmed by measuring
+     dist/index.html's computed footer styles before and after). Because
+     this stylesheet is only bundled into the page that imports this
+     component, :global(footer) still reaches only this route's footer, not
+     belts/kata's. */
+  :global(footer) {
+    font-size: .72rem;
+    color: var(--faint);
+    margin-top: 28px;
+    line-height: 1.7;
+  }
 </style>
