@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { KATA, SYLLABUS } from '../../src/data';
+import { kataSectionsFromJson, splitIntoSections, visibleText } from '../../src/data/kata-prose';
 
 // Same rationale as tests/build/belts-routes.test.ts: asserting against the built
 // HTML files pins the same behaviour without wiring a static file server into
@@ -89,22 +90,19 @@ describe('the kata list route (/kata)', () => {
   });
 });
 
-describe('a kata study guide route (/kata/<slug>)', () => {
-  // Mara has a quote and multiple sections; Naifuanchin has two match needles
-  // (its json key covers a source spelling variant) — between the two fixtures
-  // this exercises every rule in the behaviour table.
-  const slug = 'mara';
-  const kata = KATA.find((entry) => entry.slug === slug);
-  if (!kata) throw new Error(`fixture kata "${slug}" not found in KATA`);
-
+// Generalised over all four kata (previously mara-only) — Naifuanchin's two
+// match needles (its json key covers a source spelling variant) are still
+// exercised, but every kata's banner, headings, quote and syllabus rows are
+// now pinned, not just one fixture's.
+describe.each(KATA)('a kata study guide route (/kata/<slug>): $slug', (kata) => {
   let html: string;
 
   beforeAll(async () => {
-    html = stripScopeAttribute(await readKataPage(slug));
+    html = stripScopeAttribute(await readKataPage(kata.slug));
   });
 
   it('shows the kata banner name and translation', () => {
-    expect(html).toContain(`class="banner kata-colour" data-slug="${slug}"`);
+    expect(html).toContain(`class="banner kata-colour" data-slug="${kata.slug}"`);
     expect(html).toContain(`>${astroEscapeText(kata.name)}<`);
     expect(html).toContain(`>${astroEscapeText(kata.translation)}<`);
   });
@@ -113,7 +111,7 @@ describe('a kata study guide route (/kata/<slug>)', () => {
     const positions = kata.sections.map((section) => {
       const heading = `>${astroEscapeText(section.h)}</h2>`;
       const index = html.indexOf(heading);
-      expect(index, `heading "${section.h}" not found in ${slug}'s page`).toBeGreaterThan(-1);
+      expect(index, `heading "${section.h}" not found in ${kata.slug}'s page`).toBeGreaterThan(-1);
       return index;
     });
 
@@ -134,33 +132,75 @@ describe('a kata study guide route (/kata/<slug>)', () => {
     expect(html).toContain(`— ${astroEscapeText(kata.quote.src)}`);
   });
 
-  it('shows every matching syllabus row, without JJ expansion', () => {
+  it('shows every matching syllabus row, in order, and only those rows, without JJ expansion', () => {
     const rows = SYLLABUS.filter((item) => {
       const blob = `${item.section} ${item.item} ${item.detail}`.toLowerCase();
       return kata.match.some((needle) => blob.includes(needle));
     });
     expect(rows.length).toBeGreaterThan(0);
 
+    // Every rendered row is one of the expected rows and nothing else — an
+    // over-matching filter (e.g. one that lists the whole syllabus) inflates
+    // this count past rows.length and fails here, even though every expected
+    // row individually still appears somewhere in the page.
+    const renderedRowCount = (html.match(/class="syl"/g) ?? []).length;
+    expect(renderedRowCount).toBe(rows.length);
+
+    // Some rows share identical grade+item text (e.g. two Shodan rows both
+    // reading "Complete Mara reflex flow drill" — one Adult, one Junior), so
+    // a plain html.indexOf(marker) would find the same first occurrence for
+    // both and mistake a genuinely-ordered pair for one out of order.
+    // Searching forward from the end of the previous match instead treats
+    // the page as a single pass, matching each row to its own occurrence.
+    let searchFrom = 0;
     for (const row of rows) {
-      expect(html).toContain(`<span class="g">${astroEscapeText(row.grade)}</span> ${astroEscapeText(row.item)}`);
+      const marker = `<span class="g">${astroEscapeText(row.grade)}</span> ${astroEscapeText(row.item)}`;
+      const index = html.indexOf(marker, searchFrom);
+      expect(index, `row "${row.item}" not found in syllabus order in ${kata.slug}'s page`).toBeGreaterThan(-1);
       if (row.track === 'Adult') expect(html).toContain('class="tag adult"');
       if (row.track === 'Junior') expect(html).toContain('class="tag junior"');
+      searchFrom = index + marker.length;
     }
 
     // kata.html never calls expand() on syllabus text — unlike the belts page,
-    // JJ is shown exactly as the syllabus spells it, never expanded.
+    // JJ is shown exactly as the syllabus spells it, never expanded. True
+    // regardless of whether this kata happens to match a JJ row today.
+    expect(html).not.toContain('Jiu Jitsu (JJ)');
+
     const jjRow = SYLLABUS.find((item) => {
       const blob = `${item.section} ${item.item} ${item.detail}`.toLowerCase();
       return kata.match.some((needle) => blob.includes(needle)) && /\bJJ\b/.test(item.item);
     });
     if (jjRow) {
-      expect(html).not.toContain('Jiu Jitsu (JJ)');
       expect(html).toContain(astroEscapeText(jjRow.item));
     }
   });
 
   it('ships no inline style="" attribute', () => {
     expect(html).not.toContain('style="');
+  });
+});
+
+// FINDING 1: emphasis placement is martial instruction here, not decoration —
+// a phrase bolded correctly but attached to the wrong sentence, or bolded in
+// the wrong section, changes what a student is told to practise. This
+// compares ORDERED (block, run) sequences derived from the BUILT page against
+// the same ordered model derived from kata.json, per kata, per section — not
+// a flattened bag of emphasised substrings — so a relocated <b>, a <b>/<i>
+// swap, a reordered list, or a dropped word all fail here even though the
+// existing character-for-character test below (which flattens to plain text)
+// would not catch every one of them on its own.
+describe("a kata's shipped emphasis matches kata.json, block for block, in order", () => {
+  it.each(KATA.map((kata) => kata.slug))('%s', async (slug) => {
+    const kata = KATA.find((entry) => entry.slug === slug);
+    expect(kata).toBeDefined();
+    if (!kata) return;
+
+    const html = await readKataPage(slug);
+    const actual = splitIntoSections(extractProseHtml(html));
+    const expected = kataSectionsFromJson(kata);
+
+    expect(actual).toStrictEqual(expected);
   });
 });
 
@@ -225,27 +265,16 @@ describe('prev/next navigation between kata', () => {
 // browser shows the literal characters written in data.js — the built route
 // must show exactly the same characters, not a typographically "improved" copy.
 //
-// Deliberately NOT using kata-prose-parity.test.ts's normalizeText, which folds
-// curly quotes back to straight ones — the right call for Task 1's fidelity
-// proof (it compares two renderers of the same semantic content) but the wrong
-// call here: this test's whole job is to catch exactly that folding happening
-// for real, unauthorised, in the shipped page.
-function decodeHtmlEntities(text: string): string {
-  return text
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&amp;/g, '&');
-}
-
-function collapseWhitespace(text: string): string {
-  return text.replace(/\s+/g, ' ').trim();
-}
-
-function stripTags(html: string): string {
-  return html.replace(/<[^>]+>/g, ' ');
-}
+// Deliberately NOT using kata-prose-parity.test.ts's quote-folding, which
+// folds curly quotes back to straight ones — the right call for that test's
+// fidelity proof (it compares two renderers of the same semantic content,
+// one of which applies smart punctuation the shipped pipeline does not) but
+// the wrong call here: this test's whole job is to catch exactly that kind
+// of folding happening for real, unauthorised, in the shipped page.
+// decodeHtmlEntities/collapseWhitespace/stripTags/visibleText are imported
+// from src/data/kata-prose.ts — the shared comparator helper, also used by
+// kata-prose-parity.test.ts, so this repo does not carry three near-duplicate
+// copies of the same text-normalisation logic.
 
 // kata.json's sections carry heading and body separately; the rendered page's
 // headings live inside the same flowing document (see KataGuide.astro's
@@ -253,10 +282,6 @@ function stripTags(html: string): string {
 // comparing, to compare body prose against body prose only.
 function stripHeadings(html: string): string {
   return html.replace(/<h2[^>]*>[\s\S]*?<\/h2>/g, ' ');
-}
-
-function visibleText(html: string): string {
-  return collapseWhitespace(decodeHtmlEntities(stripTags(html)));
 }
 
 // Captures everything inside KataGuide.astro's <div class="prose">, up to the

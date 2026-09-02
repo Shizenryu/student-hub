@@ -19,11 +19,15 @@ describe('kata.css carries every kata\'s exact colour from kata.json', () => {
 
     const css = await readFile(KATA_CSS_PATH, 'utf8');
     const expectedTextColor = textColorForWhite(kata.white);
-    const rulePattern = new RegExp(`\\.kata-colour\\[data-slug="${slug}"\\]\\s*\\{[^}]*\\}`);
-    const match = rulePattern.exec(css);
+    const rulePattern = new RegExp(`\\.kata-colour\\[data-slug="${slug}"\\]\\s*\\{[^}]*\\}`, 'g');
+    const matches = [...css.matchAll(rulePattern)];
 
-    expect(match, `no rule for data-slug="${slug}" in ${KATA_CSS_PATH}`).not.toBeNull();
-    const rule = match?.[0] ?? '';
+    // A second, later rule for the same slug (e.g. a conflicting one
+    // appended by mistake) would win in the cascade and silently change what
+    // renders — exec() alone would keep matching only the first rule and
+    // never notice. Asserting exactly one rule catches that.
+    expect(matches, `no rule for data-slug="${slug}" in ${KATA_CSS_PATH}`).toHaveLength(1);
+    const rule = matches[0]?.[0] ?? '';
 
     expect(rule, `${slug}'s rule does not set background: ${kata.hex}`).toContain(`background: ${kata.hex};`);
     expect(rule, `${slug}'s rule does not set color: ${expectedTextColor}`).toContain(

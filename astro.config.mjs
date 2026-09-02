@@ -3,6 +3,7 @@ import react from '@astrojs/react';
 import { satteri } from '@astrojs/markdown-satteri';
 
 import { assertContentIntegrity } from './src/data/integrity';
+import { assertKataProseParity } from './src/data/kata-prose';
 import { assertLegacyParity } from './src/data/parity';
 
 export default defineConfig({
@@ -34,6 +35,7 @@ export default defineConfig({
         'astro:build:start': async () => {
           assertContentIntegrity();
           await assertLegacyParity();
+          await assertKataProseParity();
         },
       },
     },

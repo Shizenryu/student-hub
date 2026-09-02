@@ -1,5 +1,6 @@
-import { defineCollection, z } from 'astro:content';
+import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
+import { z } from 'astro/zod';
 
 // The kata prose, migrated off the trusted-HTML strings in src/data/kata.json (see
 // scripts/convert-kata-prose.mjs) into real markdown under src/content/kata/. This
