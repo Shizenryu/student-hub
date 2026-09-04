@@ -1,0 +1,23 @@
+---
+// The philosophy flashcards — the site's second React island.
+//
+// The deck list is content and ships from src/data at build time; everything
+// after that (which cards, in what order, and what the student got wrong) is a
+// fact about their own browser. The ordering rules live in a pure module so they
+// are testable without one; see src/components/flashcards-queue.ts.
+import PageShell from '../layouts/PageShell.astro';
+import StreakChipSlot from '../components/StreakChipSlot.astro';
+import Flashcards from '../components/Flashcards';
+import { DECKS } from '../data';
+import '../styles/flashcards.css';
+---
+<PageShell
+  title="Shizenryu Philosophy Flashcards"
+  description="The ideas behind the art — the Maxims, Zen & Karate, Tui Shou, the 6 Human Needs and more."
+  variant="flashcards"
+  heading="SHIZENRYU FLASHCARDS"
+  subheading="The ideas behind the art"
+>
+  <StreakChipSlot slot="header" />
+  <Flashcards client:load decks={DECKS} />
+</PageShell>

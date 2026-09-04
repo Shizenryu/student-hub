@@ -24,7 +24,7 @@ const deckOf = (name: string, fronts: readonly string[]): Deck => ({
 });
 
 const fronts = (queue: ReturnType<typeof buildQueue>): readonly string[] =>
-  queue.map((entry) => entry.card[0]);
+  queue.map((entry) => entry.front);
 
 // The legacy shuffle walks from the end, swapping each element with one at
 // Math.floor(random() * (i + 1)). A source returning 0 therefore always picks

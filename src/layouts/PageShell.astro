@@ -24,7 +24,7 @@ type Props = {
   heading?: string;
   subheading?: string;
   width?: 'default' | 'wide';
-  variant?: 'inner' | 'home' | 'practice';
+  variant?: 'inner' | 'home' | 'practice' | 'flashcards';
 };
 
 const { title, description, heading, subheading, width, variant } = Astro.props;
@@ -56,7 +56,12 @@ if (!Astro.slots.has('header') && (!heading || !subheading)) {
 <div
   class:list={[
     'app',
-    { 'app--wide': width === 'wide', 'app--home': variant === 'home', 'app--practice': variant === 'practice' },
+    {
+      'app--wide': width === 'wide',
+      'app--home': variant === 'home',
+      'app--practice': variant === 'practice',
+      'app--flashcards': variant === 'flashcards',
+    },
   ]}
 >
   <header>

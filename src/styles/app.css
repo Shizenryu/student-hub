@@ -28,6 +28,15 @@ body {
   --app-max: 560px;
 }
 
+/* The flashcards page's subheading is gold where every other page's is red. A
+   variant rather than a rule in flashcards.css because PageShell renders the
+   .sub element, so a page-level `header .sub` would tie against app.css's own and
+   be decided by stylesheet order. Slice 9 decides whether the site has one
+   subheading colour or two. */
+.app--flashcards header .sub {
+  color: var(--gold);
+}
+
 /* The practice page's header sits 4px closer to its card than every other page's.
    Quiz and flashcards both use the shared 18px, so this is a one-off rather than
    the start of a family — carried across so the migrated page matches the one it

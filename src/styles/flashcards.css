@@ -1,0 +1,238 @@
+/* The flashcards page's own styling, transcribed from the hand-written
+   public/flashcards.html this route replaced.
+
+   A plain stylesheet imported by src/pages/flashcards.astro rather than a scoped
+   <style> block, for the reason practice.css records: almost everything here
+   styles markup React renders, and Astro's scoped styles stamp a data-astro-cid
+   attribute on elements the .astro file emits, which an island's DOM never gets.
+   Astro bundles it into this page alone.
+
+   Values come from tokens.css wherever one matches exactly. The literals left are
+   ones with no token: #f5f1ea (the card back's text), #666 and #777 (two greys
+   between --muted #888 and --ink-soft #444), and the six deck colours, which are
+   the belt palette used for a different purpose and are Slice 9's to reconcile.
+
+   `.card-ui` is this page's own card, a third alongside .card and the belt/kata
+   guides' — same idea, different padding. Also Slice 9's. */
+
+.intro {
+  font-size: .85rem;
+  color: #666;
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+.card-ui {
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 20px;
+  margin-bottom: 14px;
+}
+
+.decks {
+  display: grid;
+  gap: 10px;
+}
+
+.deck-btn {
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 14px 16px;
+  font-size: .98rem;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+}
+
+.deck-btn small {
+  font-weight: 400;
+  opacity: .85;
+  font-size: .7rem;
+  margin-left: 10px;
+  text-align: right;
+}
+
+/* The deck colours. The same hexes as the belt palette, used here to tell six
+   decks apart rather than to mean a grade — which is why they are literals and not
+   the belt tokens: a deck is not a belt, and Slice 9 owns deciding whether they
+   should share a scale. d7 is not a deck; it is the "Everything" button. */
+.d1 { background: #C8102E; }
+.d2 { background: #161616; }
+.d3 { background: #00843D; }
+.d4 { background: #0072CE; }
+.d5 { background: #702F8A; }
+.d6 { background: #8B5A2B; }
+.d7 { background: #9A7D00; }
+
+.meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: .75rem;
+  color: var(--muted);
+  letter-spacing: .08em;
+  margin-bottom: 10px;
+}
+
+.scene {
+  perspective: 1200px;
+  margin-bottom: 14px;
+}
+
+/* The card is a <button>, where the page this replaces used a div with an onclick.
+   Flipping it is the only way to see the answer, so on a div the page cannot be
+   used from a keyboard at all. These four declarations strip the button back to
+   what the div rendered as; the pixel proof in the PR is what says they do. */
+.flash {
+  appearance: none;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  padding: 0;
+  display: block;
+  position: relative;
+  width: 100%;
+  min-height: 270px;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transition: transform .5s;
+}
+
+.flash.flipped {
+  transform: rotateY(180deg);
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: var(--radius-card);
+  padding: 26px 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .10);
+}
+
+.front {
+  background: var(--surface);
+  border-top: 5px solid var(--red);
+}
+
+.back {
+  background: var(--dark);
+  color: #f5f1ea;
+  transform: rotateY(180deg);
+  border-top: 5px solid var(--gold);
+}
+
+.face .cat {
+  font-size: .65rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 12px;
+}
+
+.face .txt {
+  font-size: 1.05rem;
+  line-height: 1.55;
+  font-weight: 500;
+}
+
+.back .txt {
+  font-size: .98rem;
+  font-weight: 400;
+}
+
+.tapnote {
+  font-size: .68rem;
+  color: var(--faint);
+  margin-top: 14px;
+  letter-spacing: .1em;
+}
+
+.btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.again,
+.got {
+  padding: 14px;
+  border: none;
+  border-radius: var(--radius-control);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.again {
+  background: var(--surface);
+  color: var(--red);
+  border: 2px solid var(--red);
+}
+
+.got {
+  background: var(--good);
+  color: #fff;
+}
+
+/* Hidden, not removed: the grading buttons hold their space so revealing the
+   answer does not move the card. */
+.btns.hide {
+  visibility: hidden;
+}
+
+.home-link {
+  display: block;
+  text-align: center;
+  margin-top: 16px;
+  font-size: .8rem;
+  color: var(--muted-light);
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+}
+
+.done-big {
+  font-size: 2.4rem;
+  text-align: center;
+  margin: 10px 0;
+}
+
+.done-msg {
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.done-sub {
+  text-align: center;
+  font-size: .85rem;
+  color: #777;
+  margin-bottom: 16px;
+}
+
+.next-btn {
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: var(--radius-control);
+  background: var(--dark);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+}

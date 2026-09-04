@@ -20,7 +20,16 @@ export const EVERYTHING = Symbol('everything');
 // 'Everything' happened to miss.
 export type DeckChoice = Deck | typeof EVERYTHING;
 
-export type QueuedCard = { readonly card: TermPair; readonly category: string };
+// The two sides resolved to strings. src/data types a card as `readonly string[]`,
+// so indexing it yields `string | undefined`; narrowing here once keeps that out of
+// the component, the tests and every assertion about ordering.
+export type QueuedCard = { readonly front: string; readonly back: string; readonly category: string };
+
+const queued = (card: TermPair, category: string): QueuedCard => ({
+  front: card[0] ?? '',
+  back: card[1] ?? '',
+  category,
+});
 
 export function deckSize(deck: DeckChoice, decks: readonly Deck[]): number {
   return deck === EVERYTHING ? decks.reduce((total, each) => total + each.cards.length, 0) : deck.cards.length;
@@ -58,10 +67,10 @@ export function buildQueue(options: {
   // still see where each card came from.
   const cards: readonly QueuedCard[] =
     deck === EVERYTHING
-      ? decks.flatMap((each) => each.cards.map((card) => ({ card, category: each.name })))
-      : deck.cards.map((card) => ({ card, category: deck.name }));
+      ? decks.flatMap((each) => each.cards.map((card) => queued(card, each.name)))
+      : deck.cards.map((card) => queued(card, deck.name));
 
-  const missCount = (entry: QueuedCard) => misses[hash(entry.card[0])] ?? 0;
+  const missCount = (entry: QueuedCard) => misses[hash(entry.front)] ?? 0;
 
   // Sorting AFTER the shuffle, and relying on the sort being stable: cards with
   // equal miss counts — which is most of them, and all of them for a student who
