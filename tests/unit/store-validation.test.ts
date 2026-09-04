@@ -68,16 +68,47 @@ describe('state that cannot be trusted', () => {
     { label: 'a streak missing its count', stored: '{"streak":{"last":20635,"best":30}}' },
     { label: 'a streak with a NaN day', stored: '{"streak":{"last":null,"count":1,"best":1}}' },
     { label: 'best scores that are not numbers', stored: '{"best":{"terms":"eight"}}' },
-    { label: 'a practice log holding a bare string', stored: '{"plog":{"20635":"terms"}}' },
-    { label: 'a practice log holding non-strings', stored: '{"plog":{"20635":[1,2]}}' },
+    // 1e999 is valid JSON and parses to Infinity, which is how a non-finite number
+    // actually reaches this guard --- the literals NaN and Infinity are not JSON at
+    // all. An infinite day number makes every streak comparison false forever.
+    { label: 'a streak day that overflows to Infinity', stored: '{"streak":{"last":1e999,"count":1,"best":1}}' },
+    { label: 'a best score that overflows to Infinity', stored: '{"best":{"terms":1e999}}' },
+    // Keyed on today, so a value that leaked through would show up in a read.
+    { label: 'a practice log holding a bare string', stored: `{"plog":{"${JULY_2_DAY}":"terms"}}` },
+    { label: 'a practice log holding non-strings', stored: `{"plog":{"${JULY_2_DAY}":[1,2]}}` },
   ];
 
-  it.each(unusable)('starts clean when the stored state is $label', ({ stored }) => {
-    expect(storeReading(stored).streakInfo()).toEqual({
-      count: 0,
+  // Every reader, not just the streak. Mutation testing found that asserting the
+  // streak alone could not tell "discarded" from "accepted": dropping the guard's
+  // best-scores or practice-log clause left the streak reading zero either way,
+  // and the suite stayed green while rubbish flowed through to the page.
+  it.each(unusable)('starts every reader clean when the stored state is $label', ({ stored }) => {
+    const store = storeReading(stored);
+
+    expect({
+      streak: store.streakInfo(),
+      best: store.best('terms'),
+      misses: store.misses(),
+      practisedToday: store.todayPractice(),
+    }).toEqual({
+      streak: { count: 0, best: 0, today: false, alive: false },
       best: 0,
-      today: false,
-      alive: false,
+      misses: {},
+      practisedToday: [],
+    });
+  });
+
+  it.each(unusable)('writes a clean state over $label rather than alongside it', ({ stored }) => {
+    // The other half of the same point, and the only thing that catches a guard
+    // which accepts a top-level ARRAY: every reader answers cleanly for an array
+    // too, but the next write spreads it into numeric keys and the result is
+    // something store.js cannot read on a legacy page.
+    const storage = fakeStorage({ [KEY]: stored });
+
+    createStore({ storage, now: () => new Date(JULY_2) }).markTrained();
+
+    expect(JSON.parse(storage.read(KEY) ?? 'null')).toEqual({
+      streak: { last: JULY_2_DAY, count: 1, best: 1 },
     });
   });
 
@@ -88,16 +119,4 @@ describe('state that cannot be trusted', () => {
     expect(() => storeReading(stored).streakInfo()).not.toThrow();
   });
 
-  it('replaces unusable state rather than merging the next write into it', () => {
-    const storage = fakeStorage({ [KEY]: '{"streak":"twelve","best":{"terms":"eight"}}' });
-    const store = createStore({ storage, now: () => new Date(JULY_2) });
-
-    store.markTrained();
-
-    // The rubbish is gone, not carried alongside the repaired streak: a later read
-    // by store.js on a legacy page has to find a shape it can use too.
-    expect(JSON.parse(storage.read(KEY) ?? 'null')).toEqual({
-      streak: { last: JULY_2_DAY, count: 1, best: 1 },
-    });
-  });
 });

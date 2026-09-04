@@ -80,9 +80,11 @@ const NO_STREAK: StreakState = { last: 0, count: 0, best: 0 };
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-// Number.isFinite and not typeof alone: NaN and Infinity survive a JSON round trip
-// as null, but a hand-edited key can hold either, and both poison day arithmetic
-// silently rather than loudly.
+// Number.isFinite and not typeof alone. The literals NaN and Infinity are not
+// valid JSON, so it is tempting to think this cannot happen — but 1e999 IS valid
+// JSON and parses to Infinity. An infinite day number makes every streak
+// comparison false forever, so the student's streak silently never advances
+// again. Tested in tests/unit/store-validation.test.ts.
 const isNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
 
 const isNumberMap = (value: unknown): boolean => isRecord(value) && Object.values(value).every(isNumber);

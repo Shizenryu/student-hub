@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { createStore } from '../../src/domain/store';
 import { fakeStorage, unwritableStorage } from './fake-storage';
 
+const KEY = 'shizenryu-progress-v1';
+
 // The streak is the thing students actually care about, and the thing that
 // silently breaks if the day arithmetic or the transition rules are a step out.
 // These drive it through whole days rather than through internal state: a store
@@ -31,6 +33,20 @@ describe('training on a day', () => {
     store.markTrained();
 
     expect(store.markTrained()).toEqual({ count: 1, best: 1, today: true });
+  });
+
+  it('leaves an established streak alone when training twice in one day', () => {
+    // The same-day case above starts from a count of 1, where "unchanged" and
+    // "reset to 1" look identical. Mutation testing found that: a store that fell
+    // through to the reset branch passed every test. From a count of 2 the two
+    // answers differ, and a student who trains twice on a Tuesday must not be told
+    // their streak is back to day one.
+    const storage = fakeStorage();
+    storeOn(JULY_1, storage).markTrained();
+    const secondDay = storeOn(JULY_2, storage);
+    secondDay.markTrained();
+
+    expect(secondDay.markTrained()).toEqual({ count: 2, best: 2, today: true });
   });
 
   it('extends the streak when the last session was yesterday', () => {
@@ -104,6 +120,30 @@ describe('reading the streak without training', () => {
     storeOn(JULY_3, storage).streakInfo();
 
     expect(storeOn(JULY_3, storage).markTrained()).toEqual({ count: 3, best: 3, today: true });
+  });
+});
+
+describe('reading is only ever a read', () => {
+    it('writes nothing at all when a fresh page just looks at the streak', () => {
+    // Mutation testing found a store that saved on every read still passed: the
+    // state it wrote back was usually identical, so nothing noticed. It is not
+    // harmless. For a student with no data it creates the key from nothing, and
+    // for a student with unreadable data it overwrites what was there with the
+    // empty state the guard substituted --- destroying, on a mere page view, data
+    // a later version might have been able to migrate.
+    const storage = fakeStorage();
+
+    storeOn(JULY_1, storage).streakInfo();
+
+    expect(storage.read(KEY)).toBeNull();
+  });
+
+  it('does not rewrite storage when reading a streak it could not parse', () => {
+    const storage = fakeStorage({ [KEY]: 'not json {' });
+
+    storeOn(JULY_1, storage).streakInfo();
+
+    expect(storage.read(KEY)).toBe('not json {');
   });
 });
 
