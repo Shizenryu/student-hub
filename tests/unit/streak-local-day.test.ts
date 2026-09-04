@@ -1,21 +1,11 @@
-import { readFile } from 'node:fs/promises';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// store.js is legacy plain JavaScript: an IIFE assigning to a top-level `const Store`,
-// with no exports, exactly like public/assets/data.js (see
-// tests/unit/legacy-data-parity.test.ts). It is evaluated inside a Function body that
-// returns the binding — `eval` would not work, because `const` inside eval is
-// block-scoped and never escapes.
-const STORE_SOURCE = 'public/assets/store.js';
+import { loadLegacyStore } from './store-fixtures';
 
-type StoreModule = {
-  today: () => number;
-};
-
-async function loadStore(): Promise<StoreModule> {
-  const source = await readFile(STORE_SOURCE, 'utf8');
-  return new Function(`${source}\nreturn Store;`)() as StoreModule;
-}
+// The loader lives in store-fixtures.ts, shared with store-parity.test.ts, which
+// needs the same evaluation trick against the same file. Using it here also drops
+// the `as StoreModule` this file used to need: the shared loader narrows through a
+// real type guard, which is what the project's no-assertions rule asks for.
 
 describe('Store.today() follows the local calendar date, not the UTC one', () => {
   beforeEach(() => {
@@ -32,7 +22,7 @@ describe('Store.today() follows the local calendar date, not the UTC one', () =>
     // already-finished day.
     vi.setSystemTime(new Date('2026-07-01T23:30:00Z'));
 
-    const Store = await loadStore();
+    const Store = await loadLegacyStore();
 
     // Independently derived, NOT via Date.UTC(2026,6,2)/86400000 (the expression the
     // fix itself uses) — days-since-epoch to 2026-07-02, worked out by hand:
@@ -54,7 +44,7 @@ describe('Store.today() follows the local calendar date, not the UTC one', () =>
     // change behaviour when there is no UTC/local disagreement to resolve.
     vi.setSystemTime(new Date('2026-07-01T12:00:00Z'));
 
-    const Store = await loadStore();
+    const Store = await loadLegacyStore();
 
     // Same independent derivation as above, one day earlier: 20454 + 181 = 20635.
     const expectedDayNumberFor1stJuly2026 = 20635;
