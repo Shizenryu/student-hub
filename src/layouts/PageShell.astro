@@ -9,9 +9,11 @@
 import '../styles/tokens.css';
 import '../styles/app.css';
 
-// `masthead` and `footer` are overridable slots that fall back to today's
-// markup, so belts/kata (and any future inner page) keep working with no slot
-// supplied. `variant` is the shell's spacing scale, carried as an enumerated
+// The header renders the ordinary heading pair from props and then whatever the
+// page adds, so a page can APPEND to the header rather than replace it — quiz,
+// flashcards and practice all put a streak chip after the subheading. Belts and
+// kata pass only the props; the home page passes only the slot, replacing the pair
+// with its crest and three lines. `footer` is the same shape of override. `variant` is the shell's spacing scale, carried as an enumerated
 // modifier class exactly as `width` already is — so a route adjusts the shell
 // through the shell's own vocabulary instead of reaching into its elements
 // with :global(). Today only the home page differs, and only until Slice 9
@@ -22,21 +24,20 @@ type Props = {
   heading?: string;
   subheading?: string;
   width?: 'default' | 'wide';
-  variant?: 'inner' | 'home';
+  variant?: 'inner' | 'home' | 'practice';
 };
 
 const { title, description, heading, subheading, width, variant } = Astro.props;
 
-// heading/subheading are optional only because the masthead slot replaces them.
-// (That is the whole reason for the `?` above.)
-// Nothing in the type system ties those two facts together, so a route
-// supplying neither typechecks and ships an empty <h1> — invisible in review,
-// visible to a student. Astro.slots is the only place the slot is observable,
-// so this is a build-time throw rather than a type: it runs while the page is
+// heading/subheading are optional only because a page may supply the header slot
+// instead. Nothing in the type system ties those two facts together, so a route
+// supplying neither typechecks and ships an empty header — invisible in review,
+// visible to a student. Astro.slots is the only place a slot is observable, so
+// this is a build-time throw rather than a type: it runs while the page is
 // generated, which fails `npm run build` and CI, not a browser.
-if (!Astro.slots.has('masthead') && (!heading || !subheading)) {
+if (!Astro.slots.has('header') && (!heading || !subheading)) {
   throw new Error(
-    `PageShell rendering "${title}" supplied neither a masthead slot nor both heading and subheading — ` +
+    `PageShell rendering "${title}" supplied neither a header slot nor both heading and subheading — ` +
       'one of the two is required, or the page ships an empty header',
   );
 }
@@ -52,12 +53,16 @@ if (!Astro.slots.has('masthead') && (!heading || !subheading)) {
 <link rel="apple-touch-icon" href="/assets/img/icon.png">
 </head>
 <body>
-<div class:list={['app', { 'app--wide': width === 'wide', 'app--home': variant === 'home' }]}>
+<div
+  class:list={[
+    'app',
+    { 'app--wide': width === 'wide', 'app--home': variant === 'home', 'app--practice': variant === 'practice' },
+  ]}
+>
   <header>
-    <slot name="masthead">
-      <h1>{heading}</h1>
-      <div class="sub">{subheading}</div>
-    </slot>
+    {heading && <h1>{heading}</h1>}
+    {subheading && <div class="sub">{subheading}</div>}
+    <slot name="header" />
   </header>
 
   <slot />

@@ -1,5 +1,5 @@
 ---
-// The home page — replaces public/index.html. Its masthead (crest image,
+// The home page — replaces public/index.html. Its header (crest image,
 // three lines) and its footer text are the one part of every other route's
 // shell this page doesn't want, so PageShell now offers optional `masthead`
 // and `footer` slots — falling back to the h1/.sub pair and the "← Shizenryu
@@ -15,6 +15,7 @@
 // of carrying its own copy of the content.
 import PageShell from '../layouts/PageShell.astro';
 import { MAXIMS } from '../data';
+import StreakChipSlot from '../components/StreakChipSlot.astro';
 ---
 
 <PageShell
@@ -22,7 +23,7 @@ import { MAXIMS } from '../data';
   description="Shizenryu Karate student hub: terminology quiz, kumite sequences, philosophy flashcards and study guides."
   variant="home"
 >
-  <Fragment slot="masthead">
+  <Fragment slot="header">
     <div class="crest">
       <img src="/assets/img/ki.png" width="200" height="236" alt="Shizenryu Ki logo" />
     </div>
@@ -34,11 +35,11 @@ import { MAXIMS } from '../data';
   <div class="maxim" data-maxims={JSON.stringify(MAXIMS)}>
     <span>Maxim of the day</span><em id="maxim"></em>
   </div>
-  <div id="streakChip" class="streak-chip"></div>
+  <StreakChipSlot />
 
   <h2>Train</h2>
   <div class="tiles">
-    <a class="tile practice" href="/practice.html">
+    <a class="tile practice" href="/practice">
       <div class="t">Daily Practice</div>
       <div class="d">Tick off what you practised today — one thing is enough to keep your streak. Even a stretch.</div>
     </a>
@@ -162,12 +163,11 @@ import { MAXIMS } from '../data';
     text-transform: uppercase;
   }
 
-  .streak-chip {
+  /* Only what differs from app.css's shared .streak-chip rule. */
+  :global(.streak-chip) {
     text-align: center;
     font-size: .8rem;
-    color: var(--gold);
     margin: -14px 0 20px;
-    min-height: 1em;
   }
 
   h2 {

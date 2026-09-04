@@ -1,0 +1,29 @@
+---
+// The daily practice tracker — the first React island in this site.
+//
+// Everything the student sees except the tile list is a fact about their own
+// browser (what they ticked today, which of the last thirty days they trained,
+// whether the streak is alive), so this page has to run code where a belt guide
+// does not. The activities themselves are content and come from src/data at build
+// time, which is what takes public/assets/data.js off this page entirely.
+import PageShell from '../layouts/PageShell.astro';
+import StreakChipSlot from '../components/StreakChipSlot.astro';
+import Practice from '../components/Practice';
+import { PRACTICE } from '../data';
+import '../styles/practice.css';
+---
+<PageShell
+  title="Shizenryu Daily Practice"
+  description="Tick off what you practised today — one thing is enough to keep your streak."
+  variant="practice"
+  heading="DAILY PRACTICE"
+  subheading="One thing a day is enough"
+>
+  {/* Appended after the heading pair, which is where every page in this site puts
+      the chip. The island portals its text into it. */}
+  <StreakChipSlot slot="header" />
+
+  <div class="card">
+    <Practice client:load activities={PRACTICE} />
+  </div>
+</PageShell>

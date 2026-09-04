@@ -40,7 +40,7 @@ describe('the home route (/)', () => {
   const tiles: ReadonlyArray<{ readonly title: string; readonly href: string; readonly description: string }> = [
     {
       title: 'Daily Practice',
-      href: '/practice.html',
+      href: '/practice',
       description:
         'Tick off what you practised today — one thing is enough to keep your streak. Even a stretch.',
     },
