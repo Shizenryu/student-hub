@@ -283,11 +283,34 @@ import { MAXIMS } from '../data';
      dist/index.html's computed footer styles before and after). Because
      this stylesheet is only bundled into the page that imports this
      component, :global(footer) still reaches only this route's footer, not
-     belts/kata's. */
+     belts/kata's.
+
+     The gap between this page's original values and app.css's shared ones
+     (.72rem vs .7rem, 28px vs 20px) is deliberate content this page is
+     preserving, not a mistake to reconcile here — it's the same drift
+     CLAUDE.md already documents for .app's max-width (480/520/560px across
+     quiz/index/belts+kata), and Slice 9 owns normalising all of it in one
+     pass. Until then this override keeps the home page pixel-faithful to
+     its pre-migration original rather than silently drifting to whatever
+     belts.html happened to use. */
   :global(footer) {
     font-size: .72rem;
     color: var(--faint);
     margin-top: 28px;
     line-height: 1.7;
+  }
+
+  /* Same shape as the footer override above, for the same reason: .app is
+     rendered by PageShell.astro, not this file, so it cannot be reached by
+     a scoped selector — only :global() lands on the real element. This
+     page's original set `padding: 28px 16px 40px`; app.css's shared rule
+     (transcribed from belts.html) sets `padding: 20px 16px 40px` — sides
+     and bottom already agree, so only padding-top is restated here rather
+     than repeating values the shared rule already has right (a second
+     place to keep in sync otherwise). The 28px vs 20px gap is the same
+     deliberate, not-yet-normalised drift as the footer's — Slice 9 owns
+     collapsing it, not this route. */
+  :global(.app) {
+    padding-top: 28px;
   }
 </style>
