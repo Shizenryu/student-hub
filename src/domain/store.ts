@@ -38,6 +38,15 @@ export type Store = {
   readonly today: () => number;
   readonly markTrained: () => StreakReport;
   readonly streakInfo: () => StreakInfo;
+  readonly logPractice: (activityId: string) => void;
+  readonly unlogPractice: (activityId: string) => void;
+  readonly practiceOn: (dayNumber: number) => readonly string[];
+  readonly todayPractice: () => readonly string[];
+  readonly best: (mode: string) => number;
+  readonly setBest: (mode: string, score: number) => boolean;
+  readonly misses: () => Readonly<Record<string, number>>;
+  readonly recordCard: (cardKey: string, gotIt: boolean) => void;
+  readonly hash: (cardText: string) => string;
 };
 
 const KEY = 'shizenryu-progress-v1';
@@ -127,6 +136,24 @@ function trainedOn(streak: StreakState, today: number): StreakState {
   return moved.count > moved.best ? { ...moved, best: moved.count } : moved;
 }
 
+// The practice log is unbounded otherwise: a student training daily for three
+// years would carry a thousand entries into every read. Sixty days is twice the
+// longest window the page shows. Strictly greater than 60 — day 60 exactly is
+// kept — because that is where store.js draws it.
+function pruned(log: Readonly<Record<string, readonly string[]>>, today: number): Record<string, readonly string[]> {
+  return Object.fromEntries(Object.entries(log).filter(([dayNumber]) => today - Number(dayNumber) <= 60));
+}
+
+// A 32-bit rolling string hash, used as the persisted key for a flashcard. Kept
+// digit-for-digit identical to store.js's: the miss queue a student has built up
+// is keyed by these, so a different hash silently empties it. `| 0` keeps it in
+// int32 as it goes, `>>> 0` makes it unsigned before base 36, and the leading `c`
+// keeps the result a safe object property rather than a numeric-looking one.
+function hashCard(text: string): string {
+  const h = [...text].reduce((acc, character) => (acc * 31 + character.charCodeAt(0)) | 0, 0);
+  return `c${(h >>> 0).toString(36)}`;
+}
+
 export function createStore(options: { storage: StorageLike | null; now: Clock }): Store {
   const { storage, now } = options;
 
@@ -192,5 +219,66 @@ export function createStore(options: { storage: StorageLike | null; now: Clock }
       const alive = trainedToday || streak.last === t - 1;
       return { count: alive ? streak.count : 0, best: streak.best, today: trainedToday, alive };
     },
+
+    logPractice: (activityId) => {
+      const state = load();
+      const t = day();
+      const already = state.plog?.[String(t)] ?? [];
+      const forToday = already.includes(activityId) ? already : [...already, activityId];
+      save({ ...state, plog: { ...pruned(state.plog ?? {}, t), [String(t)]: forToday } });
+    },
+
+    unlogPractice: (activityId) => {
+      const state = load();
+      const t = day();
+      const forToday = state.plog?.[String(t)];
+      if (forToday === undefined) return;
+
+      // Deliberately no pruning on this path: store.js prunes only when logging.
+      const remaining = forToday.filter((id) => id !== activityId);
+      const { [String(t)]: _removed, ...otherDays } = state.plog ?? {};
+      save({
+        ...state,
+        plog: remaining.length === 0 ? otherDays : { ...otherDays, [String(t)]: remaining },
+      });
+    },
+
+    practiceOn: (dayNumber) => load().plog?.[String(dayNumber)] ?? [],
+
+    todayPractice: () => load().plog?.[String(day())] ?? [],
+
+    best: (mode) => load().best?.[mode] ?? 0,
+
+    setBest: (mode, score) => {
+      const state = load();
+      // Nothing is written when the score is not an improvement, so an ordinary
+      // losing round leaves storage untouched.
+      if (score <= (state.best?.[mode] ?? 0)) return false;
+      save({ ...state, best: { ...state.best, [mode]: score } });
+      return true;
+    },
+
+    misses: () => load().miss ?? {},
+
+    recordCard: (cardKey, gotIt) => {
+      const state = load();
+      const current = state.miss?.[cardKey] ?? 0;
+
+      if (!gotIt) {
+        save({ ...state, miss: { ...state.miss, [cardKey]: current + 1 } });
+        return;
+      }
+
+      // Getting a card right works one miss off; at zero the card leaves the queue
+      // entirely rather than sitting there as a 0.
+      if (current <= 0) {
+        save({ ...state, miss: { ...state.miss } });
+        return;
+      }
+      const { [cardKey]: _worked, ...others } = state.miss ?? {};
+      save({ ...state, miss: current - 1 <= 0 ? others : { ...others, [cardKey]: current - 1 } });
+    },
+
+    hash: hashCard,
   };
 }
