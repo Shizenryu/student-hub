@@ -5,6 +5,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 import { KATA, SYLLABUS } from '../../src/data';
 import { kataSectionsFromJson, splitIntoSections, visibleText } from '../../src/data/kata-prose';
+import { astroEscapeText } from './astro-html';
 
 // Same rationale as tests/build/belts-routes.test.ts: asserting against the built
 // HTML files pins the same behaviour without wiring a static file server into
@@ -14,18 +15,6 @@ const KATA_DIR = join(DIST_DIR, 'kata');
 
 async function readKataPage(slug: string): Promise<string> {
   return readFile(join(KATA_DIR, slug, 'index.html'), 'utf8');
-}
-
-// Astro escapes interpolated text — content containing &, <, >, " or ' comes out
-// entity-escaped in the built HTML, so fixture text is escaped the same way
-// before comparing.
-function astroEscapeText(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
 }
 
 // Astro adds a scoped-style attribute (data-astro-cid-*) to every element

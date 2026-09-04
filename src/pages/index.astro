@@ -1,0 +1,268 @@
+---
+// The home page — replaces public/index.html. Its masthead (crest image,
+// three lines) and its footer text are the one part of every other route's
+// shell this page doesn't want, so PageShell now offers optional `masthead`
+// and `footer` slots — falling back to the h1/.sub pair and the "← Shizenryu
+// home" link every inner page still uses — rather than this route
+// duplicating the whole shell just to change two fragments of it.
+//
+// The maxim and streak chip are filled in client-side by
+// public/assets/home.js — a plain external file, not an inlined component
+// script (Astro inlines those, which the CSP a later slice adopts forbids;
+// see that file's own header comment). This route's only job for them is to
+// hand MAXIMS to the browser as a data attribute, the same contract shape
+// legacy-hash.js already uses for its slugs, so home.js reads data instead
+// of carrying its own copy of the content.
+import PageShell from '../layouts/PageShell.astro';
+import { MAXIMS } from '../data';
+---
+
+<PageShell
+  title="Shizenryu Karate — Student Hub"
+  description="Shizenryu Karate student hub: terminology quiz, kumite sequences, philosophy flashcards and study guides."
+  variant="home"
+>
+  <Fragment slot="masthead">
+    <div class="crest">
+      <img src="/assets/img/ki.png" width="200" height="236" alt="Shizenryu Ki logo" />
+    </div>
+    <h1>SHIZENRYU</h1>
+    <div class="sub">The Natural Way of Karate</div>
+    <div class="nat">Structure &gt; Discipline &gt; Measure / Accountability = Growth</div>
+  </Fragment>
+
+  <div class="maxim" data-maxims={JSON.stringify(MAXIMS)}>
+    <span>Maxim of the day</span><em id="maxim"></em>
+  </div>
+  <div id="streakChip" class="streak-chip"></div>
+
+  <h2>Train</h2>
+  <div class="tiles">
+    <a class="tile practice" href="/practice.html">
+      <div class="t">Daily Practice</div>
+      <div class="d">Tick off what you practised today — one thing is enough to keep your streak. Even a stretch.</div>
+    </a>
+    <a class="tile quiz" href="/quiz.html">
+      <div class="t">Dojo Quiz</div>
+      <div class="d">Terminology by belt level, plus the Kumite 1–12 sequences. Ten questions a round — know the words, own the art.</div>
+    </a>
+    <a class="tile cards" href="/flashcards.html">
+      <div class="t">Philosophy Flashcards</div>
+      <div class="d">The Maxims, Zen &amp; Karate, the root kata, Tui Shou, the 6 Human Needs, grades &amp; titles. Flip, recall, repeat.</div>
+    </a>
+    <a class="tile belts" href="/belts">
+      <div class="t">Belt Study Guides</div>
+      <div class="d">Your next grading, explained — every syllabus item, the key terms, and the mind behind the movement.</div>
+    </a>
+    <a class="tile kata" href="/kata">
+      <div class="t">Kata Reference</div>
+      <div class="d">Mara, Sanchin, Rokushu, Naifuanchin — what each kata is, what its name means, and where it lives in the syllabus.</div>
+    </a>
+  </div>
+
+  <h2>Study</h2>
+  <div class="tiles">
+    <a class="doc" href="/docs/study-guides.pdf">
+      <div><div class="n">Grade Study Guides</div><div class="s">One page per belt — techniques, terms and mind</div></div>
+      <div class="pdf">PDF</div>
+    </a>
+    <a class="doc" href="/docs/philosophy-guide.pdf">
+      <div><div class="n">Philosophy Study Guide</div><div class="s">The deeper elements, for advanced practitioners</div></div>
+      <div class="pdf">PDF</div>
+    </a>
+    <a class="doc" href="/docs/belt-passport.pdf">
+      <div><div class="n">Belt Passport</div><div class="s">Print at A5 — your record of the journey</div></div>
+      <div class="pdf">PDF</div>
+    </a>
+  </div>
+
+  <div class="seal">
+    <img
+      src="/assets/img/shizenryu-calligraphy.png"
+      width="140"
+      height="453"
+      loading="lazy"
+      decoding="async"
+      alt="Shizenryu written in Japanese calligraphy"
+    />
+  </div>
+
+  <Fragment slot="footer">
+    Shizenryu Karate · Syllabus 2026<br />
+    Ask your sensei anything — to ask is a moment; not to ask is a lifetime.
+  </Fragment>
+
+  <script slot="scripts" is:inline src="/assets/store.js" defer></script>
+  <script slot="scripts" is:inline src="/assets/home.js" defer></script>
+</PageShell>
+
+<style>
+  .crest {
+    margin-bottom: 10px;
+  }
+
+  .crest img {
+    width: 64px;
+    height: auto;
+  }
+
+  .seal {
+    text-align: center;
+    margin-top: 34px;
+  }
+
+  .seal img {
+    width: 46px;
+    height: auto;
+    opacity: .4;
+  }
+
+  /* Inside PageShell's <header>, so app.css's `header`, `header h1` and
+     `header .sub` rules are already in force: alignment, colour and casing
+     come from there. Only the sizes and spacing that genuinely differ from an
+     inner page are restated here — that difference is the deliberate,
+     not-yet-normalised drift Slice 9 owns. */
+  h1 {
+    font-size: 1.7rem;
+    letter-spacing: .14em;
+  }
+
+  .sub {
+    font-size: .75rem;
+    letter-spacing: .25em;
+    margin: 6px 0 4px;
+  }
+
+  .nat {
+    font-size: .85rem;
+    color: var(--muted);
+    font-style: italic;
+    margin-bottom: 22px;
+  }
+
+  .maxim {
+    background: var(--surface);
+    border-left: 4px solid var(--red);
+    padding: 14px 16px;
+    font-style: italic;
+    font-size: .92rem;
+    color: #555;
+    border-radius: 0 var(--radius-control) var(--radius-control) 0;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+  }
+
+  .maxim span {
+    display: block;
+    font-style: normal;
+    font-size: .68rem;
+    letter-spacing: .18em;
+    color: var(--red);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+  }
+
+  .streak-chip {
+    text-align: center;
+    font-size: .8rem;
+    color: var(--gold);
+    margin: -14px 0 20px;
+    min-height: 1em;
+  }
+
+  h2 {
+    font-size: .8rem;
+    letter-spacing: .2em;
+    color: var(--muted-light);
+    text-transform: uppercase;
+    margin: 22px 0 10px;
+  }
+
+  .tiles {
+    display: grid;
+    gap: 12px;
+  }
+
+  a.tile {
+    display: block;
+    text-decoration: none;
+    border-radius: var(--radius-banner);
+    padding: 18px;
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .10);
+    transition: transform .1s;
+  }
+
+  a.tile:active {
+    transform: scale(.98);
+  }
+
+  .tile .t {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .tile .d {
+    font-size: .82rem;
+    opacity: .9;
+    line-height: 1.4;
+  }
+
+  .practice {
+    background: linear-gradient(120deg, var(--good), #00843D);
+  }
+
+  .quiz {
+    background: linear-gradient(120deg, var(--red), #8B0A20);
+  }
+
+  .cards {
+    background: linear-gradient(120deg, var(--dark), #3a3a3a);
+  }
+
+  .belts {
+    background: linear-gradient(120deg, #00843D, var(--track-adult));
+  }
+
+  .kata {
+    background: linear-gradient(120deg, var(--gold), #6B3F1D);
+  }
+
+  a.doc {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-decoration: none;
+    background: var(--surface);
+    border-radius: var(--radius-control);
+    padding: 14px 16px;
+    color: var(--ink);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, .07);
+  }
+
+  a.doc:active {
+    background: #f4efe7;
+  }
+
+  .doc .n {
+    font-weight: 600;
+    font-size: .95rem;
+  }
+
+  .doc .s {
+    font-size: .75rem;
+    color: var(--muted-light);
+    margin-top: 2px;
+  }
+
+  .doc .pdf {
+    font-size: .65rem;
+    font-weight: 700;
+    color: #fff;
+    background: var(--gold);
+    padding: 4px 8px;
+    border-radius: var(--radius-tag);
+    letter-spacing: .08em;
+  }
+</style>

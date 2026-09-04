@@ -123,8 +123,11 @@ export function assertContentIntegrity(content: ContentBundle = REAL_CONTENT): v
     problems.push(`belt key "${key}" is used by more than one belt`);
   }
 
-  // index.html renders MAXIMS[day % MAXIMS.length]; an empty array yields
-  // MAXIMS[NaN] and prints the literal word "undefined" on the homepage.
+  // The home route renders MAXIMS[day % MAXIMS.length]. home.js guards the
+  // empty case, so this no longer stops the literal word "undefined" reaching a
+  // student — tests/unit/home-script.test.ts pins that. What it stops is
+  // quieter: an empty list renders no maxim at all, on a page still showing its
+  // "Maxim of the day" label. Better to fail the build than ship the hole.
   if (maxims.length === 0) problems.push('MAXIMS is empty');
 
   // Not load-bearing today — the legacy flashcards page keys by name — but the

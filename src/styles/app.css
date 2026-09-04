@@ -28,6 +28,23 @@ body {
   --app-max: 560px;
 }
 
+/* The home page's shell spacing predates the shared values above, which were
+   transcribed from belts.html: 28px of top padding rather than 20px, and a
+   slightly larger, looser footer. Carried across verbatim so the migrated page
+   renders pixel-identically to the one it replaced. Only the declarations that
+   actually differ are restated — colour and alignment already match. Slice 9
+   owns collapsing this, along with the 480/520/560 max-width drift, and deletes
+   this block when it does. */
+.app--home {
+  padding-top: 28px;
+}
+
+.app--home footer {
+  font-size: .72rem;
+  margin-top: 28px;
+  line-height: 1.7;
+}
+
 header {
   text-align: center;
   margin-bottom: 18px;

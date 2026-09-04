@@ -5,6 +5,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 import { GRADES, SYLLABUS, termsForTier } from '../../src/data';
 import { expandAbbreviations } from '../../src/data/display';
+import { astroEscapeText, jsonAttribute } from './astro-html';
 
 // Driving the built pages through Vitest Browser Mode (as the brief's Step 8
 // asks) would need a static file server wired into the browser test config,
@@ -16,18 +17,6 @@ const BELTS_DIR = join(DIST_DIR, 'belts');
 
 async function readBeltPage(slug: string): Promise<string> {
   return readFile(join(BELTS_DIR, slug, 'index.html'), 'utf8');
-}
-
-// Astro escapes interpolated text (its equivalent of the original's esc()
-// helper) — content containing &, <, >, " or ' comes out entity-escaped in
-// the built HTML, so fixture text is escaped the same way before comparing.
-function astroEscapeText(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
 }
 
 describe('the belt list route (/belts)', () => {
@@ -72,12 +61,10 @@ describe('the belt list route (/belts)', () => {
 
     expect(html).toContain('data-legacy-prefix="/belts"');
 
-    const attrMatch = /data-legacy-slugs="([^"]*)"/.exec(html);
-    expect(attrMatch, 'no data-legacy-slugs attribute found in the built page').not.toBeNull();
-    if (!attrMatch) return;
-    const rawSlugs = attrMatch[1] ?? '';
-    const parsedSlugs: unknown = JSON.parse(rawSlugs.replace(/&quot;/g, '"'));
-    expect(parsedSlugs).toEqual(GRADES.map((grade) => grade.slug));
+    const parsedSlugs = jsonAttribute(html, 'data-legacy-slugs');
+    expect(parsedSlugs, 'data-legacy-slugs is missing from the built page, or is not every slug').toEqual(
+      GRADES.map((grade) => grade.slug),
+    );
   });
 });
 

@@ -10,7 +10,12 @@ const PAGES_DIR = 'src/pages';
 const MANIFEST_PATH = 'tests/build/legacy-content.sha256';
 const ROUTABLE_EXTENSIONS = ['.astro', '.md', '.mdx', '.html'];
 
-const LEGACY_PAGES = ['index.html', 'quiz.html', 'flashcards.html', 'practice.html'];
+// index.html is deliberately absent: it is no longer a legacy page copied out of
+// public/ but a route Astro renders from src/pages/index.astro. Leaving it here
+// would keep passing for the wrong reason — the built file exists either way, so
+// the assertion would no longer prove anything about public/. tests/build/
+// home-route.test.ts owns proving the route ships.
+const LEGACY_PAGES = ['quiz.html', 'flashcards.html', 'practice.html'];
 
 const LEGACY_ASSETS = [
   'assets/data.js',

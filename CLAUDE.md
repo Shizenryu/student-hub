@@ -9,7 +9,8 @@ Live site deployed to Netlify, built from source into `dist/`. Repo: github.com/
 Netlify from source on every push to `main`; `dist/` is never committed. Static
 pages ship zero JavaScript; the three interactive pages (quiz, flashcards,
 practice) become React islands as they are migrated. None of them has been yet —
-four pages are still the original hand-written HTML in `public/`.
+those three are all that is left of the original hand-written HTML in
+`public/`.
 
 Belt study guides and kata reference are the first pages out: they are real
 Astro routes at `/belts`, `/belts/<slug>`, `/kata` and `/kata/<slug>`,
@@ -30,6 +31,20 @@ and the route prefix to send them to (`data-legacy-slugs`,
 `data-legacy-prefix`), so a future migrated page needs no script change, only
 those two attributes.
 
+The home page is a route too, at `/`. Everything on it is static except two
+things that cannot be baked in at build time: the maxim of the day, which
+would otherwise freeze until the next deploy, and the streak chip, which
+lives in the visitor's own `localStorage`. `public/assets/home.js` fills both
+in — an external script rather than an Astro component script, because Astro
+inlines those and slice 7's CSP would reject them, the same reason
+`legacy-hash.js` is external. It reads the maxims from a data attribute the
+route writes, so the content stays in `src/data` rather than being copied
+into a script, and it picks the day's maxim with `Store.today()` rather than
+its own `Date.now()` arithmetic — that is what keeps the maxim and the streak
+chip agreeing on when a day begins. `public/index.html` is gone;
+`netlify.toml` 301s `/index.html` to `/`, forced, because Astro emits a real
+`dist/index.html` that would otherwise answer first.
+
 Pages no longer open from `file://` — run `npm run dev`. See README.md.
 
 Migration in progress: pages not yet ported live untouched in `public/`, which
@@ -45,14 +60,15 @@ TypeScript is pinned to `^6.0.3` — do not upgrade to 7 yet. `@astrojs/check`
 
 ```
 public/            legacy pages, served verbatim, shrinking each slice
-├── index.html  quiz.html  flashcards.html  practice.html
-├── assets/         data.js, store.js, legacy-hash.js, img/
+├── quiz.html  flashcards.html  practice.html
+├── assets/         data.js, store.js, legacy-hash.js, home.js, img/
 └── docs/           printable PDFs
 src/
-├── pages/404.astro, belts/index.astro, belts/[slug].astro,
+├── pages/index.astro, 404.astro, belts/index.astro, belts/[slug].astro,
 │                    kata/index.astro, kata/[slug].astro
-│                    the belt study guides and kata reference — real routes,
-│                    migrated off public/belts.html and public/kata.html
+│                    the home page, belt study guides and kata reference —
+│                    real routes, migrated off public/index.html,
+│                    public/belts.html and public/kata.html
 ├── content/kata/    kata prose as markdown, one file per kata, validated
 │                    against a content collection schema at build time
 ├── components/      shared pieces a route composes, e.g. BeltGuide.astro,
@@ -87,8 +103,8 @@ their inline app script, same as before the migration.
 
 | File | What | Used by |
 |---|---|---|
-| `ki.png` | The Ki (氣) logo — black ink, transparent | index.html crest |
-| `shizenryu-calligraphy.png` | Shizenryu (自然流) calligraphy — black ink, transparent | index.html footer seal |
+| `ki.png` | The Ki (氣) logo — black ink, transparent | the home route's crest |
+| `shizenryu-calligraphy.png` | Shizenryu (自然流) calligraphy — black ink, transparent | the home route's footer seal |
 | `icon.png` | White Ki on an opaque club-red tile | favicon + touch icon, all pages |
 
 Two rules the pages depend on:
@@ -146,8 +162,9 @@ TERMS   = { 1:[[japanese, english], ...], 2:[...], 3:[...], 4:[...] }
 KUMITE  = [ {n:1, side:"OS"|"SS", belt:"9th Kyu", steps:["jun-zuki", ...]}, ... ]
           // steps in order: attack first, then responses. Source: Syllabus 2026.
 
-MAXIMS  = [ "string", ... ]   // shown randomly after quiz rounds; index.html shows
-                              // MAXIMS[dayNumber % length] as "maxim of the day"
+MAXIMS  = [ "string", ... ]   // shown randomly after quiz rounds; the home route
+                              // shows MAXIMS[Store.today() % length] as "maxim of
+                              // the day", filled in by public/assets/home.js
 
 DECKS   = [ {id, name, cls, cards:[[front, back], ...]}, ... ]
           // cls is a colour class defined in flashcards.html (d1–d7)
@@ -194,6 +211,13 @@ To add content:
 Step 3 matters because that checksum records the known-good content — a deliberate
 content change means deliberately re-recording it, so the checksum test keeps catching
 accidental drift without blocking real edits.
+
+The same step applies to **every** file under `public/`, not just `data.js`. Most of them
+are frozen legacy content, but `assets/store.js`, `assets/legacy-hash.js` and
+`assets/home.js` are live code that outlives the pages around them — they are in the
+manifest because they ship to the browser unbundled, so editing one means re-recording its
+line too, exactly as above. The test names the file and prints both hashes when you
+forget.
 
 A change to a `KATA` entry's `sections[].b` prose is a fourth step: update the matching
 kata's markdown file in `src/content/kata/` too, word for word — `data.js` and the
