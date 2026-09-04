@@ -74,11 +74,59 @@ header {
    public/assets/home.js writes the home page's. The min-height reserves the line
    before that happens, so nothing below it jumps.
 
-   Per-page differences (font-size, margin, the home page's centring) stay with
-   those pages; only what they share is here. */
+   Practice, flashcards and (in slice 6) quiz all use these four values, so they are
+   the default rather than three copies. The home page is the odd one out and says
+   so through the shell's variant vocabulary below — a modifier selector, not a
+   :global() rule that would tie on specificity with this one and be decided by
+   whichever stylesheet the bundler emitted last. */
 .streak-chip {
   color: var(--gold);
   min-height: 1em;
+  font-size: .75rem;
+  margin-top: 6px;
+}
+
+.app--home .streak-chip {
+  text-align: center;
+  font-size: .8rem;
+  margin: -14px 0 20px;
+}
+
+/* The centred grey lede a page opens with, above its first card. Three pages had
+   this rule character for character before it was hoisted; quiz makes four.
+   DEFER(slice-9): quiz's is .9rem, so this becomes a two-size decision. */
+.intro {
+  font-size: .85rem;
+  color: #666;
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+/* The "← back to" control at the foot of a card. An anchor on the belt and kata
+   guides, a button on the islands; text-decoration is inert on the latter. */
+.home-link {
+  display: block;
+  text-align: center;
+  margin-top: 16px;
+  font-size: .8rem;
+  color: var(--muted-light);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+}
+
+/* A card with more room inside it. The flashcards page and (in slice 6) the quiz
+   use 20px where the rest of the site uses 18px.
+
+   Written `.card.card-roomy`, not `.card-roomy`. A lone class ties with `.card` on
+   specificity and is then decided by source order — which is exactly what went
+   wrong when this rule was first written above `.card` and silently lost, taking
+   the flashcards card back to 18px. Two classes settle it in both directions.
+   DEFER(slice-9): one padding or two. */
+.card.card-roomy {
+  padding: 20px;
 }
 
 header h1 {

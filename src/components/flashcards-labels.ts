@@ -20,7 +20,9 @@ const repeats = (laps: number): string =>
 
 // The streak is mentioned only from two days: one day is not yet a streak, and
 // saying so after every single session would make the word worthless.
+const streakNote = (count: number): string => (count >= 2 ? ` 🔥 ${count}-day streak.` : '');
+
 export const completionSubline = (laps: number, streakCount: number): string =>
-  streakCount >= 2 ? `${repeats(laps)} 🔥 ${streakCount}-day streak.` : repeats(laps);
+  `${repeats(laps)}${streakNote(streakCount)}`;
 
 export const cardsToGo = (remaining: number): string => `${remaining} TO GO`;

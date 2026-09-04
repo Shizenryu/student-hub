@@ -4,7 +4,8 @@
 // React root — which matters most for weekdayLabel, whose defect below is only
 // visible under a timezone the browser suite cannot switch to.
 
-export type StreakView = { readonly count: number; readonly today: boolean };
+// StreakView, NO_STREAK and streakLabel now live in ./streak-label, beside the
+// component that renders them.
 
 // The two windows the page reports on. Here rather than in the component, beside
 // the sentence that names them, so summaryLabel cannot be handed a window that
@@ -40,12 +41,6 @@ export const statusLabel = (count: number): string =>
   count === 0
     ? 'Nothing yet — pick one thing. Even a stretch keeps the streak.'
     : `${count} thing${count === 1 ? '' : 's'} done today — streak kept ✓`;
-
-// The wording differs from the home page's chip, which says "N-day training
-// streak". That divergence is pre-existing; unifying the two is a content decision
-// for the club, not a port decision.
-export const streakLabel = ({ count, today }: StreakView): string =>
-  count < 1 ? '' : `🔥 ${count}-day streak${today ? '' : ' — train today to keep it'}`;
 
 export const summaryLabel = (weekHits: number, monthHits: number): string =>
   `Practised on ${weekHits} of the last ${WEEK} days · ${monthHits} of the last ${MONTH}.`;

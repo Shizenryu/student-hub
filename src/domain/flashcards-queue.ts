@@ -31,37 +31,46 @@ const queued = (card: TermPair, category: string): QueuedCard => ({
   category,
 });
 
-export function deckSize(deck: DeckChoice, decks: readonly Deck[]): number {
-  return deck === EVERYTHING ? decks.reduce((total, each) => total + each.cards.length, 0) : deck.cards.length;
-}
+export const totalCards = (decks: readonly Deck[]): number =>
+  decks.reduce((total, deck) => total + deck.cards.length, 0);
+
+// What a choice is called. Here rather than at the call sites so that the one place
+// that knows Everything is not a Deck also knows what to call it.
+export const deckName = (deck: DeckChoice): string => (deck === EVERYTHING ? 'Everything' : deck.name);
 
 // Fisher-Yates, walking from the end, transcribed from the legacy page so that a
 // given sequence of random numbers produces the same deck order it always did.
 //
 // It mutates, which the rest of this codebase does not — but only a copy it just
-// made and still owns, and the alternative spellings of an in-place shuffle are
-// all harder to check against the original.
+// made and still owns, and the alternative spellings of an in-place shuffle are all
+// harder to check against the original.
 function shuffled<T>(items: readonly T[], random: () => number): readonly T[] {
   const order = [...items];
   for (let index = order.length - 1; index > 0; index--) {
     const swap = Math.floor(random() * (index + 1));
     const held = order[index];
     const other = order[swap];
-    if (held === undefined || other === undefined) continue;
-    order[index] = other;
-    order[swap] = held;
+    // Both indices are in bounds by construction — `index` walks down from the end
+    // and `swap` is at most `index`. The compiler cannot see that under
+    // noUncheckedIndexedAccess and this project does not allow assertions, so the
+    // swap is written as a positive condition rather than an early `continue` that
+    // would silently deal a different order if it ever did fire.
+    if (held !== undefined && other !== undefined) {
+      order[index] = other;
+      order[swap] = held;
+    }
   }
   return order;
 }
 
 export function buildQueue(options: {
   readonly deck: DeckChoice;
-  readonly decks?: readonly Deck[];
+  readonly decks: readonly Deck[];
   readonly misses: Readonly<Record<string, number>>;
   readonly hash: (text: string) => string;
   readonly random: () => number;
 }): readonly QueuedCard[] {
-  const { deck, decks = [], misses, hash, random } = options;
+  const { deck, decks, misses, hash, random } = options;
 
   // Every card carries its OWN deck's name, so a student studying Everything can
   // still see where each card came from.

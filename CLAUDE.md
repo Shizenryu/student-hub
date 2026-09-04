@@ -165,14 +165,36 @@ before committing it rather than shrinking it in CSS, and add
 
 ## Migration rules
 
+**Deferrals are written `DEFER(slice-N):`.** Work put off to a named later slice — a
+value Slice 9 will normalise, a defect Slice 8 will fix, a file Slice 6 retires —
+carries that literal token in its comment. It is the difference between slice 9
+starting with `grep -rn "DEFER(slice-9)"` and reading six stylesheets hoping the
+phrasing was consistent. It was not: "Slice 9" and "slice 9" both appear today.
+
 **Accessibility during a port.** Semantics that change no pixels — an `aria-pressed`
 on a toggle, a `type="button"`, a role — are in scope for a migration and should be
 added, because the legacy pages have almost none and a later "accessibility slice"
 would have to re-read every page to find them. Anything needing new markup, focus
 management or a live region is NOT: it changes what a student experiences, so it
 defers alongside the defects. `/practice`'s tiles gained `aria-pressed` under this
-rule; the quiz's screen switcher, which announces nothing when the view changes,
-does not qualify and waits.
+rule.
+
+**With one exception, because the rule above got it wrong once.** A markup change is
+in scope when the current markup makes the page unusable by keyboard or screen
+reader, and pixel-identity can be proven. `/flashcards`' card was a `<div onclick>`
+— flipping it is the only way to see an answer, so the page could not be used
+without a mouse at all. That is not a semantic nicety, and "defer it" was the wrong
+answer. Such a change must be named in the slice plan before implementation.
+
+**And it obliges something.** A control that gains a role gains an accessible name,
+and that name has to be checked: making the card a button made its name the
+question AND the answer concatenated, so a screen reader read out the answer on
+focus — an accessibility regression introduced by an accessibility fix. Where a
+control's accessible name changes with its state, tests address it by element
+rather than by role, and say why.
+
+The quiz's screen switcher, which announces nothing when the view changes, needs a
+live region and focus management, so it still waits.
 
 ## Content rules — read before writing ANY martial content
 

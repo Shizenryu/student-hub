@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import Flashcards from '../../src/components/Flashcards';
@@ -17,6 +17,10 @@ import '../../src/styles/flashcards.css';
 // the flip, and that grading reaches the student's stored progress.
 //
 // localStorage is cleared before every test by tests/browser/setup.ts.
+
+beforeEach(() => {
+  mountChipTarget();
+});
 
 // Both faces of the card are in the DOM at once — that is how the 3D flip works —
 // so "what does the card say" has to name a face. The faces are distinguished
@@ -38,16 +42,18 @@ const visibilityOf = (selector: string): string => {
 // first flip cannot find it after. Tests address the control by its element.
 const flipCard = async (): Promise<void> => {
   document.querySelector<HTMLElement>('.flash')?.click();
+  // Long enough for React to commit the state change before the next assertion
+  // reads the DOM directly. Assertions that go through expect.poll do not need it;
+  // the ones reading getComputedStyle or a class list do.
   await new Promise((resolve) => setTimeout(resolve, 60));
 };
 
 const isFlipped = (): boolean => document.querySelector('.flash')?.classList.contains('flipped') ?? false;
 
-// A deterministic deck to study: the smallest real one, so a test can finish it.
-const smallestDeck = [...DECKS].sort((a, b) => a.cards.length - b.cards.length)[0]!;
-
-// Deck names are passed as plain strings, which Playwright treats as a substring
-// match. Three decks begin "The", so matching on a first word finds three buttons.
+// A deterministic deck to study: the smallest real one, so a test can finish it
+// without forty clicks. Reduced rather than sorted, so there is no index to assert
+// is present --- this project does not allow non-null assertions.
+const smallestDeck = DECKS.reduce((smallest, deck) => (deck.cards.length < smallest.cards.length ? deck : smallest));
 
 // The deck name and the count share a line with no role of their own, so these
 // read them off the elements directly rather than through a text query that would
@@ -56,7 +62,6 @@ const metaText = (index: number): string =>
   document.querySelectorAll('.meta span')[index]?.textContent ?? '';
 
 const startSmallestDeck = async () => {
-  mountChipTarget();
   const screen = await render(<Flashcards decks={DECKS} />);
   await screen.getByRole('button', { name: smallestDeck.name }).click();
   return screen;
@@ -64,7 +69,6 @@ const startSmallestDeck = async () => {
 
 describe('choosing what to study', () => {
   test('offers every deck with its card count, and Everything with the total', async () => {
-    mountChipTarget();
     const screen = await render(<Flashcards decks={DECKS} />);
 
     for (const deck of DECKS) {
@@ -86,7 +90,6 @@ describe('choosing what to study', () => {
 
   test('goes back to the decks without grading anything', async () => {
     const screen = await startSmallestDeck();
-
 
     await screen.getByRole('button', { name: /back to decks/ }).click();
 
@@ -313,7 +316,6 @@ describe('studying Everything', () => {
     // The legacy page restarted Everything by looking it up by name, missing, and
     // getting the -1 that startDeck uses as its Everything sentinel. That accident
     // is gone; this pins the behaviour it produced.
-    mountChipTarget();
     const screen = await render(<Flashcards decks={DECKS} />);
     const total = DECKS.reduce((n, deck) => n + deck.cards.length, 0);
     await screen.getByRole('button', { name: /Everything/ }).click();

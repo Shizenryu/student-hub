@@ -8,41 +8,11 @@
    Astro bundles it into this page alone.
 
    Values come from tokens.css wherever one matches exactly. The literals left are
-   ones with no token: #f5f1ea (the card back's text), #666 and #777 (two greys
-   between --muted #888 and --ink-soft #444), and the six deck colours, which are
-   the belt palette used for a different purpose and are Slice 9's to reconcile.
+   #f5f1ea (the card back's text) and #777 (a grey between --muted #888 and
+   --ink-soft #444), plus the deck colours below.
 
-   `.card-ui` is this page's own card, a third alongside .card and the belt/kata
-   guides' — same idea, different padding. Also Slice 9's. */
-
-/* Only what differs from app.css's shared .streak-chip rule, which carries the
-   colour and the reserved line. The legacy page set all four inline; the other two
-   are here, matching practice.css exactly.
-
-   Duplicated rather than hoisted on purpose: the home page's chip is a different
-   size with different margins, and its override lives in a scoped block whose
-   order relative to app.css is decided by bundling. Two identical two-line rules
-   are worth more than a rule that wins or loses by build order. Slice 9 owns
-   deciding whether the site has one chip or three. */
-.streak-chip {
-  font-size: .75rem;
-  margin-top: 6px;
-}
-
-.intro {
-  font-size: .85rem;
-  color: #666;
-  margin-bottom: 14px;
-  text-align: center;
-}
-
-.card-ui {
-  background: var(--surface);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
-  padding: 20px;
-  margin-bottom: 14px;
-}
+   The chip, the lede and the roomier card are not here: they are shared rules in
+   app.css, because this is the second page to want each of them. */
 
 .decks {
   display: grid;
@@ -71,10 +41,13 @@
   text-align: right;
 }
 
-/* The deck colours. The same hexes as the belt palette, used here to tell six
-   decks apart rather than to mean a grade — which is why they are literals and not
-   the belt tokens: a deck is not a belt, and Slice 9 owns deciding whether they
-   should share a scale. d7 is not a deck; it is the "Everything" button. */
+/* The deck colours, transcribed as raw hexes. Four of them do match brand tokens
+   (--red, --dark, --gold, --track-adult), but src/styles/belts.css and kata.css set
+   the precedent: a palette that mirrors data is transcribed whole and pinned by a
+   test, because tokenising the four that happen to match and leaving three literal
+   would read as an accident rather than a decision.
+   DEFER(slice-9): whether decks, belts and kata should share one scale.
+   d7 is not a deck; it is the "Everything" button. */
 .d1 { background: #C8102E; }
 .d2 { background: #161616; }
 .d3 { background: #00843D; }
@@ -97,10 +70,11 @@
   margin-bottom: 14px;
 }
 
-/* The card is a <button>, where the page this replaces used a div with an onclick.
+/* The card is a <button>, where the page this replaced used a div with an onclick.
    Flipping it is the only way to see the answer, so on a div the page cannot be
-   used from a keyboard at all. These four declarations strip the button back to
-   what the div rendered as; the pixel proof in the PR is what says they do. */
+   used from a keyboard at all. The declarations down to `display` strip the button
+   back to what the div rendered as — checked, not assumed:
+   `node scripts/compare-pixels.mjs --page flashcards --ref main`. */
 .flash {
   appearance: none;
   border: none;
@@ -206,17 +180,6 @@
   visibility: hidden;
 }
 
-.home-link {
-  display: block;
-  text-align: center;
-  margin-top: 16px;
-  font-size: .8rem;
-  color: var(--muted-light);
-  background: none;
-  border: none;
-  cursor: pointer;
-  width: 100%;
-}
 
 .done-big {
   font-size: 2.4rem;

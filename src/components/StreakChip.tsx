@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { STREAK_CHIP_ID } from './streak-chip-id';
-import { streakLabel } from './practice-labels';
-import type { StreakView } from './practice-labels';
+import { streakLabel } from './streak-label';
+import type { StreakView } from './streak-label';
 
 // The streak chip belongs in the page <header>, above whatever island renders the
 // rest of the page — that is where every page in this site has always put it. But

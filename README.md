@@ -34,8 +34,16 @@ npm run dev   # local site at http://localhost:4321/
 | `npm run typecheck` | TypeScript and Astro type checking |
 | `npm test` | Node tests (run `npm run build` first) |
 | `npm run test:browser` | Browser tests in Chromium (see below) |
+| `node scripts/compare-pixels.mjs --page <name> --ref <git-ref>` | Proves a migrated route still renders identically to the page it replaced |
 
 Pages cannot be opened directly from disk any more — use `npm run dev`.
+
+`compare-pixels` is run by hand, not in CI — it needs a build, a preview server and a
+git ref holding a page the working tree has deleted. Build first, then
+`node scripts/compare-pixels.mjs --page flashcards --ref main`. It screenshots the
+route and its predecessor in the same browser at the same moment and compares them
+byte for byte, so font rendering cancels out; differing states are written to
+`dist/__pixel-comparison/` to look at.
 
 The browser tests need Chromium, which `npm ci` does not download. Once per machine:
 

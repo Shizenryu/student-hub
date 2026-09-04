@@ -1,10 +1,9 @@
 import { existsSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { DECKS } from '../../src/data';
-import { astroEscapeText } from './astro-html';
+import { astroEscapeText, readBuiltPage } from './astro-html';
 
 // Nothing else proves this route ships.
 //
@@ -14,7 +13,6 @@ import { astroEscapeText } from './astro-html';
 // suite stays green, /flashcards 404s and the new 301 points at a dead URL. The
 // browser suite cannot see it either — it renders the component and never asks
 // whether a page was emitted. Same lesson as tests/build/practice-route.test.ts.
-const FLASHCARDS_PAGE = join('dist', 'flashcards', 'index.html');
 
 // These assert the counts as plain text on purpose, with no allowance for React's
 // text-node splitting. React separates adjacent text nodes with an empty comment,
@@ -28,10 +26,7 @@ describe('the flashcards route (/flashcards)', () => {
   let html: string;
 
   beforeAll(async () => {
-    if (!existsSync(FLASHCARDS_PAGE)) {
-      throw new Error(`${FLASHCARDS_PAGE} is missing — run \`npm run build\`, or the route no longer exists`);
-    }
-    html = await readFile(FLASHCARDS_PAGE, 'utf8');
+    html = await readBuiltPage('flashcards', 'index.html');
   });
 
   it('is served at a directory URL, so /flashcards.html needs no forced redirect', () => {

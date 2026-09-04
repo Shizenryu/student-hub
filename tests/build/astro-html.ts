@@ -10,6 +10,10 @@
 // Not a *.test.ts file, so vitest does not collect it as a suite — see the
 // `include` globs in vitest.config.ts.
 
+import { existsSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
 // Astro escapes interpolated text (its equivalent of the legacy pages' own
 // esc() helper): content containing &, <, >, " or ' comes out entity-escaped in
 // the built HTML, so fixture text is escaped the same way before comparing.
@@ -40,6 +44,18 @@ const ATTRIBUTE_ENTITIES: Readonly<Record<string, string>> = {
 // page that renders perfectly well.
 export function decodeAttribute(value: string): string {
   return value.replace(/&(?:quot|amp|lt|gt|#34|#38|#39);/g, (entity) => ATTRIBUTE_ENTITIES[entity] ?? entity);
+}
+
+// Reads one built page, or explains why it is not there. Five build suites had
+// this same existsSync/throw/readFile trio; the message names the path, because
+// "missing" means either "you did not run the build" or "that route no longer
+// exists", and those need different reactions.
+export async function readBuiltPage(...segments: readonly string[]): Promise<string> {
+  const path = join('dist', ...segments);
+  if (!existsSync(path)) {
+    throw new Error(`${path} is missing — run \`npm run build\`, or the route no longer exists`);
+  }
+  return readFile(path, 'utf8');
 }
 
 // Reads a JSON payload a route wrote into a data attribute — the contract the

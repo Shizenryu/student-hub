@@ -4,7 +4,8 @@ import type { PracticeActivity } from '../data';
 import type { Store } from '../domain/store';
 import StreakChip from './StreakChip';
 import { MONTH, WEEK, statusLabel, summaryLabel, todayLabel, weekdayLabel } from './practice-labels';
-import type { StreakView } from './practice-labels';
+import { NO_STREAK } from './streak-label';
+import type { StreakView } from './streak-label';
 import { useBrowserStore } from './use-browser-store';
 
 // The daily practice tracker, ported from the hand-written public/practice.html
@@ -44,7 +45,7 @@ const BEFORE_MOUNT: View = {
   today: '',
   status: '',
   summary: '',
-  streak: { count: 0, today: false },
+  streak: NO_STREAK,
 };
 
 function readView(store: Store, now: Date): View {

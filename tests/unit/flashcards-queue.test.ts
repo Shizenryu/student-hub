@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { DECKS } from '../../src/data';
 import type { Deck } from '../../src/data';
-import { EVERYTHING, buildQueue, deckSize } from '../../src/components/flashcards-queue';
+import { EVERYTHING, buildQueue, totalCards } from '../../src/domain/flashcards-queue';
 
 // The order a deck comes at a student in is the flashcards page's one piece of
 // real cleverness, and it is invisible from the outside: the queue is shuffled,
@@ -39,7 +39,7 @@ describe('choosing a single deck', () => {
   it('offers every card in it, once', () => {
     const deck = deckOf('The Maxims', ['a', 'b', 'c']);
 
-    const queue = buildQueue({ deck, misses: {}, hash: (text) => text, random: noShuffle });
+    const queue = buildQueue({ deck, decks: [], misses: {}, hash: (text) => text, random: noShuffle });
 
     expect([...fronts(queue)].sort()).toEqual(['a', 'b', 'c']);
   });
@@ -47,7 +47,7 @@ describe('choosing a single deck', () => {
   it('tags every card with the deck it came from', () => {
     const deck = deckOf('The Maxims', ['a', 'b']);
 
-    const queue = buildQueue({ deck, misses: {}, hash: (text) => text, random: noShuffle });
+    const queue = buildQueue({ deck, decks: [], misses: {}, hash: (text) => text, random: noShuffle });
 
     expect(queue.map((entry) => entry.category)).toEqual(['The Maxims', 'The Maxims']);
   });
@@ -79,6 +79,7 @@ describe('cards the student keeps missing come first', () => {
 
     const queue = buildQueue({
       deck,
+      decks: [],
       misses: { a: 1, b: 3, c: 2 },
       hash: (text) => text,
       random: noShuffle,
@@ -90,7 +91,7 @@ describe('cards the student keeps missing come first', () => {
   it('treats a card with no misses as zero rather than dropping it', () => {
     const deck = deckOf('The Maxims', ['a', 'b']);
 
-    const queue = buildQueue({ deck, misses: { b: 1 }, hash: (text) => text, random: noShuffle });
+    const queue = buildQueue({ deck, decks: [], misses: { b: 1 }, hash: (text) => text, random: noShuffle });
 
     expect(fronts(queue)).toEqual(['b', 'a']);
   });
@@ -103,6 +104,7 @@ describe('cards the student keeps missing come first', () => {
 
     const queue = buildQueue({
       deck,
+      decks: [],
       misses: { 'hashed:b': 5 },
       hash: (text) => `hashed:${text}`,
       random: noShuffle,
@@ -114,7 +116,7 @@ describe('cards the student keeps missing come first', () => {
   it('leaves the shuffled order alone when nothing has been missed', () => {
     const deck = deckOf('The Maxims', ['a', 'b', 'c']);
 
-    const queue = buildQueue({ deck, misses: {}, hash: (text) => text, random: noShuffle });
+    const queue = buildQueue({ deck, decks: [], misses: {}, hash: (text) => text, random: noShuffle });
 
     expect(fronts(queue)).toEqual(['a', 'b', 'c']);
   });
@@ -125,10 +127,11 @@ describe('cards the student keeps missing come first', () => {
     // nothing to order by, so the whole queue must come out exactly as the
     // shuffle left it — which alwaysFirst makes predictable.
     const deck = deckOf('The Maxims', ['a', 'b', 'c', 'd']);
-    const shuffled = buildQueue({ deck, misses: {}, hash: (t) => t, random: alwaysFirst });
+    const shuffled = buildQueue({ deck, decks: [], misses: {}, hash: (t) => t, random: alwaysFirst });
 
     const equallyMissed = buildQueue({
       deck,
+      decks: [],
       misses: { a: 1, b: 1, c: 1, d: 1 },
       hash: (text) => text,
       random: alwaysFirst,
@@ -149,7 +152,7 @@ describe('the shuffle', () => {
     // early passed everything.
     const deck = deckOf('The Maxims', ['a', 'b', 'c', 'd']);
 
-    const queue = buildQueue({ deck, misses: {}, hash: (t) => t, random: alwaysFirst });
+    const queue = buildQueue({ deck, decks: [], misses: {}, hash: (t) => t, random: alwaysFirst });
 
     expect(fronts(queue)).toEqual(['b', 'c', 'd', 'a']);
   });
@@ -167,6 +170,7 @@ describe('the shuffle', () => {
 
     const queue = buildQueue({
       deck,
+      decks: [],
       misses: { a: 4, b: 3, c: 2, d: 1 },
       hash: (text) => text,
       random: alwaysFirst,
@@ -184,22 +188,25 @@ describe('the shuffle', () => {
     // the same sequence every time.
     const deck = deckOf('The Maxims', ['a', 'b', 'c', 'd', 'e']);
 
-    const queue = buildQueue({ deck, misses: {}, hash: (t) => t, random: alwaysFirst });
+    const queue = buildQueue({ deck, decks: [], misses: {}, hash: (t) => t, random: alwaysFirst });
 
     expect(fronts(queue)).not.toEqual(['a', 'b', 'c', 'd', 'e']);
     expect([...fronts(queue)].sort()).toEqual(['a', 'b', 'c', 'd', 'e']);
   });
 });
 
-describe('how many cards a deck holds', () => {
-  it('counts a single deck', () => {
-    expect(deckSize(deckOf('One', ['a', 'b']), [])).toBe(2);
+describe('how many cards Everything holds', () => {
+  it('adds up every deck', () => {
+    expect(totalCards([deckOf('One', ['a', 'b']), deckOf('Two', ['c'])])).toBe(3);
   });
 
-  it('counts every deck for Everything', () => {
-    // The menu shows this beside the Everything button; against the real data it
-    // is 61, and deriving it here rather than restating it is what keeps the menu
-    // honest when a deck gains a card.
-    expect(deckSize(EVERYTHING, DECKS)).toBe(DECKS.reduce((n, deck) => n + deck.cards.length, 0));
+  it('counts nothing as nothing', () => {
+    expect(totalCards([])).toBe(0);
+  });
+
+  it('matches the real decks, which is what the menu promises', () => {
+    // Derived rather than restated, so the menu stays honest when a deck gains a
+    // card. Against today's data it is 61.
+    expect(totalCards(DECKS)).toBe(DECKS.reduce((n, deck) => n + deck.cards.length, 0));
   });
 });
