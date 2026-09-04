@@ -6,10 +6,18 @@
 
 export type StreakView = { readonly count: number; readonly today: boolean };
 
-// `TODAY — Thursday 2 July`, in the reader's own locale, exactly as the page this
-// replaces built it.
-export const todayLabel = (now: Date): string =>
-  `TODAY — ${now.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}`;
+// Both date functions below take an optional locale. It defaults to undefined,
+// which is what production wants — the reader's own, exactly as the page this
+// replaces used. It is a parameter because these functions are locale-DEPENDENT by
+// design, so any test wanting an exact string has to say which locale it means.
+// Leaving it implicit is how a suite passes on an en-GB laptop ("Thursday 2 July")
+// and fails on an en-US CI runner ("Thursday, July 2"), which is precisely what
+// happened.
+type Locale = string | undefined;
+
+// `TODAY — Thursday 2 July`, in the reader's own locale.
+export const todayLabel = (now: Date, locale?: Locale): string =>
+  `TODAY — ${now.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })}`;
 
 // KNOWN DEFECT, ported deliberately rather than fixed, and pinned in
 // tests/unit/practice-labels.test.ts.
@@ -22,8 +30,8 @@ export const todayLabel = (now: Date): string =>
 //
 // Slice 8 owns the fix, one RED->GREEN commit, so that "we ported it" and "we
 // changed it" never share a diff.
-export const weekdayLabel = (dayNumber: number): string =>
-  new Date(dayNumber * 86400000).toLocaleDateString(undefined, { weekday: 'short' });
+export const weekdayLabel = (dayNumber: number, locale?: Locale): string =>
+  new Date(dayNumber * 86400000).toLocaleDateString(locale, { weekday: 'short' });
 
 export const statusLabel = (count: number): string =>
   count === 0

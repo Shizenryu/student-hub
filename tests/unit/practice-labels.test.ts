@@ -7,6 +7,13 @@ import { statusLabel, streakLabel, summaryLabel, todayLabel, weekdayLabel } from
 // Thursday.
 const JULY_2_DAY = 20636;
 
+// Every assertion below that involves a date names its locale. These functions
+// format in the reader's own locale in production, which is the point of them —
+// so an exact-string assertion that does not say which locale it means is really
+// asserting "whatever this machine happens to be set to". That passed on an en-GB
+// laptop and failed on the en-US CI runner.
+const LOCALE = 'en-GB';
+
 const at = (timezone: string, read: () => string): string => {
   const previous = process.env.TZ;
   process.env.TZ = timezone;
@@ -23,7 +30,7 @@ afterEach(() => {
 
 describe('what the student is told about today', () => {
   it('names the day in full', () => {
-    expect(todayLabel(new Date('2026-07-02T12:00:00Z'))).toBe('TODAY — Thursday 2 July');
+    expect(todayLabel(new Date('2026-07-02T12:00:00Z'), LOCALE)).toBe('TODAY — Thursday 2 July');
   });
 
   it('reads as a prompt when nothing has been ticked', () => {
@@ -67,18 +74,18 @@ describe('the week strip labels a known defect, ported unchanged', () => {
   // evening anywhere west of UTC.
 
   it('is correct in the club timezone, which is why nobody has noticed', () => {
-    expect(at('Europe/London', () => weekdayLabel(JULY_2_DAY))).toBe('Thu');
+    expect(at('Europe/London', () => weekdayLabel(JULY_2_DAY, LOCALE))).toBe('Thu');
   });
 
   it('is correct east of UTC too', () => {
-    expect(at('Pacific/Auckland', () => weekdayLabel(JULY_2_DAY))).toBe('Thu');
+    expect(at('Pacific/Auckland', () => weekdayLabel(JULY_2_DAY, LOCALE))).toBe('Thu');
   });
 
   it('is a day out west of UTC — 2 July 2026 is a Thursday, not a Wednesday', () => {
-    expect(at('America/New_York', () => weekdayLabel(JULY_2_DAY))).toBe('Wed');
+    expect(at('America/New_York', () => weekdayLabel(JULY_2_DAY, LOCALE))).toBe('Wed');
   });
 
   it('is a day out as far west as the site reaches', () => {
-    expect(at('America/Los_Angeles', () => weekdayLabel(JULY_2_DAY))).toBe('Wed');
+    expect(at('America/Los_Angeles', () => weekdayLabel(JULY_2_DAY, LOCALE))).toBe('Wed');
   });
 });
