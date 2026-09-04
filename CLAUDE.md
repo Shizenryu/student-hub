@@ -212,6 +212,13 @@ Step 3 matters because that checksum records the known-good content — a delibe
 content change means deliberately re-recording it, so the checksum test keeps catching
 accidental drift without blocking real edits.
 
+The same step applies to **every** file under `public/`, not just `data.js`. Most of them
+are frozen legacy content, but `assets/store.js`, `assets/legacy-hash.js` and
+`assets/home.js` are live code that outlives the pages around them — they are in the
+manifest because they ship to the browser unbundled, so editing one means re-recording its
+line too, exactly as above. The test names the file and prints both hashes when you
+forget.
+
 A change to a `KATA` entry's `sections[].b` prose is a fourth step: update the matching
 kata's markdown file in `src/content/kata/` too, word for word — `data.js` and the
 markdown are two authored copies of the same prose until `data.js` retires, and the

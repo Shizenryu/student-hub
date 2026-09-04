@@ -4,32 +4,13 @@ import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { MAXIMS } from '../../src/data';
+import { jsonAttribute } from './astro-html';
 
 // Driving the built page through Vitest Browser Mode would need a static file
 // server wired into the browser test config, which nothing in this repo sets
 // up yet — see tests/build/belts-routes.test.ts for the same rationale.
 // Asserting against the built HTML directly pins the same behaviour.
 const DIST_DIR = 'dist';
-
-// Astro escapes attribute values, so a raw match has to be decoded before it is
-// JSON again. One pass over a table rather than chained .replace() calls:
-// chaining turns &amp;quot; — an escaped, literal "&quot;" inside a maxim — into
-// a real quote and corrupts the parse. Only &quot; occurs in today's maxims; the
-// rest are here so a future content edit fails on its own merits rather than
-// failing this test on a page that renders perfectly well.
-const ATTRIBUTE_ENTITIES: Readonly<Record<string, string>> = {
-  '&quot;': String.fromCharCode(34),
-  '&#34;': String.fromCharCode(34),
-  '&amp;': '&',
-  '&#38;': '&',
-  '&lt;': '<',
-  '&gt;': '>',
-  '&#39;': "'",
-};
-
-function decodeAttribute(value: string): string {
-  return value.replace(/&(?:quot|amp|lt|gt|#34|#38|#39);/g, (entity) => ATTRIBUTE_ENTITIES[entity] ?? entity);
-}
 
 describe('the home route (/)', () => {
   let html: string;
@@ -134,12 +115,8 @@ describe('the home route (/)', () => {
   // file's own header comment) — nothing else pins the contract that the
   // browser actually receives every maxim, and only every maxim.
   it('hands the browser exactly MAXIMS as a data attribute, not a second copy', () => {
-    const attrMatch = /data-maxims="([^"]*)"/.exec(html);
-    expect(attrMatch, 'no data-maxims attribute found in the built page').not.toBeNull();
-    if (!attrMatch) return;
-    const rawMaxims = attrMatch[1] ?? '';
-    const parsedMaxims: unknown = JSON.parse(decodeAttribute(rawMaxims));
-    expect(parsedMaxims).toEqual(MAXIMS);
+    const parsedMaxims = jsonAttribute(html, 'data-maxims');
+    expect(parsedMaxims, 'data-maxims is missing from the built page, or is not every maxim').toEqual(MAXIMS);
   });
 
   it('loads store.js before home.js, both as external scripts with no inline body', () => {

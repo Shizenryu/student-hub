@@ -13,7 +13,7 @@
 # Format: <sha256>  <path relative to public/, forward slashes>, sorted by path.
 
 7fdfc665e801eac32abbaf16920806cb74b032d98e0f3ad175c190898f9f0b86  assets/data.js
-2c42a9d7ac1a16b2ec4ddd92b591c7420e3ad5aca20c5f563e15267c660c98f1  assets/home.js
+abf2771c9de564d5d1b9743b9b5a4edbd27e55f7b92a5176aca562424f9b3a4f  assets/home.js
 c152c0de1ba1c09a143a495b7f59a3f85857e3050d88f3af8be0a39bc48d83b1  assets/img/icon.png
 066200e4c56f23f6f87d5677af6abe0b6aa2400e2a22222b16625116c33e2592  assets/img/ki.png
 83983778db8ce0d74644b594afff0f30803410da782dc19f18ddc58d87655e7c  assets/img/shizenryu-calligraphy.png

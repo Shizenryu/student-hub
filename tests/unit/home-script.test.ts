@@ -16,6 +16,16 @@ const HOME_SCRIPT_SOURCE = 'public/assets/home.js';
 type StreakInfo = { readonly count: number; readonly today: boolean };
 type FakeStore = { readonly today: () => number; readonly streakInfo: () => StreakInfo };
 
+// The two things home.js reads off Store, in one place. `day` defaults because
+// a streak assertion does not care what day it is, and stating it anyway
+// implies it matters.
+const fakeStore = (streak: StreakInfo, day = 0): FakeStore => ({
+  today: () => day,
+  streakInfo: () => streak,
+});
+
+const NO_STREAK: StreakInfo = { count: 0, today: false };
+
 type RunResult = { readonly maximText: string; readonly streakText: string };
 
 // Stands in for HTMLElement: the script's own `host instanceof HTMLElement`
@@ -25,13 +35,15 @@ class FakeElement {
 }
 
 async function runHomeScript(options: {
-  readonly maxims: readonly string[];
+  readonly maxims?: readonly string[];
+  // Sets data-maxims verbatim, for the malformed values `maxims` cannot express.
+  readonly rawMaxims?: string;
   readonly store?: FakeStore;
 }): Promise<RunResult> {
   const source = await readFile(HOME_SCRIPT_SOURCE, 'utf8');
 
   const host = new FakeElement();
-  host.dataset.maxims = JSON.stringify(options.maxims);
+  host.dataset.maxims = options.rawMaxims ?? JSON.stringify(options.maxims ?? []);
 
   const maximEl = { textContent: '' };
   const streakEl = { textContent: '' };
@@ -67,65 +79,61 @@ describe('public/assets/home.js', () => {
     // removes — answers the SAME maxim to both calls. Asserting one day only
     // would leave that mutant alive whenever the real day number happened to
     // be congruent to 5 modulo the list length: one day in three.
-    const storeOn = (day: number): FakeStore => ({
-      today: () => day,
-      streakInfo: () => ({ count: 0, today: false }),
-    });
-
-    const onDayFive = await runHomeScript({ maxims: ['a', 'b', 'c'], store: storeOn(5) });
-    const onDaySix = await runHomeScript({ maxims: ['a', 'b', 'c'], store: storeOn(6) });
+    const onDayFive = await runHomeScript({ maxims: ['a', 'b', 'c'], store: fakeStore(NO_STREAK, 5) });
+    const onDaySix = await runHomeScript({ maxims: ['a', 'b', 'c'], store: fakeStore(NO_STREAK, 6) });
 
     expect(onDayFive.maximText).toBe('“c”');
     expect(onDaySix.maximText).toBe('“a”');
   });
 
   it('renders the "trained today" streak-chip form, character for character', async () => {
-    const store: FakeStore = {
-      today: () => 0,
-      streakInfo: () => ({ count: 5, today: true }),
-    };
-
-    const { streakText } = await runHomeScript({ maxims: ['x'], store });
+    const { streakText } = await runHomeScript({ store: fakeStore({ count: 5, today: true }) });
 
     expect(streakText).toBe('🔥 5-day training streak');
   });
 
   it('renders the "train today to keep it" streak-chip form, character for character', async () => {
-    const store: FakeStore = {
-      today: () => 0,
-      streakInfo: () => ({ count: 5, today: false }),
-    };
-
-    const { streakText } = await runHomeScript({ maxims: ['x'], store });
+    const { streakText } = await runHomeScript({ store: fakeStore({ count: 5, today: false }) });
 
     expect(streakText).toBe('🔥 5-day streak — train today to keep it');
   });
 
   it('leaves the streak chip empty when the streak count is zero', async () => {
-    const store: FakeStore = {
-      today: () => 0,
-      streakInfo: () => ({ count: 0, today: false }),
-    };
-
-    const { streakText } = await runHomeScript({ maxims: ['x'], store });
+    const { streakText } = await runHomeScript({ store: fakeStore(NO_STREAK) });
 
     expect(streakText).toBe('');
   });
 
   // src/data/integrity.ts fails the build on an empty MAXIMS precisely because
   // of what this pins: the page must stay blank rather than print the literal
-  // word "undefined" at a student. Both the length guard and the typeof check
-  // in home.js block that independently, so this test passes with either one
-  // removed — it characterises the guarantee, not a single line's necessity.
+  // word "undefined" at a student. home.js no longer carries a length check for
+  // it — mutation testing proved that clause could not change any outcome — so
+  // this test is the only thing holding the guarantee.
   it('leaves the maxim empty rather than printing "undefined" when the list is empty', async () => {
-    const store: FakeStore = {
-      today: () => 5,
-      streakInfo: () => ({ count: 0, today: false }),
-    };
-
-    const { maximText } = await runHomeScript({ maxims: [], store });
+    const { maximText } = await runHomeScript({ maxims: [], store: fakeStore(NO_STREAK, 5) });
 
     expect(maximText).toBe('');
+  });
+
+  // The route writes this attribute from typed JSON, so a non-array should be
+  // impossible — but Array.isArray is the only thing standing between a
+  // malformed one and real damage, and mutation testing found nothing pinned
+  // it. A JSON string is the nasty case: "abc" has a length, so it indexes, and
+  // a single letter renders as the maxim of the day. null is the loud one: it
+  // would throw, and an uncaught throw here takes the rest of the file — the
+  // streak chip — down with it. Asserting the chip still renders is the point
+  // of the second expectation, not incidental.
+  it.each([
+    { label: 'a JSON string', rawMaxims: '"abc"' },
+    { label: 'null', rawMaxims: 'null' },
+  ])('leaves the maxim empty when data-maxims is $label rather than an array', async ({ rawMaxims }) => {
+    const { maximText, streakText } = await runHomeScript({
+      rawMaxims,
+      store: fakeStore({ count: 3, today: true }),
+    });
+
+    expect(maximText).toBe('');
+    expect(streakText).toBe('🔥 3-day training streak');
   });
 
   it('leaves both the maxim and the streak chip empty when Store is unavailable', async () => {

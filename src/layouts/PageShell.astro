@@ -9,24 +9,26 @@
 import '../styles/tokens.css';
 import '../styles/app.css';
 
-// heading/subheading are optional because the home route replaces the whole
-// header with its own masthead (crest image, three lines) via the named
-// `masthead` slot below, rather than the h1/.sub pair every inner page uses —
-// so it never reads these props. `footer` is the same shape of override: the
-// home page's footer text is different content, not a link back to itself.
-// Both slots fall back to today's markup so belts/kata (and any future inner
-// page) keep working unchanged with no slot supplied.
+// `masthead` and `footer` are overridable slots that fall back to today's
+// markup, so belts/kata (and any future inner page) keep working with no slot
+// supplied. `variant` is the shell's spacing scale, carried as an enumerated
+// modifier class exactly as `width` already is — so a route adjusts the shell
+// through the shell's own vocabulary instead of reaching into its elements
+// with :global(). Today only the home page differs, and only until Slice 9
+// normalises the spacing; see .app--home in app.css.
 type Props = {
   title: string;
   description: string;
   heading?: string;
   subheading?: string;
   width?: 'default' | 'wide';
+  variant?: 'inner' | 'home';
 };
 
-const { title, description, heading, subheading, width } = Astro.props;
+const { title, description, heading, subheading, width, variant } = Astro.props;
 
 // heading/subheading are optional only because the masthead slot replaces them.
+// (That is the whole reason for the `?` above.)
 // Nothing in the type system ties those two facts together, so a route
 // supplying neither typechecks and ships an empty <h1> — invisible in review,
 // visible to a student. Astro.slots is the only place the slot is observable,
@@ -50,7 +52,7 @@ if (!Astro.slots.has('masthead') && (!heading || !subheading)) {
 <link rel="apple-touch-icon" href="/assets/img/icon.png">
 </head>
 <body>
-<div class:list={['app', { 'app--wide': width === 'wide' }]}>
+<div class:list={['app', { 'app--wide': width === 'wide', 'app--home': variant === 'home' }]}>
   <header>
     <slot name="masthead">
       <h1>{heading}</h1>

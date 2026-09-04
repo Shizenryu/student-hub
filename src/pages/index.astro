@@ -20,6 +20,7 @@ import { MAXIMS } from '../data';
 <PageShell
   title="Shizenryu Karate — Student Hub"
   description="Shizenryu Karate student hub: terminology quiz, kumite sequences, philosophy flashcards and study guides."
+  variant="home"
 >
   <Fragment slot="masthead">
     <div class="crest">
@@ -97,7 +98,6 @@ import { MAXIMS } from '../data';
 
 <style>
   .crest {
-    text-align: center;
     margin-bottom: 10px;
   }
 
@@ -117,24 +117,23 @@ import { MAXIMS } from '../data';
     opacity: .4;
   }
 
+  /* Inside PageShell's <header>, so app.css's `header`, `header h1` and
+     `header .sub` rules are already in force: alignment, colour and casing
+     come from there. Only the sizes and spacing that genuinely differ from an
+     inner page are restated here — that difference is the deliberate,
+     not-yet-normalised drift Slice 9 owns. */
   h1 {
-    text-align: center;
     font-size: 1.7rem;
     letter-spacing: .14em;
-    color: var(--dark);
   }
 
   .sub {
-    text-align: center;
     font-size: .75rem;
     letter-spacing: .25em;
-    color: var(--red);
-    text-transform: uppercase;
     margin: 6px 0 4px;
   }
 
   .nat {
-    text-align: center;
     font-size: .85rem;
     color: var(--muted);
     font-style: italic;
@@ -148,7 +147,7 @@ import { MAXIMS } from '../data';
     font-style: italic;
     font-size: .92rem;
     color: #555;
-    border-radius: 0 10px 10px 0;
+    border-radius: 0 var(--radius-control) var(--radius-control) 0;
     margin-bottom: 24px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
   }
@@ -265,52 +264,5 @@ import { MAXIMS } from '../data';
     padding: 4px 8px;
     border-radius: var(--radius-tag);
     letter-spacing: .08em;
-  }
-
-  /* PageShell's shared footer rule (app.css) sets a smaller font-size, a
-     smaller margin-top and no line-height at all — this page's original
-     footer set its own value for all four declarations below (color happens
-     to already match the shared rule's --faint token exactly, but is
-     restated here so this override is self-contained). Without it the two
-     footer lines sit measurably closer together and higher up than in
-     production.
-
-     :global() is required, not stylistic: the <footer> tag itself is
-     rendered by PageShell.astro, not by this file — only its slotted text
-     content is authored here. A scoped `footer { ... }` rule compiles to
-     `footer[data-astro-cid-<this-file>]`, which never matches an element
-     PageShell rendered, so it silently did nothing (confirmed by measuring
-     dist/index.html's computed footer styles before and after). Because
-     this stylesheet is only bundled into the page that imports this
-     component, :global(footer) still reaches only this route's footer, not
-     belts/kata's.
-
-     The gap between this page's original values and app.css's shared ones
-     (.72rem vs .7rem, 28px vs 20px) is deliberate content this page is
-     preserving, not a mistake to reconcile here — it's the same drift
-     CLAUDE.md already documents for .app's max-width (480/520/560px across
-     quiz/index/belts+kata), and Slice 9 owns normalising all of it in one
-     pass. Until then this override keeps the home page pixel-faithful to
-     its pre-migration original rather than silently drifting to whatever
-     belts.html happened to use. */
-  :global(footer) {
-    font-size: .72rem;
-    color: var(--faint);
-    margin-top: 28px;
-    line-height: 1.7;
-  }
-
-  /* Same shape as the footer override above, for the same reason: .app is
-     rendered by PageShell.astro, not this file, so it cannot be reached by
-     a scoped selector — only :global() lands on the real element. This
-     page's original set `padding: 28px 16px 40px`; app.css's shared rule
-     (transcribed from belts.html) sets `padding: 20px 16px 40px` — sides
-     and bottom already agree, so only padding-top is restated here rather
-     than repeating values the shared rule already has right (a second
-     place to keep in sync otherwise). The 28px vs 20px gap is the same
-     deliberate, not-yet-normalised drift as the footer's — Slice 9 owns
-     collapsing it, not this route. */
-  :global(.app) {
-    padding-top: 28px;
   }
 </style>
