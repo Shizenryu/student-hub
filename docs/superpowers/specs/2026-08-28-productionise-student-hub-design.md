@@ -219,13 +219,20 @@ deploys a working site.
 | 3 | Markdown pipeline; `/kata/[slug]`; `/` | Trusted-HTML path gone |
 | 4 | `practice` island; `store.ts` port; validated persistence | First island live |
 | 5 | `flashcards` island | |
-| 6 | `quiz` island + characterisation tests pinning defects 1, 2 and 4 | `public/` empty |
+| 6 | `quiz` island + defect pins; `data.js` retires | No pages left in `public/` |
 | 7 | Strict CSP, header hardening, supply-chain CI, CSP-violation test | Hardened |
 | 8 | All six defect fixes, one RED→GREEN commit each | Behaviour deliberately changed |
 | 9 | Visual normalisation: greys, spacing scale, max-widths | Every diff intentional |
 
 CSP lands at 7 rather than earlier because the legacy inline-script pages in `public/` would
 violate it, and path-scoping the policy mid-migration is machinery for no gain.
+
+Slice 6 leaves no *pages* in `public/`, not an empty directory: `assets/store.js`,
+`assets/home.js`, `assets/legacy-hash.js`, the images and the PDFs remain. The home page's
+maxim and streak chip are classic scripts reading `store.js`, and replacing them with an
+island would put React on the landing page — around 60KB gzipped to render one line of text,
+on the page a student opens on poor signal at the dojo. Retiring those three scripts is a
+separate decision nobody has needed to make yet.
 
 ### Keeping content editable
 
