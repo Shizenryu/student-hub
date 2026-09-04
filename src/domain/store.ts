@@ -9,6 +9,13 @@
 // day-boundary arithmetic below testable without freezing global time, and it is
 // how a caller supplies the in-memory fallback when a student has storage
 // disabled.
+//
+// It must write exactly what public/assets/store.js writes, byte for byte, for as
+// long as both exist: quiz.html and flashcards.html still log practice and mark
+// the streak through the old one, so a student can move between an island and a
+// legacy page on the same day. tests/unit/store-parity.test.ts holds them
+// together. Where a rule below looks odd, it is almost certainly matching that
+// file rather than expressing a preference.
 
 export type StorageLike = {
   getItem: (key: string) => string | null;
@@ -18,9 +25,78 @@ export type StorageLike = {
 
 export type Clock = () => Date;
 
-export type Store = {
-  readonly today: () => number;
+export type StreakReport = {
+  readonly count: number;
+  readonly best: number;
+  readonly today: boolean;
 };
+
+export type StreakInfo = StreakReport & { readonly alive: boolean };
+
+export type Store = {
+  readonly available: boolean;
+  readonly today: () => number;
+  readonly markTrained: () => StreakReport;
+  readonly streakInfo: () => StreakInfo;
+};
+
+const KEY = 'shizenryu-progress-v1';
+const PROBE_KEY = '__t';
+
+type StreakState = { readonly last: number; readonly count: number; readonly best: number };
+
+// Version 1 is exactly the shape store.js writes: every field optional, because a
+// student who has only ever done a quiz has `streak` and `best` and no `plog`.
+type ProgressState = {
+  readonly streak?: StreakState;
+  readonly best?: Readonly<Record<string, number>>;
+  readonly miss?: Readonly<Record<string, number>>;
+  readonly plog?: Readonly<Record<string, readonly string[]>>;
+};
+
+const NO_STREAK: StreakState = { last: 0, count: 0, best: 0 };
+
+// --- the untrusted-input guard ----------------------------------------------
+//
+// Hand-rolled rather than Zod, deliberately. Zod is already a dependency, but it
+// runs at build time for content collections; pulling it into an island would
+// ship roughly 12KB to a student's phone to check a four-key object.
+//
+// SCHEMA VERSION 1 is the shape store.js writes, and it is UNVERSIONED — there is
+// no version field in the persisted JSON and there must not be one, because
+// store.js would write state without it and the two would stop matching. The key
+// name itself (…-v1) carries the version. A version 2 changes that key and
+// migrates from this one; it does not add a field here.
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+// Number.isFinite and not typeof alone: NaN and Infinity survive a JSON round trip
+// as null, but a hand-edited key can hold either, and both poison day arithmetic
+// silently rather than loudly.
+const isNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
+
+const isNumberMap = (value: unknown): boolean => isRecord(value) && Object.values(value).every(isNumber);
+
+const isStreakState = (value: unknown): value is StreakState =>
+  isRecord(value) && isNumber(value.last) && isNumber(value.count) && isNumber(value.best);
+
+const isPracticeLog = (value: unknown): boolean =>
+  isRecord(value) &&
+  Object.values(value).every((day) => Array.isArray(day) && day.every((id) => typeof id === 'string'));
+
+// Absent is not malformed: a student who has only ever done a quiz has a streak
+// and no practice log. Present-but-wrong discards the whole object rather than the
+// offending field, because a half-trusted state is harder to reason about than a
+// fresh one, and the student loses nothing they could have seen anyway.
+function isProgressState(value: unknown): value is ProgressState {
+  if (!isRecord(value)) return false;
+  if (value.streak !== undefined && !isStreakState(value.streak)) return false;
+  if (value.best !== undefined && !isNumberMap(value.best)) return false;
+  if (value.miss !== undefined && !isNumberMap(value.miss)) return false;
+  if (value.plog !== undefined && !isPracticeLog(value.plog)) return false;
+  return true;
+}
 
 // Days since the epoch for the clock's LOCAL calendar date.
 //
@@ -36,8 +112,85 @@ function localDayNumber(now: Date): number {
   return Math.floor(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 86400000);
 }
 
+// Whether a session today moves the streak on, restarts it, or leaves it alone.
+//
+// The best score is recomputed even on the already-counted path. That looks
+// redundant and is: store.js runs its `count > best` check after the branch, so a
+// state where count somehow exceeds best would be repaired by a same-day call.
+// Keeping the shape means the parity proof compares like with like.
+function trainedOn(streak: StreakState, today: number): StreakState {
+  const moved: StreakState =
+    streak.last === today
+      ? streak
+      : { ...streak, last: today, count: streak.last === today - 1 ? streak.count + 1 : 1 };
+
+  return moved.count > moved.best ? { ...moved, best: moved.count } : moved;
+}
+
 export function createStore(options: { storage: StorageLike | null; now: Clock }): Store {
+  const { storage, now } = options;
+
+  // Feature detection by doing it, not by asking. Safari in private browsing has a
+  // localStorage that exists and throws on write; the only reliable test is a
+  // round trip. store.js probes the same way, with the same key.
+  const writable = ((): boolean => {
+    if (storage === null) return false;
+    try {
+      storage.setItem(PROBE_KEY, '1');
+      storage.removeItem(PROBE_KEY);
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+
+  // The fallback when storage is unavailable: the student's progress lives for the
+  // life of the page and no longer. Better than a page that will not count a
+  // session at all.
+  let memory: ProgressState = {};
+
+  function load(): ProgressState {
+    if (!writable || storage === null) return memory;
+    try {
+      const raw: unknown = JSON.parse(storage.getItem(KEY) ?? 'null');
+      return isProgressState(raw) ? raw : {};
+    } catch {
+      // Not JSON at all. Same answer as JSON that is not our shape: start clean.
+      return {};
+    }
+  }
+
+  function save(state: ProgressState): void {
+    memory = state;
+    if (!writable || storage === null) return;
+    try {
+      storage.setItem(KEY, JSON.stringify(state));
+    } catch {
+      // Storage filled up or was revoked mid-session. The in-memory copy above
+      // keeps the page consistent; nothing else can be done here.
+    }
+  }
+
+  const day = () => localDayNumber(now());
+
   return {
-    today: () => localDayNumber(options.now()),
+    available: writable,
+
+    today: day,
+
+    markTrained: () => {
+      const state = load();
+      const streak = trainedOn(state.streak ?? NO_STREAK, day());
+      save({ ...state, streak });
+      return { count: streak.count, best: streak.best, today: true };
+    },
+
+    streakInfo: () => {
+      const streak = load().streak ?? NO_STREAK;
+      const t = day();
+      const trainedToday = streak.last === t;
+      const alive = trainedToday || streak.last === t - 1;
+      return { count: alive ? streak.count : 0, best: streak.best, today: trainedToday, alive };
+    },
   };
 }
