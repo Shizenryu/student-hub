@@ -1,23 +1,23 @@
 import { describe, expect, it } from 'vitest';
 
 import { createStore } from '../../src/domain/store';
-import { fakeStorage, storageThatFillsUp, unwritableStorage } from './fake-storage';
-
-const KEY = 'shizenryu-progress-v1';
+import {
+  JULY_1,
+  JULY_2,
+  JULY_3,
+  JULY_5,
+  PROGRESS_KEY,
+  fakeStorage,
+  storageThatFillsUp,
+  storeOn,
+  unwritableStorage,
+} from './store-fixtures';
 
 // The streak is the thing students actually care about, and the thing that
 // silently breaks if the day arithmetic or the transition rules are a step out.
 // These drive it through whole days rather than through internal state: a store
 // is built at a given moment, used, and rebuilt at a later moment against the
 // same storage — the same way a student closes the page and comes back tomorrow.
-
-const JULY_1 = '2026-07-01T12:00:00Z';
-const JULY_2 = '2026-07-02T12:00:00Z';
-const JULY_3 = '2026-07-03T12:00:00Z';
-const JULY_5 = '2026-07-05T12:00:00Z';
-
-const storeOn = (iso: string, storage: ReturnType<typeof fakeStorage>) =>
-  createStore({ storage, now: () => new Date(iso) });
 
 describe('training on a day', () => {
   it('starts a streak at one', () => {
@@ -71,8 +71,9 @@ describe('reading the streak without training', () => {
   it('reports nothing for a student who has never trained', () => {
     // alive is false, not true: the stored default last-trained day is 0, which is
     // 1 January 1970 and so not yesterday. store.js has answered this since it was
-    // written, and nothing reads `alive` — but the parity proof compares the whole
-    // returned object, so the honest expectation is what it actually says.
+    // written, and nothing reads `alive` — but store-parity.test.ts's runBoth now
+    // compares what streakInfo RETURNS as well as what gets stored, so the honest
+    // expectation is what it actually says rather than what would be tidier.
     expect(storeOn(JULY_1, fakeStorage()).streakInfo()).toEqual({
       count: 0,
       best: 0,
@@ -135,15 +136,15 @@ describe('reading is only ever a read', () => {
 
     storeOn(JULY_1, storage).streakInfo();
 
-    expect(storage.read(KEY)).toBeNull();
+    expect(storage.read(PROGRESS_KEY)).toBeNull();
   });
 
   it('does not rewrite storage when reading a streak it could not parse', () => {
-    const storage = fakeStorage({ [KEY]: 'not json {' });
+    const storage = fakeStorage({ [PROGRESS_KEY]: 'not json {' });
 
     storeOn(JULY_1, storage).streakInfo();
 
-    expect(storage.read(KEY)).toBe('not json {');
+    expect(storage.read(PROGRESS_KEY)).toBe('not json {');
   });
 });
 

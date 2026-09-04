@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createStore } from '../../src/domain/store';
-import { fakeStorage } from './fake-storage';
+import { JULY_1_DAY, JULY_2, JULY_2_DAY, PROGRESS_KEY, fakeStorage, storeOn } from './store-fixtures';
 
 // localStorage is untrusted input. It is shared with anything else on the origin,
 // it survives across versions of this site, and a student can edit it by hand.
@@ -12,16 +12,7 @@ import { fakeStorage } from './fake-storage';
 // that rejected it would wipe live streaks on the day this ships — so it is
 // tested first and must never regress.
 
-const KEY = 'shizenryu-progress-v1';
-const JULY_2 = '2026-07-02T12:00:00Z';
-
-// 2026-07-01 and 2026-07-02 as local day numbers; see store-day-number.test.ts
-// for the derivation.
-const JULY_1_DAY = 20635;
-const JULY_2_DAY = 20636;
-
-const storeReading = (stored: string) =>
-  createStore({ storage: fakeStorage({ [KEY]: stored }), now: () => new Date(JULY_2) });
+const storeReading = (stored: string) => storeOn(JULY_2, fakeStorage({ [PROGRESS_KEY]: stored }));
 
 describe('state already in a student browser', () => {
   it('keeps a streak written by the legacy store, which carries no version field', () => {
@@ -103,11 +94,11 @@ describe('state that cannot be trusted', () => {
     // which accepts a top-level ARRAY: every reader answers cleanly for an array
     // too, but the next write spreads it into numeric keys and the result is
     // something store.js cannot read on a legacy page.
-    const storage = fakeStorage({ [KEY]: stored });
+    const storage = fakeStorage({ [PROGRESS_KEY]: stored });
 
     createStore({ storage, now: () => new Date(JULY_2) }).markTrained();
 
-    expect(JSON.parse(storage.read(KEY) ?? 'null')).toEqual({
+    expect(JSON.parse(storage.read(PROGRESS_KEY) ?? 'null')).toEqual({
       streak: { last: JULY_2_DAY, count: 1, best: 1 },
     });
   });

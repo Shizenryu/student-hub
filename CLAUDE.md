@@ -77,18 +77,29 @@ src/
 ├── styles/          tokens.css (design tokens, the source of truth for colours,
 │                    radii and widths) and app.css (shell/reset styles); routes
 │                    and components add their own scoped <style> alongside this
-└── data/           typed content — src/data/index.ts is the module pages import
+├── data/           typed content — src/data/index.ts is the module pages import
                     content from; the JSON files behind it, plus integrity.ts,
                     parity.ts and kata-prose.ts (cross-reference, legacy-parity
                     and kata prose/markdown build guards)
+└── domain/         pure TypeScript: no DOM, no storage, no clock of its own.
+                    store.ts is the progress store and the only thing in src/
+                    that touches localStorage — it takes both storage and a clock
+                    as arguments, which is what makes the day-boundary arithmetic
+                    testable in node. It must persist byte-identical state to
+                    public/assets/store.js until that file retires in slice 6;
+                    tests/unit/store-parity.test.ts holds the two together and
+                    deletes itself alongside it.
 scripts/            extract-legacy-data.mjs — regenerates src/data/*.json from
                     public/assets/data.js after a content edit
 tests/
 ├── build/          build-output assertions
 ├── browser/        Vitest Browser Mode
-└── unit/           content integrity, legacy-parity and kata-prose-parity tests
-                    (Node, no browser) — the last of these keeps src/content/kata/
-                    in step with data.js's KATA array word for word
+└── unit/           content integrity, legacy-parity and kata-prose-parity tests,
+                    plus the src/domain/store.ts suite (Node, no browser). The
+                    kata-prose one keeps src/content/kata/ in step with data.js's
+                    KATA array word for word; store-parity does the same job for
+                    the two progress stores. Shared helpers that vitest does not
+                    collect sit beside the suites: store-fixtures.ts, fake-storage.ts
 docs/superpowers/   committed specs and plans — not to be confused with
                     public/docs/, the student-facing printable PDFs above
 astro.config.mjs  tsconfig.json  vitest.config.ts  vitest.browser.config.ts

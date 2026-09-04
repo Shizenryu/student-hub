@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createStore } from '../../src/domain/store';
-import { fakeStorage } from './fake-storage';
+import { JULY_2, JULY_2_DAY, PROGRESS_KEY, fakeStorage, persisted, storeOn } from './store-fixtures';
 
 // What the store records besides the streak: the daily practice log the island
 // reads, the best quiz scores, and the flashcard miss queue. The last two are not
@@ -9,20 +8,9 @@ import { fakeStorage } from './fake-storage';
 // but store.js writes them into the same key, so this store has to round-trip
 // them untouched or a legacy page loses a student's scores.
 
-const KEY = 'shizenryu-progress-v1';
-const JULY_2 = '2026-07-02T12:00:00Z';
-const JULY_2_DAY = 20636;
-
-const storeOn = (iso: string, storage: ReturnType<typeof fakeStorage>) =>
-  createStore({ storage, now: () => new Date(iso) });
-
-const persisted = (storage: ReturnType<typeof fakeStorage>): unknown =>
-  JSON.parse(storage.read(KEY) ?? 'null');
-
 describe('the daily practice log', () => {
   it('records what was practised today', () => {
-    const storage = fakeStorage();
-    const store = storeOn(JULY_2, storage);
+    const store = storeOn(JULY_2);
 
     store.logPractice('stretch');
     store.logPractice('sanchin');
@@ -31,8 +19,7 @@ describe('the daily practice log', () => {
   });
 
   it('records an activity once however many times it is logged', () => {
-    const storage = fakeStorage();
-    const store = storeOn(JULY_2, storage);
+    const store = storeOn(JULY_2);
 
     store.logPractice('stretch');
     store.logPractice('stretch');
@@ -41,8 +28,7 @@ describe('the daily practice log', () => {
   });
 
   it('removes an activity that was un-ticked', () => {
-    const storage = fakeStorage();
-    const store = storeOn(JULY_2, storage);
+    const store = storeOn(JULY_2);
     store.logPractice('stretch');
     store.logPractice('kihon');
 
@@ -77,7 +63,7 @@ describe('the daily practice log', () => {
 
   it('forgets practice older than sixty days', () => {
     const storage = fakeStorage({
-      [KEY]: JSON.stringify({
+      [PROGRESS_KEY]: JSON.stringify({
         plog: {
           [String(JULY_2_DAY - 61)]: ['stretch'],
           [String(JULY_2_DAY - 60)]: ['mara'],
@@ -100,7 +86,7 @@ describe('the daily practice log', () => {
     // store.js prunes only on the logging path. Pruning here too would be tidier
     // and would break parity, so it is pinned rather than improved.
     const storage = fakeStorage({
-      [KEY]: JSON.stringify({
+      [PROGRESS_KEY]: JSON.stringify({
         plog: { [String(JULY_2_DAY - 61)]: ['stretch'], [String(JULY_2_DAY)]: ['mara'] },
       }),
     });
@@ -118,16 +104,14 @@ describe('best quiz scores', () => {
   });
 
   it('records a new best and says it was one', () => {
-    const storage = fakeStorage();
-    const store = storeOn(JULY_2, storage);
+    const store = storeOn(JULY_2);
 
     expect(store.setBest('terms', 7)).toBe(true);
     expect(store.best('terms')).toBe(7);
   });
 
   it('keeps the higher score and says the lower one was not a best', () => {
-    const storage = fakeStorage();
-    const store = storeOn(JULY_2, storage);
+    const store = storeOn(JULY_2);
     store.setBest('terms', 7);
 
     expect(store.setBest('terms', 5)).toBe(false);
@@ -140,12 +124,11 @@ describe('best quiz scores', () => {
     const storage = fakeStorage();
     storeOn(JULY_2, storage).setBest('terms', 0);
 
-    expect(storage.read(KEY)).toBeNull();
+    expect(storage.read(PROGRESS_KEY)).toBeNull();
   });
 
   it('keeps scores for different modes apart', () => {
-    const storage = fakeStorage();
-    const store = storeOn(JULY_2, storage);
+    const store = storeOn(JULY_2);
 
     store.setBest('terms', 7);
     store.setBest('kumite', 3);
@@ -160,8 +143,7 @@ describe('the flashcard miss queue', () => {
   });
 
   it('counts a card the student did not know', () => {
-    const storage = fakeStorage();
-    const store = storeOn(JULY_2, storage);
+    const store = storeOn(JULY_2);
 
     store.recordCard('c1abc', false);
     store.recordCard('c1abc', false);
@@ -170,8 +152,7 @@ describe('the flashcard miss queue', () => {
   });
 
   it('works a miss back off when the student gets it', () => {
-    const storage = fakeStorage();
-    const store = storeOn(JULY_2, storage);
+    const store = storeOn(JULY_2);
     store.recordCard('c1abc', false);
     store.recordCard('c1abc', false);
 
@@ -181,8 +162,7 @@ describe('the flashcard miss queue', () => {
   });
 
   it('forgets a card once its misses are worked off', () => {
-    const storage = fakeStorage();
-    const store = storeOn(JULY_2, storage);
+    const store = storeOn(JULY_2);
     store.recordCard('c1abc', false);
 
     store.recordCard('c1abc', true);
@@ -191,8 +171,7 @@ describe('the flashcard miss queue', () => {
   });
 
   it('ignores a correct answer for a card that was never missed', () => {
-    const storage = fakeStorage();
-    const store = storeOn(JULY_2, storage);
+    const store = storeOn(JULY_2);
 
     store.recordCard('c1abc', true);
 

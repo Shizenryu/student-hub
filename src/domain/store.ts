@@ -10,6 +10,15 @@
 // how a caller supplies the in-memory fallback when a student has storage
 // disabled.
 //
+// A NOTE FOR THE ISLANDS THAT WILL CONSUME THIS. Astro renders a client:load
+// component in Node at build time before hydrating it in the browser, and there
+// is no localStorage in Node. Building a store at module scope in a .tsx file
+// therefore probes a storage that does not exist, falls back to memory, and
+// reuses that dead instance after hydration — so the student's progress silently
+// never persists, the build does not fail, and no test here would catch it.
+// Construct the store after mount, and bind it through one shared helper rather
+// than three hand-written call sites.
+//
 // It must write exactly what public/assets/store.js writes, byte for byte, for as
 // long as both exist: quiz.html and flashcards.html still log practice and mark
 // the streak through the old one, so a student can move between an island and a
@@ -87,12 +96,17 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 // again. Tested in tests/unit/store-validation.test.ts.
 const isNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
 
-const isNumberMap = (value: unknown): boolean => isRecord(value) && Object.values(value).every(isNumber);
+// These return type predicates rather than plain booleans on purpose. With a bare
+// boolean the fields stay `unknown` after the check passes, and isProgressState's
+// `value is ProgressState` becomes an assertion wearing a guard's clothes — the
+// exact thing this project bans. Narrowing here makes the outer predicate real.
+const isNumberMap = (value: unknown): value is Record<string, number> =>
+  isRecord(value) && Object.values(value).every(isNumber);
 
 const isStreakState = (value: unknown): value is StreakState =>
   isRecord(value) && isNumber(value.last) && isNumber(value.count) && isNumber(value.best);
 
-const isPracticeLog = (value: unknown): boolean =>
+const isPracticeLog = (value: unknown): value is Record<string, readonly string[]> =>
   isRecord(value) &&
   Object.values(value).every((day) => Array.isArray(day) && day.every((id) => typeof id === 'string'));
 
@@ -152,13 +166,13 @@ function pruned(log: Readonly<Record<string, readonly string[]>>, today: number)
 // int32 as it goes, `>>> 0` makes it unsigned before base 36, and the leading `c`
 // keeps the result a safe object property rather than a numeric-looking one.
 //
-// It walks UTF-16 CODE UNITS, matching store.js's charCodeAt(i) over s.length,
-// and not code points. Review caught the difference: [...text] splits an astral
-// character into one element where charCodeAt sees two surrogates, so
-// hash('a<fire emoji>b') came out as c12s4m here and cyfrvd there. Nothing in
-// data.js is outside the BMP today, so it was latent — but a single emoji added
-// to a deck would have orphaned every miss count on that card.
-function hashCard(text: string): string {
+// It walks UTF-16 CODE UNITS, matching store.js's charCodeAt(i) over s.length, and
+// NOT code points: [...text] splits an astral character into one element where
+// charCodeAt sees two surrogates, so the two spellings agree on everything in the
+// BMP and diverge the moment they do not. Nothing in the decks is astral today, so
+// a divergence here would be latent until one emoji orphaned every miss count on
+// that card. Pinned in tests/unit/store-parity.test.ts.
+export function hashCard(text: string): string {
   const h = Array.from({ length: text.length }, (_, index) => text.charCodeAt(index)).reduce(
     (acc, codeUnit) => (acc * 31 + codeUnit) | 0,
     0,
@@ -166,59 +180,52 @@ function hashCard(text: string): string {
   return `c${(h >>> 0).toString(36)}`;
 }
 
-// Replace or remove one key while every other key keeps its position.
+// Removing a key is the only rewrite that needs a helper. `{ ...record, [key]: v }`
+// already updates an existing key IN PLACE — property order is insertion order and
+// reassigning does not move it — and appends a genuinely new one, which is what
+// store.js's assignment does too.
 //
-// Destructuring a key out and spreading it back appends it at the END, which
-// changes the serialised JSON even when the contents match. store.js assigns and
-// deletes in place, so it does not. The parity suite compares strings, so this is
-// the difference between a byte-for-byte claim that holds and one that does not —
-// review found exactly that in the miss queue.
-//
-// It only actually matters for the miss queue: its keys start with a letter and so
-// keep insertion order, while practice-log keys are day numbers, and JavaScript
-// orders integer-like keys numerically however they were inserted. Used on both
-// anyway — one rule is easier to keep than two, and the day the log is keyed by
-// anything else the difference stops being free.
-function replacingKey<T>(
-  record: Readonly<Record<string, T>>,
-  key: string,
-  value: T | undefined,
-): Record<string, T> {
-  const rebuilt = Object.entries(record).flatMap(([existingKey, existingValue]): Array<[string, T]> => {
-    if (existingKey !== key) return [[existingKey, existingValue]];
-    return value === undefined ? [] : [[key, value]];
-  });
-  const appended: Array<[string, T]> =
-    key in record || value === undefined ? rebuilt : [...rebuilt, [key, value]];
-  return Object.fromEntries(appended);
+// What must never be used is destructuring the key out and spreading the rest
+// back: that appends, so the contents match while the bytes do not, and the parity
+// suite compares strings. That was a real break, found in review, in the miss
+// queue — whose keys start with a letter and so carry insertion order. (The
+// practice log could not have shown it: its keys are day numbers, and JavaScript
+// orders integer-like keys numerically however they were inserted.)
+const withoutKey = <T,>(record: Readonly<Record<string, T>>, key: string): Record<string, T> =>
+  Object.fromEntries(Object.entries(record).filter(([existing]) => existing !== key));
+
+// Feature detection by doing it, not by asking. Safari in private browsing has a
+// localStorage that exists and throws on write; the only reliable test is a round
+// trip. store.js probes the same way, with the same key.
+function probeWritable(storage: StorageLike | null): boolean {
+  if (storage === null) return false;
+  try {
+    storage.setItem(PROBE_KEY, '1');
+    storage.removeItem(PROBE_KEY);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function createStore(options: { storage: StorageLike | null; now: Clock }): Store {
   const { storage, now } = options;
 
-  // Feature detection by doing it, not by asking. Safari in private browsing has a
-  // localStorage that exists and throws on write; the only reliable test is a
-  // round trip. store.js probes the same way, with the same key.
-  const writable = ((): boolean => {
-    if (storage === null) return false;
-    try {
-      storage.setItem(PROBE_KEY, '1');
-      storage.removeItem(PROBE_KEY);
-      return true;
-    } catch {
-      return false;
-    }
-  })();
+  // One value, not two: a storage that failed the probe is the same thing as no
+  // storage as far as every path below is concerned, and collapsing them means the
+  // guards read `persistent === null` once instead of `!writable || storage === null`
+  // twice.
+  const persistent: StorageLike | null = probeWritable(storage) ? storage : null;
 
-  // The fallback when storage is unavailable: the student's progress lives for the
-  // life of the page and no longer. Better than a page that will not count a
+  // The fallback when nothing can be persisted: the student's progress lives for
+  // the life of the page and no longer. Better than a page that will not count a
   // session at all.
   let memory: ProgressState = {};
 
   function load(): ProgressState {
-    if (!writable || storage === null) return memory;
+    if (persistent === null) return memory;
     try {
-      const raw: unknown = JSON.parse(storage.getItem(KEY) ?? 'null');
+      const raw: unknown = JSON.parse(persistent.getItem(KEY) ?? 'null');
       return isProgressState(raw) ? raw : {};
     } catch {
       // Not JSON at all. Same answer as JSON that is not our shape: start clean.
@@ -228,9 +235,9 @@ export function createStore(options: { storage: StorageLike | null; now: Clock }
 
   function save(state: ProgressState): void {
     memory = state;
-    if (!writable || storage === null) return;
+    if (persistent === null) return;
     try {
-      storage.setItem(KEY, JSON.stringify(state));
+      persistent.setItem(KEY, JSON.stringify(state));
     } catch {
       // Storage passed the probe at construction and then refused this write —
       // filled up, or revoked mid-session. The write is LOST: load() consults
@@ -247,7 +254,7 @@ export function createStore(options: { storage: StorageLike | null; now: Clock }
   const day = () => localDayNumber(now());
 
   return {
-    available: writable,
+    available: persistent !== null,
 
     today: day,
 
@@ -284,7 +291,10 @@ export function createStore(options: { storage: StorageLike | null; now: Clock }
       const remaining = forToday.filter((id) => id !== activityId);
       save({
         ...state,
-        plog: replacingKey(state.plog ?? {}, String(t), remaining.length === 0 ? undefined : remaining),
+        plog:
+          remaining.length === 0
+            ? withoutKey(state.plog ?? {}, String(t))
+            : { ...state.plog, [String(t)]: remaining },
       });
     },
 
@@ -307,21 +317,24 @@ export function createStore(options: { storage: StorageLike | null; now: Clock }
 
     recordCard: (cardKey, gotIt) => {
       const state = load();
-      const current = state.miss?.[cardKey] ?? 0;
-
-      if (!gotIt) {
-        save({ ...state, miss: replacingKey(state.miss ?? {}, cardKey, current + 1) });
-        return;
-      }
+      const misses = state.miss ?? {};
+      const current = misses[cardKey] ?? 0;
+      const worked = current - 1;
 
       // Getting a card right works one miss off; at zero the card leaves the queue
-      // entirely rather than sitting there as a 0.
-      if (current <= 0) {
-        save({ ...state, miss: { ...state.miss } });
-        return;
-      }
-      const worked = current - 1;
-      save({ ...state, miss: replacingKey(state.miss ?? {}, cardKey, worked <= 0 ? undefined : worked) });
+      // rather than sitting there as a 0. A miss always sets and never removes,
+      // because store.js increments unconditionally — a stored negative count that
+      // increments to <= 0 is kept, not deleted, and folding the two together would
+      // break that.
+      const miss = !gotIt
+        ? { ...misses, [cardKey]: current + 1 }
+        : current <= 0
+          ? misses
+          : worked <= 0
+            ? withoutKey(misses, cardKey)
+            : { ...misses, [cardKey]: worked };
+
+      save({ ...state, miss });
     },
 
     hash: hashCard,
