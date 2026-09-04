@@ -20,11 +20,11 @@
 // than three hand-written call sites.
 //
 // It must write exactly what public/assets/store.js writes, byte for byte, for as
-// long as both exist: quiz.html and flashcards.html still log practice and mark
-// the streak through the old one, so a student can move between an island and a
-// legacy page on the same day. tests/unit/store-parity.test.ts holds them
-// together. Where a rule below looks odd, it is almost certainly matching that
-// file rather than expressing a preference.
+// long as both exist: quiz.html still logs practice and marks the streak through
+// the old one, so a student can move between an island and that page on the same
+// day. tests/unit/store-parity.test.ts holds them together. Where a rule below
+// looks odd, it is almost certainly matching that file rather than expressing a
+// preference.
 
 export type StorageLike = {
   getItem: (key: string) => string | null;

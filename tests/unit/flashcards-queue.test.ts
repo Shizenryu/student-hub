@@ -139,6 +139,44 @@ describe('cards the student keeps missing come first', () => {
 });
 
 describe('the shuffle', () => {
+  it('produces the exact order the legacy page would, for a given source', () => {
+    // Fisher-Yates from the end, so with a source that always picks index 0 the
+    // permutation is forced: [a,b,c,d] -> swap 3,0 -> swap 2,0 -> swap 1,0.
+    //
+    // Pinned exactly rather than loosely, because "some other order" is satisfied
+    // by a shuffle that walks the wrong way and deals a different deck than the
+    // page this replaced. Mutation testing found that: stopping the loop one step
+    // early passed everything.
+    const deck = deckOf('The Maxims', ['a', 'b', 'c', 'd']);
+
+    const queue = buildQueue({ deck, misses: {}, hash: (t) => t, random: alwaysFirst });
+
+    expect(fronts(queue)).toEqual(['b', 'c', 'd', 'a']);
+  });
+
+  it('runs BEFORE the miss ordering, not after it', () => {
+    // The whole rule is shuffle-then-sort. Doing it the other way round leaves the
+    // most-missed card wherever the shuffle threw it, so a student stops seeing
+    // their weakest cards first.
+    //
+    // This needs a real shuffle AND unequal misses to see: with noShuffle both
+    // orders agree, and with equal misses the sort has nothing to say. Mutation
+    // testing found exactly that hole — the stability test above compares two
+    // calls that would both be wrong in the same way.
+    const deck = deckOf('The Maxims', ['a', 'b', 'c', 'd']);
+
+    const queue = buildQueue({
+      deck,
+      misses: { a: 4, b: 3, c: 2, d: 1 },
+      hash: (text) => text,
+      random: alwaysFirst,
+    });
+
+    // Sorting last makes the result depend only on the miss counts, whatever the
+    // shuffle did.
+    expect(fronts(queue)).toEqual(['a', 'b', 'c', 'd']);
+  });
+
   it('reorders the deck', () => {
     // Not an assertion about which order — that is the random source's business —
     // but that the source is consulted at all. A builder that ignored it would

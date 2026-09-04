@@ -11,7 +11,7 @@ The digital home for students of Shizenryu Karate — *The Natural Way of Karate
 | `/` | Landing page — maxim of the day, links to everything. A real Astro route now; `public/index.html` is gone and `/index.html` redirects here for old bookmarks. The maxim and the streak chip are filled in client-side by `public/assets/home.js`, because a page built ahead of time cannot know what day you are reading it |
 | `/practice` | Daily Practice — tick off what you trained today and keep your streak. A React island (the first on the site), backed by `src/domain/store.ts`; `public/practice.html` is gone and `/practice.html` redirects here |
 | `public/quiz.html` | Dojo Quiz — Japanese terminology by belt level, plus Kumite 1–12 sequence training |
-| `public/flashcards.html` | Philosophy flashcards — the Maxims, Zen & Karate, Tui Shou, and more |
+| `/flashcards` | Philosophy flashcards — the Maxims, Zen & Karate, Tui Shou, and more. A React island; the deck is shuffled and then ordered so cards you have missed come first. `public/flashcards.html` is gone and `/flashcards.html` redirects here |
 | `/belts`, `/belts/<slug>` | Belt study guides — syllabus, key terms and the mind behind the movement for each grade. A real Astro route now; `public/belts.html` is gone and `belts.html` redirects here for old bookmarks |
 | `/kata`, `/kata/<slug>` | Kata reference — what each kata is, what its name means, and where it lives in the syllabus. A real Astro route now; `public/kata.html` is gone and `kata.html` redirects here for old bookmarks. Kata prose is authored as markdown in `src/content/kata/` |
 | `public/docs/` | Printable PDFs: grade study guides, philosophy study guide, belt passport |
