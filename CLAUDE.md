@@ -84,10 +84,8 @@ src/
 ├── components/      shared pieces a route composes, e.g. BeltGuide.astro,
 │                    KataGuide.astro. Practice.tsx is the first React island;
 │                    practice-labels.ts holds its strings as pure functions so
-│                    they are testable without a browser — flashcards-labels.ts
-│                    and flashcards-queue.ts do the same for that island, the
-│                    queue holding the shuffle-then-sort-by-misses ordering
-│                    behind an injected random source. StreakChip.tsx,
+│                    they are testable without a browser, and flashcards-labels.ts
+│                    does the same for that island. StreakChip.tsx,
 │                    StreakChipSlot.astro and streak-chip-id.ts are the chip's
 │                    three parts — the element, the portal into it, and the id
 │                    they share. use-browser-store.ts is the ONLY thing that
@@ -109,6 +107,9 @@ src/
                     parity.ts and kata-prose.ts (cross-reference, legacy-parity
                     and kata prose/markdown build guards)
 └── domain/         pure TypeScript: no DOM, no storage, no clock of its own.
+                    flashcards-queue.ts holds the deck ordering — shuffle, then
+                    stably sort by miss count — behind an injected random source,
+                    which is what makes an invisible rule assertable.
                     store.ts is the progress store and the only thing in src/
                     that touches localStorage — it takes both storage and a clock
                     as arguments, which is what makes the day-boundary arithmetic

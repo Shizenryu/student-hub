@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import { JULY_2, JULY_2_DAY, PROGRESS_KEY, fakeStorage, persisted, storeOn } from './store-fixtures';
 
-// What the store records besides the streak: the daily practice log the island
-// reads, the best quiz scores, and the flashcard miss queue. The last two are not
-// used by anything in src/ yet — quiz.html and flashcards.html still own them —
-// but store.js writes them into the same key, so this store has to round-trip
-// them untouched or a legacy page loses a student's scores.
+// What the store records besides the streak: the daily practice log and the
+// flashcard miss queue, both read by islands, and the best quiz scores, which only
+// public/quiz.html uses until slice 6. store.js writes all of them into the same
+// key, so this store has to round-trip the scores untouched or that page loses a
+// student's bests.
 
 describe('the daily practice log', () => {
   it('records what was practised today', () => {

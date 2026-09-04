@@ -175,10 +175,12 @@ async function main() {
   // grandchild, and killing the wrapper leaves that grandchild holding the port —
   // so every run of this script leaked a server and the next one failed with a
   // misleading "did not start".
+  const base = `http://localhost:${port}`;
+  await requireFreePort(base);
+
   const preview = spawn(process.execPath, ['node_modules/astro/bin/astro.mjs', 'preview', '--port', String(port)], {
     stdio: 'ignore',
   });
-  const base = `http://localhost:${port}`;
   const browser = await chromium.launch();
   let differences = 0;
 
@@ -224,8 +226,12 @@ async function main() {
 //
 // Killing the child handle is not enough on Windows: Astro's preview has children of
 // its own and the listener survives. So the port is what gets closed, by finding
-// whoever holds it. Belt and braces, because the failure mode is confusing and the
-// cleanup is cheap.
+// whoever holds it.
+//
+// That is only safe because the port is checked to be FREE before anything is
+// spawned (see requireFreePort). Without that check this would force-kill whatever
+// process tree happened to own the port --- someone else's dev server, and no way to
+// tell from in here.
 function stopPreview(preview, port) {
   preview.kill();
   if (process.platform !== 'win32') return;
@@ -240,6 +246,21 @@ function stopPreview(preview, port) {
   } catch {
     // Nothing listening, or already gone. Either is the outcome we wanted.
   }
+}
+
+// Refuses to continue if anything already holds the port, because the cleanup
+// above closes the port rather than tracking a process, and closing a port someone
+// else owns is not this script's business.
+async function requireFreePort(base) {
+  try {
+    await fetch(base, { signal: AbortSignal.timeout(500) });
+  } catch {
+    return; // nothing there, which is what we want
+  }
+  throw new Error(
+    `Something is already listening on ${base}. Stop it, or pass --port <n>. ` +
+      'This script will not take over a port it did not open.',
+  );
 }
 
 async function waitForServer(base) {
