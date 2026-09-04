@@ -15,6 +15,17 @@
   to = "/kata"
   status = 301
 
+# Unlike the two above, the home page's old URL still resolves to a real built
+# file — Astro emits the root route as dist/index.html — so without `force` a
+# request for /index.html would serve that file directly and the rule would
+# never fire. Forcing it keeps one canonical home URL. `/` is not matched by
+# this rule, so there is no redirect loop.
+[[redirects]]
+  from = "/index.html"
+  to = "/"
+  status = 301
+  force = true
+
 [[headers]]
   for = "/*"
   [headers.values]

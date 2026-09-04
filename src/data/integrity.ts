@@ -123,7 +123,7 @@ export function assertContentIntegrity(content: ContentBundle = REAL_CONTENT): v
     problems.push(`belt key "${key}" is used by more than one belt`);
   }
 
-  // index.html renders MAXIMS[day % MAXIMS.length]; an empty array yields
+  // The home route renders MAXIMS[day % MAXIMS.length]; an empty array yields
   // MAXIMS[NaN] and prints the literal word "undefined" on the homepage.
   if (maxims.length === 0) problems.push('MAXIMS is empty');
 

@@ -8,7 +8,7 @@ The digital home for students of Shizenryu Karate — *The Natural Way of Karate
 
 | Page | Purpose |
 |---|---|
-| `public/index.html` | Landing page — maxim of the day, links to everything |
+| `/` | Landing page — maxim of the day, links to everything. A real Astro route now; `public/index.html` is gone and `/index.html` redirects here for old bookmarks. The maxim and the streak chip are filled in client-side by `public/assets/home.js`, because a page built ahead of time cannot know what day you are reading it |
 | `public/quiz.html` | Dojo Quiz — Japanese terminology by belt level, plus Kumite 1–12 sequence training |
 | `public/flashcards.html` | Philosophy flashcards — the Maxims, Zen & Karate, Tui Shou, and more |
 | `/belts`, `/belts/<slug>` | Belt study guides — syllabus, key terms and the mind behind the movement for each grade. A real Astro route now; `public/belts.html` is gone and `belts.html` redirects here for old bookmarks |
@@ -22,7 +22,7 @@ You need [Node 22](https://nodejs.org). Then:
 
 ```bash
 npm ci        # install exactly the locked dependencies
-npm run dev   # local site at http://localhost:4321/index.html
+npm run dev   # local site at http://localhost:4321/
 ```
 
 | Command | What it does |

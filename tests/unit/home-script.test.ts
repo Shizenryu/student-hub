@@ -107,6 +107,22 @@ describe('public/assets/home.js', () => {
     expect(streakText).toBe('');
   });
 
+  // src/data/integrity.ts fails the build on an empty MAXIMS precisely because
+  // of what this pins: the page must stay blank rather than print the literal
+  // word "undefined" at a student. Both the length guard and the typeof check
+  // in home.js block that independently, so this test passes with either one
+  // removed — it characterises the guarantee, not a single line's necessity.
+  it('leaves the maxim empty rather than printing "undefined" when the list is empty', async () => {
+    const store: FakeStore = {
+      today: () => 5,
+      streakInfo: () => ({ count: 0, today: false }),
+    };
+
+    const { maximText } = await runHomeScript({ maxims: [], store });
+
+    expect(maximText).toBe('');
+  });
+
   it('leaves both the maxim and the streak chip empty when Store is unavailable', async () => {
     const { maximText, streakText } = await runHomeScript({ maxims: ['a', 'b', 'c'] });
 
