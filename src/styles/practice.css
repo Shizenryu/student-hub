@@ -1,12 +1,13 @@
 /* The daily practice tracker's own styling, transcribed from the hand-written
    public/practice.html this route replaced.
 
-   A plain stylesheet rather than a scoped <style> in practice.astro, and imported
-   by the island's component the way KataGuide.astro imports kata.css. It has to
-   be: almost everything here styles markup React renders, and Astro's scoped
-   styles work by stamping a data-astro-cid attribute on elements the .astro file
-   itself emits — an island's DOM never gets one, so a scoped rule would silently
-   match nothing.
+   A plain stylesheet rather than a scoped <style> block, imported by
+   src/pages/practice.astro. It has to be: almost everything here styles markup
+   React renders, and Astro's scoped styles work by stamping a data-astro-cid
+   attribute on elements the .astro file itself emits — an island's DOM never gets
+   one, so a scoped rule would silently match nothing. Astro still bundles it into
+   this page alone, so the bare `h2` and `.summary` selectors reach no other
+   route.
 
    Values come from tokens.css wherever one matches the original exactly. The
    literals left behind (#e5e0d8, #e9f7ef, #fbf7f1 and the greys) have no token
@@ -27,6 +28,12 @@
   letter-spacing: .15em;
   color: var(--muted-light);
   text-transform: uppercase;
+  /* Reserved: the island fills this after hydration, and without a floor the whole
+     card below it jumps. Measured filled height is 1.282em; this is just under, so
+     the settled layout is untouched. Same reason #streakChip and .status carry one
+     — the page this replaces already used this idiom, it just did not need it here
+     because its scripts were parser-blocking and painted the page complete. */
+  min-height: 1.28em;
 }
 
 .status {
@@ -79,8 +86,12 @@
   background: #e9f7ef;
 }
 
-/* The tick is decoration: the button carries aria-pressed, so a screen reader is
-   told the state rather than having a checkmark read out mid-sentence. */
+/* Generated content IS part of the accessible name in Chromium and WebKit, so a
+   ticked tile announces as `button "Stretch ✓ Even Part 1 counts" [pressed]` —
+   verified, not assumed. The tick is therefore redundant with aria-pressed rather
+   than invisible to it. Kept because it is what the page this replaces showed, and
+   removing it would change the pixels; worth revisiting in Slice 9 alongside the
+   rest of this page's visual language. */
 .act.on .n::after {
   content: " ✓";
   color: var(--good);
@@ -99,6 +110,9 @@ h2 {
   grid-template-columns: repeat(7, 1fr);
   gap: 8px;
   text-align: center;
+  /* The largest of the reserved heights: 52px of dots and labels that do not exist
+     until the island runs. A 34px dot, its 5px margin and one label line. */
+  min-height: 3.25em;
 }
 
 .day .dot {
@@ -137,6 +151,7 @@ h2 {
   color: #777;
   margin-top: 12px;
   text-align: center;
+  min-height: 1.29em;
 }
 
 .mind {

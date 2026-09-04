@@ -209,7 +209,8 @@ SYLLABUS = [ {grade, track, section, item, detail}, ... ]
           // Source of truth is the Syllabus 2026 spreadsheet — verify before editing.
 
 PRACTICE = [ {id, name, hint}, ... ]
-          // practice.html activity tiles. Timings in hints come from the Syllabus 2026
+          // the /practice tiles, passed to the island as a prop. Timings in hints
+          // come from the Syllabus 2026
           // Simplified sheet. quiz.html auto-logs 'terms'/'kumite', flashcards.html
           // auto-logs 'philosophy' on completion.
 
