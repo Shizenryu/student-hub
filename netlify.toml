@@ -15,6 +15,11 @@
   to = "/kata"
   status = 301
 
+[[redirects]]
+  from = "/practice.html"
+  to = "/practice"
+  status = 301
+
 # Unlike the two above, the home page's old URL still resolves to a real built
 # file — Astro emits the root route as dist/index.html — so without `force` a
 # request for /index.html would serve that file directly and the rule would

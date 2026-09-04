@@ -104,7 +104,7 @@ export function assertContentIntegrity(content: ContentBundle = REAL_CONTENT): v
     if (!hit) problems.push(`kata "${entry.name}" matches no syllabus row`);
   }
 
-  // practice.html keys streak completion solely by PRACTICE[].id — a duplicate
+  // The practice island keys streak completion solely by PRACTICE[].id — a duplicate
   // silently aliases two activities' completion state.
   for (const id of duplicates(practice.map((activity) => activity.id))) {
     problems.push(`practice activity id "${id}" is used more than once`);

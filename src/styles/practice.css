@@ -1,0 +1,151 @@
+/* The daily practice tracker's own styling, transcribed from the hand-written
+   public/practice.html this route replaced.
+
+   A plain stylesheet rather than a scoped <style> in practice.astro, and imported
+   by the island's component the way KataGuide.astro imports kata.css. It has to
+   be: almost everything here styles markup React renders, and Astro's scoped
+   styles work by stamping a data-astro-cid attribute on elements the .astro file
+   itself emits — an island's DOM never gets one, so a scoped rule would silently
+   match nothing.
+
+   Values come from tokens.css wherever one matches the original exactly. The
+   literals left behind (#e5e0d8, #e9f7ef, #fbf7f1 and the greys) have no token
+   today; inventing tokens for one page's palette is Slice 9's job, not this
+   slice's, and doing it here would change values rather than move them. */
+
+#streakChip {
+  font-size: .75rem;
+  color: var(--gold);
+  margin-top: 6px;
+  /* Reserves the line before the island fills it in, so the card below does not
+     jump when a student with a live streak loads the page. */
+  min-height: 1em;
+}
+
+.today {
+  font-size: .78rem;
+  letter-spacing: .15em;
+  color: var(--muted-light);
+  text-transform: uppercase;
+}
+
+.status {
+  margin: 8px 0 14px;
+  font-size: .95rem;
+  font-weight: 600;
+  min-height: 1.4em;
+}
+
+.status.done {
+  color: var(--good);
+}
+
+.status.none {
+  color: #888;
+  font-weight: 400;
+}
+
+.acts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.act {
+  border: 2px solid #e5e0d8;
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 13px 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .12s, background .12s;
+}
+
+.act .n {
+  font-weight: 700;
+  font-size: .92rem;
+  color: var(--dark);
+}
+
+.act .h {
+  font-size: .72rem;
+  color: var(--muted-light);
+  margin-top: 3px;
+  line-height: 1.3;
+}
+
+.act.on {
+  border-color: var(--good);
+  background: #e9f7ef;
+}
+
+/* The tick is decoration: the button carries aria-pressed, so a screen reader is
+   told the state rather than having a checkmark read out mid-sentence. */
+.act.on .n::after {
+  content: " ✓";
+  color: var(--good);
+}
+
+h2 {
+  font-size: .78rem;
+  letter-spacing: .2em;
+  color: var(--muted-light);
+  text-transform: uppercase;
+  margin: 20px 0 10px;
+}
+
+.week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  text-align: center;
+}
+
+.day .dot {
+  width: 34px;
+  height: 34px;
+  margin: 0 auto 5px;
+  border-radius: 50%;
+  border: 2px solid #e5e0d8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .8rem;
+  font-weight: 700;
+  color: var(--faint);
+}
+
+.day.hit .dot {
+  background: var(--good);
+  border-color: var(--good);
+  color: #fff;
+}
+
+.day.today .dot {
+  border-color: var(--red);
+}
+
+.day .lbl {
+  font-size: .62rem;
+  letter-spacing: .05em;
+  color: var(--muted-light);
+  text-transform: uppercase;
+}
+
+.summary {
+  font-size: .82rem;
+  color: #777;
+  margin-top: 12px;
+  text-align: center;
+}
+
+.mind {
+  background: #fbf7f1;
+  border-left: 4px solid var(--gold);
+  padding: 12px 14px;
+  font-size: .85rem;
+  font-style: italic;
+  color: #555;
+  border-radius: 0 var(--radius-control) var(--radius-control) 0;
+  margin-top: 14px;
+}

@@ -28,6 +28,16 @@ body {
   --app-max: 560px;
 }
 
+/* The practice page's header sits 4px closer to its card than every other page's.
+   Quiz and flashcards both use the shared 18px, so this is a one-off rather than
+   the start of a family — carried across so the migrated page matches the one it
+   replaced, and collapsed into one scale by Slice 9. It has to live here rather
+   than in practice.css because PageShell renders the <header>, so the route
+   cannot reach it with a scoped selector. */
+.app--practice header {
+  margin-bottom: 14px;
+}
+
 /* The home page's shell spacing predates the shared values above, which were
    transcribed from belts.html: 28px of top padding rather than 20px, and a
    slightly larger, looser footer. Carried across verbatim so the migrated page

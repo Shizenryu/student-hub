@@ -8,9 +8,18 @@ Live site deployed to Netlify, built from source into `dist/`. Repo: github.com/
 **Astro, TypeScript, no runtime dependencies of our own.** The site is built by
 Netlify from source on every push to `main`; `dist/` is never committed. Static
 pages ship zero JavaScript; the three interactive pages (quiz, flashcards,
-practice) become React islands as they are migrated. None of them has been yet —
-those three are all that is left of the original hand-written HTML in
-`public/`.
+practice) become React islands as they are migrated. Practice is the first one
+across; quiz and flashcards are all that is left of the original hand-written
+HTML in `public/`.
+
+`/practice` is that island. Everything on it except the tile list is a fact about
+one student's own browser — what they ticked today, which of the last thirty days
+they trained, whether the streak is alive — so it cannot be answered at build
+time. The activities themselves are content and come from `src/data`, which took
+`assets/data.js` off that page entirely. Its streak chip belongs inside the
+shared `<header>`, above the island's own markup, so the island renders it
+through a React portal into `#streakChip`: one root and one piece of state, since
+ticking the first activity of the day changes the chip.
 
 Belt study guides and kata reference are the first pages out: they are real
 Astro routes at `/belts`, `/belts/<slug>`, `/kata` and `/kata/<slug>`,
@@ -60,20 +69,31 @@ TypeScript is pinned to `^6.0.3` — do not upgrade to 7 yet. `@astrojs/check`
 
 ```
 public/            legacy pages, served verbatim, shrinking each slice
-├── quiz.html  flashcards.html  practice.html
+├── quiz.html  flashcards.html
 ├── assets/         data.js, store.js, legacy-hash.js, home.js, img/
 └── docs/           printable PDFs
 src/
-├── pages/index.astro, 404.astro, belts/index.astro, belts/[slug].astro,
+├── pages/index.astro, 404.astro, practice.astro,
+│                    belts/index.astro, belts/[slug].astro,
 │                    kata/index.astro, kata/[slug].astro
-│                    the home page, belt study guides and kata reference —
-│                    real routes, migrated off public/index.html,
-│                    public/belts.html and public/kata.html
+│                    every migrated page, in migration order: belts, kata,
+│                    home, practice. practice.astro is the only one that
+│                    hydrates anything — it mounts the Practice island
 ├── content/kata/    kata prose as markdown, one file per kata, validated
 │                    against a content collection schema at build time
 ├── components/      shared pieces a route composes, e.g. BeltGuide.astro,
-│                    KataGuide.astro
-├── layouts/         PageShell.astro — the shared page shell every route wraps in
+│                    KataGuide.astro, PageHeading.astro (the h1/.sub pair a
+│                    page's header opens with). Practice.tsx is the first
+│                    React island; practice-labels.ts holds its strings as
+│                    pure functions so they are testable without a browser
+├── layouts/         PageShell.astro — the shared page shell every route wraps
+│                    in. Its `header` and `footer` slots carry those regions'
+│                    CONTENT, so a page can add to the header rather than
+│                    replace it (practice keeps the heading pair and appends a
+│                    streak chip). Spacing that predates the shared scale is an
+│                    enumerated `variant` applied as a modifier class, never a
+│                    route reaching in with :global() — see .app--home and
+│                    .app--practice in app.css, both of which Slice 9 deletes
 ├── styles/          tokens.css (design tokens, the source of truth for colours,
 │                    radii and widths) and app.css (shell/reset styles); routes
 │                    and components add their own scoped <style> alongside this
@@ -262,4 +282,48 @@ before hand-copying a hex code or width into a new page.
 
 ## Persistence
 
-`sit
+Everything a student does is kept in **their own browser** and nowhere else. There
+is no account, no server and no analytics. The store holds day numbers, counts and
+scores — never anything that identifies a child.
+
+One `localStorage` key, `shizenryu-progress-v1`:
+
+```js
+{ streak: {last, count, best},   // last = LOCAL calendar day number
+  best:   {mode: score},         // quiz best scores, keyed by mode
+  miss:   {cardHash: n},         // flashcards answered "Again", shown first next time
+  plog:   {dayNumber: [id]} }    // daily practice log, pruned to 60 days
+```
+
+Every key is optional: a student who has only ever done a quiz has `streak` and
+`best` and no `plog`.
+
+**Two implementations write this key until slice 6.** `src/domain/store.ts` is the
+typed one, used by the practice island; `public/assets/store.js` is the legacy one
+that `quiz.html`, `flashcards.html` and `assets/home.js` still load. Both are live
+at once, and a student can tick an activity on the island and finish a quiz round
+on a legacy page the same day — so they must write byte-identical state.
+`tests/unit/store-parity.test.ts` drives both through the same operation sequences
+and compares the stored JSON as a string plus every value returned. It deletes
+itself along with `store.js`.
+
+Three things about `store.ts` that look odd and are deliberate:
+
+- **The day number is a LOCAL calendar day**, composed through `Date.UTC` from the
+  local Y/M/D rather than dividing a timestamp. Dividing gives a UTC day, which is
+  the defect #12 removed: during British Summer Time a student training at 00:30
+  local is at 23:30 UTC the previous day, so the session lands on a day that has
+  already finished and a kept streak looks broken.
+- **Storage and the clock are injected**, not reached for, which is what makes the
+  day arithmetic testable in node. Islands must call `browserStore()` **after
+  mount** — Astro renders a `client:load` component in Node at build time, where
+  there is no `localStorage`, and a store built at module scope would fall back to
+  memory and be reused after hydration, so nothing would ever persist and the
+  build would not fail.
+- **What comes back out is untrusted.** A hand-rolled ~20-line guard discards
+  anything malformed and starts clean, rather than letting a bad value reach the
+  page. Not Zod: Zod runs at build time for content collections, and pulling it
+  into an island would ship roughly 12KB to a phone to check a four-key object.
+  Schema version 1 is deliberately **unversioned** — adding a version field would
+  make the two implementations' writes differ, so the key name carries the
+  version and a version 2 changes the key and migrates.
