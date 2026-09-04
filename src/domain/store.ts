@@ -151,9 +151,46 @@ function pruned(log: Readonly<Record<string, readonly string[]>>, today: number)
 // is keyed by these, so a different hash silently empties it. `| 0` keeps it in
 // int32 as it goes, `>>> 0` makes it unsigned before base 36, and the leading `c`
 // keeps the result a safe object property rather than a numeric-looking one.
+//
+// It walks UTF-16 CODE UNITS, matching store.js's charCodeAt(i) over s.length,
+// and not code points. Review caught the difference: [...text] splits an astral
+// character into one element where charCodeAt sees two surrogates, so
+// hash('a<fire emoji>b') came out as c12s4m here and cyfrvd there. Nothing in
+// data.js is outside the BMP today, so it was latent — but a single emoji added
+// to a deck would have orphaned every miss count on that card.
 function hashCard(text: string): string {
-  const h = [...text].reduce((acc, character) => (acc * 31 + character.charCodeAt(0)) | 0, 0);
+  const h = Array.from({ length: text.length }, (_, index) => text.charCodeAt(index)).reduce(
+    (acc, codeUnit) => (acc * 31 + codeUnit) | 0,
+    0,
+  );
   return `c${(h >>> 0).toString(36)}`;
+}
+
+// Replace or remove one key while every other key keeps its position.
+//
+// Destructuring a key out and spreading it back appends it at the END, which
+// changes the serialised JSON even when the contents match. store.js assigns and
+// deletes in place, so it does not. The parity suite compares strings, so this is
+// the difference between a byte-for-byte claim that holds and one that does not —
+// review found exactly that in the miss queue.
+//
+// It only actually matters for the miss queue: its keys start with a letter and so
+// keep insertion order, while practice-log keys are day numbers, and JavaScript
+// orders integer-like keys numerically however they were inserted. Used on both
+// anyway — one rule is easier to keep than two, and the day the log is keyed by
+// anything else the difference stops being free.
+function replacingKey<T>(
+  record: Readonly<Record<string, T>>,
+  key: string,
+  value: T | undefined,
+): Record<string, T> {
+  const rebuilt = Object.entries(record).flatMap(([existingKey, existingValue]): Array<[string, T]> => {
+    if (existingKey !== key) return [[existingKey, existingValue]];
+    return value === undefined ? [] : [[key, value]];
+  });
+  const appended: Array<[string, T]> =
+    key in record || value === undefined ? rebuilt : [...rebuilt, [key, value]];
+  return Object.fromEntries(appended);
 }
 
 export function createStore(options: { storage: StorageLike | null; now: Clock }): Store {
@@ -195,8 +232,15 @@ export function createStore(options: { storage: StorageLike | null; now: Clock }
     try {
       storage.setItem(KEY, JSON.stringify(state));
     } catch {
-      // Storage filled up or was revoked mid-session. The in-memory copy above
-      // keeps the page consistent; nothing else can be done here.
+      // Storage passed the probe at construction and then refused this write —
+      // filled up, or revoked mid-session. The write is LOST: load() consults
+      // `memory` only when the probe failed, so the next read goes back to
+      // storage and sees the old value.
+      //
+      // That is store.js's behaviour too, and this is a port, so it is matched
+      // rather than repaired. It is worth repairing when store.js goes in slice
+      // 6 and there is no parity to keep: `memory` is already maintained, so
+      // reading from it after a failed write is a two-line change.
     }
   }
 
@@ -238,10 +282,9 @@ export function createStore(options: { storage: StorageLike | null; now: Clock }
 
       // Deliberately no pruning on this path: store.js prunes only when logging.
       const remaining = forToday.filter((id) => id !== activityId);
-      const { [String(t)]: _removed, ...otherDays } = state.plog ?? {};
       save({
         ...state,
-        plog: remaining.length === 0 ? otherDays : { ...otherDays, [String(t)]: remaining },
+        plog: replacingKey(state.plog ?? {}, String(t), remaining.length === 0 ? undefined : remaining),
       });
     },
 
@@ -267,7 +310,7 @@ export function createStore(options: { storage: StorageLike | null; now: Clock }
       const current = state.miss?.[cardKey] ?? 0;
 
       if (!gotIt) {
-        save({ ...state, miss: { ...state.miss, [cardKey]: current + 1 } });
+        save({ ...state, miss: replacingKey(state.miss ?? {}, cardKey, current + 1) });
         return;
       }
 
@@ -277,8 +320,8 @@ export function createStore(options: { storage: StorageLike | null; now: Clock }
         save({ ...state, miss: { ...state.miss } });
         return;
       }
-      const { [cardKey]: _worked, ...others } = state.miss ?? {};
-      save({ ...state, miss: current - 1 <= 0 ? others : { ...others, [cardKey]: current - 1 } });
+      const worked = current - 1;
+      save({ ...state, miss: replacingKey(state.miss ?? {}, cardKey, worked <= 0 ? undefined : worked) });
     },
 
     hash: hashCard,

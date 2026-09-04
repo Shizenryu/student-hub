@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createStore } from '../../src/domain/store';
-import { fakeStorage, unwritableStorage } from './fake-storage';
+import { fakeStorage, storageThatFillsUp, unwritableStorage } from './fake-storage';
 
 const KEY = 'shizenryu-progress-v1';
 
@@ -155,15 +155,32 @@ describe('when the browser will not store anything', () => {
     expect(store.markTrained()).toEqual({ count: 1, best: 1, today: true });
   });
 
-  it('keeps working within the page when writes throw', () => {
-    // Safari private browsing: localStorage exists and setItem throws. The student
-    // should still see their streak move while the page is open, even though
-    // nothing survives the reload.
+  it('keeps working within the page when storage refuses from the start', () => {
+    // Safari private browsing: localStorage exists and every setItem throws,
+    // including the probe at construction. The store sees that and works from
+    // memory, so the student's streak still moves while the page is open even
+    // though nothing survives the reload.
     const storage = unwritableStorage();
     const store = createStore({ storage, now: () => new Date(JULY_1) });
 
     store.markTrained();
 
     expect(store.streakInfo()).toEqual({ count: 1, best: 1, today: true, alive: true });
+  });
+
+  it('loses the session when storage fills up part-way through it', () => {
+    // The case the test above does NOT cover, which review pointed out: the probe
+    // succeeds, so the store trusts storage, and a later write throws. The write is
+    // lost and the next read goes back to storage and finds nothing.
+    //
+    // This is pinned rather than fixed because store.js does exactly the same and
+    // this is a port. It is worth repairing in slice 6 when there is no parity left
+    // to keep — `memory` is already maintained, so reading from it after a failed
+    // write is a two-line change.
+    const store = createStore({ storage: storageThatFillsUp(), now: () => new Date(JULY_1) });
+
+    store.markTrained();
+
+    expect(store.streakInfo()).toEqual({ count: 0, best: 0, today: false, alive: false });
   });
 });

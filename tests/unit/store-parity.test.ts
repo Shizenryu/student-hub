@@ -220,6 +220,20 @@ const SEQUENCES: ReadonlyArray<{ readonly name: string; readonly operations: rea
     operations: [{ kind: 'recordCard', card: 'cabc12', gotIt: true }],
   },
   {
+    // Review found the miss queue reordering its keys: destructuring one out and
+    // spreading it back appends it at the end, where store.js assigns in place.
+    // The sequence above hid it by working both cards down to zero, which deletes
+    // the moved key. This one leaves the decremented card in the map with another
+    // card after it, so the byte-for-byte comparison actually sees the order.
+    name: 'a card worked down while another card is still queued behind it',
+    operations: [
+      { kind: 'recordCard', card: 'cabc12', gotIt: false },
+      { kind: 'recordCard', card: 'cabc12', gotIt: false },
+      { kind: 'recordCard', card: 'cdef34', gotIt: false },
+      { kind: 'recordCard', card: 'cabc12', gotIt: true },
+    ],
+  },
+  {
     name: 'a student moving between the island and a legacy page all day',
     operations: [
       { kind: 'logPractice', id: 'stretch' },
@@ -280,6 +294,14 @@ describe('store.ts and store.js persist the same state', () => {
     expect(domain).toBe(legacy);
   });
 
+  // There is deliberately NO practice-log equivalent of the miss-queue ordering
+  // sequence above. One was written and could not be made to fail: a practice log
+  // is keyed by day NUMBER, and JavaScript orders integer-like keys numerically
+  // however they were inserted, so `{"20635":…,"20632":…}` always serialises
+  // ascending and the log cannot reorder. The miss queue can, because card keys
+  // start with a letter and so keep insertion order. A test that cannot fail is
+  // worse than no test, so this note stands in its place.
+
   it('carry existing student state forward identically', async () => {
     // The realistic case on ship day: a student who already has a streak, scores
     // and a miss queue written by store.js, who then uses the island.
@@ -304,7 +326,20 @@ describe('store.ts and store.js persist the same state', () => {
     const legacy = await loadLegacyStore(storage);
     const domain = createStore({ storage: fakeStorage(), now: () => new Date() });
 
-    const cards = ['Zanshin|Remaining mind', 'Mushin|No mind', '', 'a', 'Structure > Discipline'];
+    const cards = [
+      'Zanshin|Remaining mind',
+      'Mushin|No mind',
+      '',
+      'a',
+      'Structure > Discipline',
+      // Beyond the BMP. store.js walks UTF-16 code units; an implementation that
+      // walks code points instead agrees on everything above and diverges here,
+      // which is precisely what review found. No deck contains an emoji today —
+      // adding one would have silently orphaned every miss count on that card.
+      'a\u{1F525}b',
+      '\u{1F525}',
+      '\u{1F525}\u{1F525}',
+    ];
 
     expect(cards.map((card) => domain.hash(card))).toEqual(cards.map((card) => legacy.hash(card)));
   });
