@@ -6,17 +6,20 @@
 
 export type StreakView = { readonly count: number; readonly today: boolean };
 
-// Both date functions below take an optional locale. It defaults to undefined,
-// which is what production wants — the reader's own, exactly as the page this
-// replaces used. It is a parameter because these functions are locale-DEPENDENT by
-// design, so any test wanting an exact string has to say which locale it means.
-// Leaving it implicit is how a suite passes on an en-GB laptop ("Thursday 2 July")
-// and fails on an en-US CI runner ("Thursday, July 2"), which is precisely what
-// happened.
-type Locale = string | undefined;
+// The two windows the page reports on. Here rather than in the component, beside
+// the sentence that names them, so summaryLabel cannot be handed a window that
+// disagrees with the range its counts were taken over.
+export const WEEK = 7;
+export const MONTH = 30;
 
 // `TODAY — Thursday 2 July`, in the reader's own locale.
-export const todayLabel = (now: Date, locale?: Locale): string =>
+//
+// The locale is a parameter, defaulting to the reader's own, because this and
+// weekdayLabel below are locale-DEPENDENT by design — so any test wanting an exact
+// string has to say which locale it means. Leaving it implicit is how a suite
+// passes on an en-GB laptop ("Thursday 2 July") and fails on an en-US CI runner
+// ("Thursday, July 2"), which is exactly what happened.
+export const todayLabel = (now: Date, locale?: string): string =>
   `TODAY — ${now.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })}`;
 
 // KNOWN DEFECT, ported deliberately rather than fixed, and pinned in
@@ -30,7 +33,7 @@ export const todayLabel = (now: Date, locale?: Locale): string =>
 //
 // Slice 8 owns the fix, one RED->GREEN commit, so that "we ported it" and "we
 // changed it" never share a diff.
-export const weekdayLabel = (dayNumber: number, locale?: Locale): string =>
+export const weekdayLabel = (dayNumber: number, locale?: string): string =>
   new Date(dayNumber * 86400000).toLocaleDateString(locale, { weekday: 'short' });
 
 export const statusLabel = (count: number): string =>
@@ -41,10 +44,8 @@ export const statusLabel = (count: number): string =>
 // The wording differs from the home page's chip, which says "N-day training
 // streak". That divergence is pre-existing; unifying the two is a content decision
 // for the club, not a port decision.
-export const streakLabel = (streak: StreakView): string => {
-  if (streak.count < 1) return '';
-  return streak.today ? `🔥 ${streak.count}-day streak` : `🔥 ${streak.count}-day streak — train today to keep it`;
-};
+export const streakLabel = ({ count, today }: StreakView): string =>
+  count < 1 ? '' : `🔥 ${count}-day streak${today ? '' : ' — train today to keep it'}`;
 
-export const summaryLabel = (weekHits: number, weekDays: number, monthHits: number, monthDays: number): string =>
-  `Practised on ${weekHits} of the last ${weekDays} days · ${monthHits} of the last ${monthDays}.`;
+export const summaryLabel = (weekHits: number, monthHits: number): string =>
+  `Practised on ${weekHits} of the last ${WEEK} days · ${monthHits} of the last ${MONTH}.`;

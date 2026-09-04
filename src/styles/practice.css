@@ -9,18 +9,23 @@
    this page alone, so the bare `h2` and `.summary` selectors reach no other
    route.
 
-   Values come from tokens.css wherever one matches the original exactly. The
-   literals left behind (#e5e0d8, #e9f7ef, #fbf7f1 and the greys) have no token
-   today; inventing tokens for one page's palette is Slice 9's job, not this
-   slice's, and doing it here would change values rather than move them. */
+   Values come from tokens.css wherever one matches the original exactly. Four
+   literals are left because no token matches them: #e5e0d8 and #e9f7ef (the tile
+   border and its ticked fill) and #555/#777 (--ink-soft is #444, not #555).
+   Inventing tokens for one page's palette is Slice 9's job, and doing it here
+   would change values rather than move them.
 
-#streakChip {
+   Five rules below carry a min-height. The island fills them after hydration and
+   without a floor the card jumps --- 116px, measured, before these were added. Each
+   value is the element's measured filled height rounded down, so the settled page
+   is untouched; the pixel proof in the PR covers that. #streakChip and .status
+   carried one already, ported from the original, which never needed the other
+   three because its scripts were parser-blocking and painted the page complete. */
+
+/* Only what differs from app.css's shared .streak-chip rule. */
+.streak-chip {
   font-size: .75rem;
-  color: var(--gold);
   margin-top: 6px;
-  /* Reserves the line before the island fills it in, so the card below does not
-     jump when a student with a live streak loads the page. */
-  min-height: 1em;
 }
 
 .today {
@@ -28,11 +33,6 @@
   letter-spacing: .15em;
   color: var(--muted-light);
   text-transform: uppercase;
-  /* Reserved: the island fills this after hydration, and without a floor the whole
-     card below it jumps. Measured filled height is 1.282em; this is just under, so
-     the settled layout is untouched. Same reason #streakChip and .status carry one
-     — the page this replaces already used this idiom, it just did not need it here
-     because its scripts were parser-blocking and painted the page complete. */
   min-height: 1.28em;
 }
 
@@ -48,7 +48,7 @@
 }
 
 .status.none {
-  color: #888;
+  color: var(--muted);
   font-weight: 400;
 }
 
@@ -110,9 +110,6 @@ h2 {
   grid-template-columns: repeat(7, 1fr);
   gap: 8px;
   text-align: center;
-  /* The largest of the reserved heights: 52px of dots and labels that do not exist
-     until the island runs. A 34px dot, its 5px margin and one label line. */
-  min-height: 3.25em;
 }
 
 .day .dot {
@@ -140,6 +137,13 @@ h2 {
 }
 
 .day .lbl {
+  /* The seven cells ship server-rendered, so the dots reserve themselves; only the
+     weekday text is unknown until the island runs. `1lh` is exactly one line box
+     at this element's own font-size and line-height, which is the reservation
+     stated from first principles rather than measured off a screenshot. A browser
+     too old for the unit ignores the declaration and gets the small shift back,
+     which is the right way round. */
+  min-height: 1lh;
   font-size: .62rem;
   letter-spacing: .05em;
   color: var(--muted-light);
@@ -155,7 +159,7 @@ h2 {
 }
 
 .mind {
-  background: #fbf7f1;
+  background: var(--surface-warm);
   border-left: 4px solid var(--gold);
   padding: 12px 14px;
   font-size: .85rem;

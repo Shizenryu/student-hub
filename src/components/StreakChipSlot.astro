@@ -1,0 +1,9 @@
+---
+// The element StreakChip.tsx portals into. Pages compose this into PageShell's
+// header slot; the home page puts it in the body, where its own script fills it.
+//
+// It carries both the id (the portal target) and the class (the styling hook, in
+// app.css). Keeping them together in one component is what stops four pages
+// agreeing on a magic string by accident.
+---
+<div id="streakChip" class="streak-chip"></div>

@@ -8,14 +8,12 @@
 // ad-hoc CSS across each consuming route.
 import '../styles/tokens.css';
 import '../styles/app.css';
-import PageHeading from '../components/PageHeading.astro';
 
-// `header` and `footer` are overridable slots that fall back to today's markup,
-// so belts/kata (and any future inner page) keep working with no slot supplied.
-// The header slot carries the header's CONTENT rather than replacing the header
-// wholesale, which is what lets a page keep the ordinary heading pair and add to
-// it — quiz, flashcards and practice all put a streak chip after the subheading,
-// so "replace it all" would have meant three copies of the heading markup. `variant` is the shell's spacing scale, carried as an enumerated
+// The header renders the ordinary heading pair from props and then whatever the
+// page adds, so a page can APPEND to the header rather than replace it — quiz,
+// flashcards and practice all put a streak chip after the subheading. Belts and
+// kata pass only the props; the home page passes only the slot, replacing the pair
+// with its crest and three lines. `footer` is the same shape of override. `variant` is the shell's spacing scale, carried as an enumerated
 // modifier class exactly as `width` already is — so a route adjusts the shell
 // through the shell's own vocabulary instead of reaching into its elements
 // with :global(). Today only the home page differs, and only until Slice 9
@@ -62,9 +60,9 @@ if (!Astro.slots.has('header') && (!heading || !subheading)) {
   ]}
 >
   <header>
-    <slot name="header">
-      {heading && subheading && <PageHeading heading={heading} subheading={subheading} />}
-    </slot>
+    {heading && <h1>{heading}</h1>}
+    {subheading && <div class="sub">{subheading}</div>}
+    <slot name="header" />
   </header>
 
   <slot />

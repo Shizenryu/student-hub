@@ -82,17 +82,21 @@ src/
 ├── content/kata/    kata prose as markdown, one file per kata, validated
 │                    against a content collection schema at build time
 ├── components/      shared pieces a route composes, e.g. BeltGuide.astro,
-│                    KataGuide.astro, PageHeading.astro (the h1/.sub pair a
-│                    page's header opens with). Practice.tsx is the first
-│                    React island; practice-labels.ts holds its strings as
-│                    pure functions so they are testable without a browser
+│                    KataGuide.astro. Practice.tsx is the first React island;
+│                    practice-labels.ts holds its strings as pure functions so
+│                    they are testable without a browser. StreakChip.tsx,
+│                    StreakChipSlot.astro and streak-chip-id.ts are the chip's
+│                    three parts — the element, the portal into it, and the id
+│                    they share. use-browser-store.ts is the ONLY thing that
+│                    binds a store to the browser
 ├── layouts/         PageShell.astro — the shared page shell every route wraps
-│                    in. Its `header` and `footer` slots carry those regions'
-│                    CONTENT, so a page can add to the header rather than
-│                    replace it (practice keeps the heading pair and appends a
-│                    streak chip). Spacing that predates the shared scale is an
-│                    enumerated `variant` applied as a modifier class, never a
-│                    route reaching in with :global() — see .app--home and
+│                    in. Its header renders the h1/.sub pair from props and THEN
+│                    the `header` slot, so a page appends to the header rather
+│                    than replacing it (practice keeps the pair and adds a streak
+│                    chip; home passes no props and supplies only the slot).
+│                    Spacing that predates the shared scale is an enumerated
+│                    `variant` applied as a modifier class, never a route
+│                    reaching in with :global() — see .app--home and
 │                    .app--practice in app.css, both of which Slice 9 deletes
 ├── styles/          tokens.css (design tokens, the source of truth for colours,
 │                    radii and widths) and app.css (shell/reset styles); routes
@@ -155,6 +159,17 @@ JPEG shows as a white box. The app icon is opaque because it sits on a home scre
 Astro copies `public/` straight through without processing, so resize an image
 before committing it rather than shrinking it in CSS, and add
 `loading="lazy" decoding="async"` to anything below the fold.
+
+## Migration rules
+
+**Accessibility during a port.** Semantics that change no pixels — an `aria-pressed`
+on a toggle, a `type="button"`, a role — are in scope for a migration and should be
+added, because the legacy pages have almost none and a later "accessibility slice"
+would have to re-read every page to find them. Anything needing new markup, focus
+management or a live region is NOT: it changes what a student experiences, so it
+defers alongside the defects. `/practice`'s tiles gained `aria-pressed` under this
+rule; the quiz's screen switcher, which announces nothing when the view changes,
+does not qualify and waits.
 
 ## Content rules — read before writing ANY martial content
 
@@ -316,11 +331,13 @@ Three things about `store.ts` that look odd and are deliberate:
   local is at 23:30 UTC the previous day, so the session lands on a day that has
   already finished and a kept streak looks broken.
 - **Storage and the clock are injected**, not reached for, which is what makes the
-  day arithmetic testable in node. Islands must call `browserStore()` **after
-  mount** — Astro renders a `client:load` component in Node at build time, where
-  there is no `localStorage`, and a store built at module scope would fall back to
-  memory and be reused after hydration, so nothing would ever persist and the
-  build would not fail.
+  day arithmetic testable in node. `src/domain/store.ts` deliberately exports no
+  browser-bound factory: `useBrowserStore()` in `src/components/` is the only
+  thing that constructs one, and being a hook it cannot run during render. That
+  matters because Astro renders a `client:load` island in Node at build time,
+  where there is no `localStorage`, so reading the store while rendering gives one
+  answer on the server and another in the browser — a mismatch React 19 recovers
+  from silently. Nothing throws and no test notices.
 - **What comes back out is untrusted.** A hand-rolled ~20-line guard discards
   anything malformed and starts clean, rather than letting a bad value reach the
   page. Not Zod: Zod runs at build time for content collections, and pulling it

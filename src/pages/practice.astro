@@ -7,7 +7,7 @@
 // does not. The activities themselves are content and come from src/data at build
 // time, which is what takes public/assets/data.js off this page entirely.
 import PageShell from '../layouts/PageShell.astro';
-import PageHeading from '../components/PageHeading.astro';
+import StreakChipSlot from '../components/StreakChipSlot.astro';
 import Practice from '../components/Practice';
 import { PRACTICE } from '../data';
 import '../styles/practice.css';
@@ -16,13 +16,12 @@ import '../styles/practice.css';
   title="Shizenryu Daily Practice"
   description="Tick off what you practised today — one thing is enough to keep your streak."
   variant="practice"
+  heading="DAILY PRACTICE"
+  subheading="One thing a day is enough"
 >
-  <Fragment slot="header">
-    <PageHeading heading="DAILY PRACTICE" subheading="One thing a day is enough" />
-    {/* The island portals its streak text in here. It sits in the header, above
-        the card, exactly where the page this replaces put it. */}
-    <div id="streakChip"></div>
-  </Fragment>
+  {/* Appended after the heading pair, which is where every page in this site puts
+      the chip. The island portals its text into it. */}
+  <StreakChipSlot slot="header" />
 
   <div class="card">
     <Practice client:load activities={PRACTICE} />

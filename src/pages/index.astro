@@ -15,6 +15,7 @@
 // of carrying its own copy of the content.
 import PageShell from '../layouts/PageShell.astro';
 import { MAXIMS } from '../data';
+import StreakChipSlot from '../components/StreakChipSlot.astro';
 ---
 
 <PageShell
@@ -34,7 +35,7 @@ import { MAXIMS } from '../data';
   <div class="maxim" data-maxims={JSON.stringify(MAXIMS)}>
     <span>Maxim of the day</span><em id="maxim"></em>
   </div>
-  <div id="streakChip" class="streak-chip"></div>
+  <StreakChipSlot />
 
   <h2>Train</h2>
   <div class="tiles">
@@ -162,12 +163,11 @@ import { MAXIMS } from '../data';
     text-transform: uppercase;
   }
 
-  .streak-chip {
+  /* Only what differs from app.css's shared .streak-chip rule. */
+  :global(.streak-chip) {
     text-align: center;
     font-size: .8rem;
-    color: var(--gold);
     margin: -14px 0 20px;
-    min-height: 1em;
   }
 
   h2 {

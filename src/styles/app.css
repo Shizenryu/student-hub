@@ -60,6 +60,18 @@ header {
   margin-bottom: 18px;
 }
 
+/* The streak chip, on every page that has one. Its element is rendered by
+   src/components/StreakChipSlot.astro; islands portal their text into it and
+   public/assets/home.js writes the home page's. The min-height reserves the line
+   before that happens, so nothing below it jumps.
+
+   Per-page differences (font-size, margin, the home page's centring) stay with
+   those pages; only what they share is here. */
+.streak-chip {
+  color: var(--gold);
+  min-height: 1em;
+}
+
 header h1 {
   font-size: 1.3rem;
   letter-spacing: .12em;

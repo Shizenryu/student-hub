@@ -208,24 +208,6 @@ function probeWritable(storage: StorageLike | null): boolean {
   }
 }
 
-// The binding for a browser. Every island should use this rather than calling
-// createStore with globals of its own.
-//
-// `typeof localStorage === 'undefined'` is not defensive padding: Astro renders a
-// client:load island in Node at build time, where the global does not exist and a
-// bare reference is a ReferenceError, not undefined. TypeScript will not warn —
-// the DOM lib types localStorage as always present.
-//
-// Call it after mount. A store built at module scope in a .tsx file is constructed
-// during that server render, probes a storage that is not there, falls back to
-// memory, and is then reused by the hydrated page — so the student's progress
-// silently never persists.
-export const browserStore = (): Store =>
-  createStore({
-    storage: typeof localStorage === 'undefined' ? null : localStorage,
-    now: () => new Date(),
-  });
-
 export function createStore(options: { storage: StorageLike | null; now: Clock }): Store {
   const { storage, now } = options;
 

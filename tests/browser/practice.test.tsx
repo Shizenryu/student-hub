@@ -3,42 +3,18 @@ import { render } from 'vitest-browser-react';
 
 import Practice from '../../src/components/Practice';
 import { PRACTICE } from '../../src/data';
+import { mountChipTarget, seed, stored, today } from './progress';
 
 // The practice island, driven in a real browser against real localStorage — which
 // is the whole reason this page is an island rather than a static route. The store
 // is exercised here exactly as a student's browser will exercise it, not through a
 // fake: tests/unit/ already proves the store's rules in isolation, so what is left
 // to prove is the wiring.
-
-const PROGRESS_KEY = 'shizenryu-progress-v1';
-
-// The same local-calendar day number the store computes, derived here rather than
-// imported so a seeded fixture cannot silently agree with a broken implementation.
-const today = (): number => {
-  const now = new Date();
-  return Math.floor(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 86400000);
-};
-
-const seed = (state: unknown): void => {
-  localStorage.setItem(PROGRESS_KEY, JSON.stringify(state));
-};
-
-const stored = (): Record<string, unknown> => {
-  const raw: unknown = JSON.parse(localStorage.getItem(PROGRESS_KEY) ?? '{}');
-  return typeof raw === 'object' && raw !== null && !Array.isArray(raw)
-    ? (Object.fromEntries(Object.entries(raw)) as Record<string, unknown>)
-    : {};
-};
+//
+// localStorage is cleared before every test by tests/browser/setup.ts.
 
 beforeEach(() => {
-  localStorage.clear();
-  // src/pages/practice.astro renders this inside <header>, above the island, and
-  // Practice portals the chip text into it. Providing it here keeps the component
-  // under test in the shape the page actually gives it.
-  document.body.querySelector('#streakChip')?.remove();
-  const chip = document.createElement('div');
-  chip.id = 'streakChip';
-  document.body.append(chip);
+  mountChipTarget();
 });
 
 describe('choosing what you practised', () => {

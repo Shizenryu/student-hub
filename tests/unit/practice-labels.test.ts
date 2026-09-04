@@ -1,11 +1,12 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { statusLabel, streakLabel, summaryLabel, todayLabel, weekdayLabel } from '../../src/components/practice-labels';
+import { JULY_2_DAY } from './store-fixtures';
 
-// 2 July 2026 as a local calendar day number — the same value store.ts computes,
-// derived by hand in tests/unit/store-day-number.test.ts. 2 July 2026 is a
-// Thursday.
-const JULY_2_DAY = 20636;
+// 2 July 2026 as a local calendar day number. Imported rather than restated: the
+// hand derivation lives in tests/unit/store-day-number.test.ts, which is
+// deliberately independent of the implementation's formula, and store-fixtures.ts
+// is where the rest of the suite reads it from. 2 July 2026 is a Thursday.
 
 // Every assertion below that involves a date names its locale. These functions
 // format in the reader's own locale in production, which is the point of them —
@@ -45,7 +46,7 @@ describe('what the student is told about today', () => {
   });
 
   it('summarises both windows', () => {
-    expect(summaryLabel(2, 7, 5, 30)).toBe('Practised on 2 of the last 7 days · 5 of the last 30.');
+    expect(summaryLabel(2, 5)).toBe('Practised on 2 of the last 7 days · 5 of the last 30.');
   });
 });
 
