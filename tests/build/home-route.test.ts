@@ -11,6 +11,26 @@ import { MAXIMS } from '../../src/data';
 // Asserting against the built HTML directly pins the same behaviour.
 const DIST_DIR = 'dist';
 
+// Astro escapes attribute values, so a raw match has to be decoded before it is
+// JSON again. One pass over a table rather than chained .replace() calls:
+// chaining turns &amp;quot; — an escaped, literal "&quot;" inside a maxim — into
+// a real quote and corrupts the parse. Only &quot; occurs in today's maxims; the
+// rest are here so a future content edit fails on its own merits rather than
+// failing this test on a page that renders perfectly well.
+const ATTRIBUTE_ENTITIES: Readonly<Record<string, string>> = {
+  '&quot;': String.fromCharCode(34),
+  '&#34;': String.fromCharCode(34),
+  '&amp;': '&',
+  '&#38;': '&',
+  '&lt;': '<',
+  '&gt;': '>',
+  '&#39;': "'",
+};
+
+function decodeAttribute(value: string): string {
+  return value.replace(/&(?:quot|amp|lt|gt|#34|#38|#39);/g, (entity) => ATTRIBUTE_ENTITIES[entity] ?? entity);
+}
+
 describe('the home route (/)', () => {
   let html: string;
 
@@ -118,7 +138,7 @@ describe('the home route (/)', () => {
     expect(attrMatch, 'no data-maxims attribute found in the built page').not.toBeNull();
     if (!attrMatch) return;
     const rawMaxims = attrMatch[1] ?? '';
-    const parsedMaxims: unknown = JSON.parse(rawMaxims.replace(/&quot;/g, '"'));
+    const parsedMaxims: unknown = JSON.parse(decodeAttribute(rawMaxims));
     expect(parsedMaxims).toEqual(MAXIMS);
   });
 

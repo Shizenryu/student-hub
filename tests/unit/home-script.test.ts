@@ -59,19 +59,24 @@ async function runHomeScript(options: {
 
 describe('public/assets/home.js', () => {
   it('selects the maxim at Store.today() modulo the list length, not the raw day number', async () => {
-    // today() = 5 against a 3-item list: 5 % 3 = 2 -> the 3rd item. Neither
-    // maxims[5] (out of range) nor a day number that happens to already be
-    // a valid index would tell modulo wrapping apart from a bug that used
-    // the raw day number — 5 itself is out of range, and 2 (the correct
-    // answer) is not equal to 5, so this pins the wrap genuinely happening.
-    const store: FakeStore = {
-      today: () => 5,
+    // Two days, one list, because a single day cannot tell the two failure
+    // modes apart. today() = 5 against 3 items wraps to index 2; today() = 6
+    // wraps to index 0. The first assertion pins that wrapping happens at all
+    // (5 is out of range, and 2 is not 5). The second pins where the day comes
+    // from: a script computing its own Date.now() day — the bug this slice
+    // removes — answers the SAME maxim to both calls. Asserting one day only
+    // would leave that mutant alive whenever the real day number happened to
+    // be congruent to 5 modulo the list length: one day in three.
+    const storeOn = (day: number): FakeStore => ({
+      today: () => day,
       streakInfo: () => ({ count: 0, today: false }),
-    };
+    });
 
-    const { maximText } = await runHomeScript({ maxims: ['a', 'b', 'c'], store });
+    const onDayFive = await runHomeScript({ maxims: ['a', 'b', 'c'], store: storeOn(5) });
+    const onDaySix = await runHomeScript({ maxims: ['a', 'b', 'c'], store: storeOn(6) });
 
-    expect(maximText).toBe('“c”');
+    expect(onDayFive.maximText).toBe('“c”');
+    expect(onDaySix.maximText).toBe('“a”');
   });
 
   it('renders the "trained today" streak-chip form, character for character', async () => {
