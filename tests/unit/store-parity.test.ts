@@ -7,11 +7,11 @@ import type { LegacyStore } from './store-fixtures';
 // The load-bearing test of slice 4.
 //
 // Until slice 6 empties public/, TWO implementations write the same localStorage
-// key. quiz.html:265 and flashcards.html:171 both call logPractice() and
-// markTrained() through public/assets/store.js, so a student can tick an activity
-// on the practice island and finish a quiz round on a legacy page the same day. If
-// the two disagree about the shape they persist, a streak breaks silently and the
-// student is simply told they lost it.
+// key. quiz.html calls logPractice() and markTrained() through
+// public/assets/store.js, so a student can tick an activity on the practice island
+// or finish a deck on the flashcards one and then complete a quiz round on that
+// page the same day. If the two disagree about the shape they persist, a streak
+// breaks silently and the student is simply told they lost it.
 //
 // So this drives BOTH through identical operation sequences and compares two
 // things: the persisted JSON as a STRING — key order is part of what

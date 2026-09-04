@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { statusLabel, streakLabel, summaryLabel, todayLabel, weekdayLabel } from '../../src/components/practice-labels';
+import { statusLabel, summaryLabel, todayLabel, weekdayLabel } from '../../src/components/practice-labels';
+import { streakLabel } from '../../src/components/streak-label';
 import { JULY_2_DAY } from './store-fixtures';
 
 // 2 July 2026 as a local calendar day number. Imported rather than restated: the

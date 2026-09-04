@@ -52,7 +52,7 @@ describe('the home route (/)', () => {
     },
     {
       title: 'Philosophy Flashcards',
-      href: '/flashcards.html',
+      href: '/flashcards',
       description:
         'The Maxims, Zen &amp; Karate, the root kata, Tui Shou, the 6 Human Needs, grades &amp; titles. Flip, recall, repeat.',
     },

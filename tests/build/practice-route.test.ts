@@ -1,10 +1,9 @@
 import { existsSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { PRACTICE } from '../../src/data';
-import { astroEscapeText } from './astro-html';
+import { astroEscapeText, readBuiltPage } from './astro-html';
 
 // Nothing else proves this route ships.
 //
@@ -18,16 +17,12 @@ import { astroEscapeText } from './astro-html';
 // Same lesson as the home route in slice 3b, where the opposite mistake was made:
 // an assertion was left in LEGACY_PAGES passing for the wrong reason. A migrated
 // page needs its own build test either way.
-const PRACTICE_PAGE = join('dist', 'practice', 'index.html');
 
 describe('the practice route (/practice)', () => {
   let html: string;
 
   beforeAll(async () => {
-    if (!existsSync(PRACTICE_PAGE)) {
-      throw new Error(`${PRACTICE_PAGE} is missing — run \`npm run build\`, or the route no longer exists`);
-    }
-    html = await readFile(PRACTICE_PAGE, 'utf8');
+    html = await readBuiltPage('practice', 'index.html');
   });
 
   it('is served at a directory URL, so /practice.html needs no forced redirect', () => {

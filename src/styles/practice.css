@@ -15,18 +15,13 @@
    Inventing tokens for one page's palette is Slice 9's job, and doing it here
    would change values rather than move them.
 
-   Five rules below carry a min-height. The island fills them after hydration and
+   Four rules below carry a min-height. The island fills them after hydration and
    without a floor the card jumps --- 116px, measured, before these were added. Each
    value is the element's measured filled height rounded down, so the settled page
-   is untouched; the pixel proof in the PR covers that. #streakChip and .status
+   is untouched: `node scripts/compare-pixels.mjs --page practice --ref 8877a37`
+   is what says so. #streakChip and .status
    carried one already, ported from the original, which never needed the other
    three because its scripts were parser-blocking and painted the page complete. */
-
-/* Only what differs from app.css's shared .streak-chip rule. */
-.streak-chip {
-  font-size: .75rem;
-  margin-top: 6px;
-}
 
 .today {
   font-size: .78rem;

@@ -15,7 +15,7 @@ const ROUTABLE_EXTENSIONS = ['.astro', '.md', '.mdx', '.html'];
 // would keep passing for the wrong reason — the built file exists either way, so
 // the assertion would no longer prove anything about public/. tests/build/
 // home-route.test.ts owns proving the route ships.
-const LEGACY_PAGES = ['quiz.html', 'flashcards.html'];
+const LEGACY_PAGES = ['quiz.html'];
 
 const LEGACY_ASSETS = [
   'assets/data.js',

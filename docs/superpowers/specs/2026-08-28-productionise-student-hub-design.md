@@ -95,9 +95,13 @@ preserves bookmarked hash URLs.
 
 ## Defects found in the current code
 
-Discovered while reading the existing implementation. Each is pinned by a characterisation
-test during the port, then fixed as its own RED→GREEN commit in PR 8 — so "we ported it"
-and "we changed it" never share a diff.
+Discovered while reading the existing implementation, and — for 5 and 6 — while porting it.
+Each is pinned by a characterisation test during the port, then fixed as its own RED→GREEN
+commit in PR 8, so "we ported it" and "we changed it" never share a diff. Defect 3 was the
+exception: it was fixed early, in #12, because it silently broke streaks for the students
+who train most.
+
+**A defect found during a port is added to this list in the same PR that pins it.**
 
 1. **Duplicate distractors.** `quiz.html` picks wrong answers with
    `pool.filter(t => t[0] !== jp)` — excluding by Japanese term only. In forward mode the
@@ -116,6 +120,23 @@ and "we changed it" never share a diff.
 
 4. **Small kumite ranges lose an option.** `startKumite(3)` leaves only two other kumite for
    "which kumite is this?" distractors, rendering three buttons instead of four.
+
+Two more were found during the migration itself, after this list was written. They are
+recorded here because this list is what slice 8 reads; a comment in the code and a task in a
+merged plan are not a register, and both were nearly lost.
+
+5. **The week strip is labelled a day early west of UTC.** A practice-log day number is a
+   LOCAL calendar day, so multiplying it back out gives midnight UTC, which
+   `toLocaleDateString` then formats in the viewer's own zone. At UTC+0/+1 it lands on the
+   same date, which is why the club has never seen it. Pinned at four timezones in
+   `tests/unit/practice-labels.test.ts`; the code is `weekdayLabel` in
+   `src/components/practice-labels.ts`.
+
+6. **The repeat count counts presses, not cards.** Finishing a flashcard deck reports
+   "N cards needed a second look", where N is the number of times Again was pressed — so one
+   card missed three times reports three cards. Pinned in
+   `tests/unit/flashcards-labels.test.ts`; the code is `completionSubline` in
+   `src/components/flashcards-labels.ts`.
 
 ## Testing
 
@@ -198,9 +219,9 @@ deploys a working site.
 | 3 | Markdown pipeline; `/kata/[slug]`; `/` | Trusted-HTML path gone |
 | 4 | `practice` island; `store.ts` port; validated persistence | First island live |
 | 5 | `flashcards` island | |
-| 6 | `quiz` island + characterisation tests pinning all four defects | `public/` empty |
+| 6 | `quiz` island + characterisation tests pinning defects 1, 2 and 4 | `public/` empty |
 | 7 | Strict CSP, header hardening, supply-chain CI, CSP-violation test | Hardened |
-| 8 | The four defect fixes, one RED→GREEN commit each | Behaviour deliberately changed |
+| 8 | All six defect fixes, one RED→GREEN commit each | Behaviour deliberately changed |
 | 9 | Visual normalisation: greys, spacing scale, max-widths | Every diff intentional |
 
 CSP lands at 7 rather than earlier because the legacy inline-script pages in `public/` would

@@ -8,9 +8,9 @@ Live site deployed to Netlify, built from source into `dist/`. Repo: github.com/
 **Astro, TypeScript, no runtime dependencies of our own.** The site is built by
 Netlify from source on every push to `main`; `dist/` is never committed. Static
 pages ship zero JavaScript; the three interactive pages (quiz, flashcards,
-practice) become React islands as they are migrated. Practice is the first one
-across; quiz and flashcards are all that is left of the original hand-written
-HTML in `public/`.
+practice) become React islands as they are migrated. Practice and flashcards are
+across; `quiz.html` is the last of the original hand-written HTML left in
+`public/`, and slice 6 empties the directory.
 
 `/practice` is that island. Everything on it except the tile list is a fact about
 one student's own browser — what they ticked today, which of the last thirty days
@@ -69,22 +69,23 @@ TypeScript is pinned to `^6.0.3` — do not upgrade to 7 yet. `@astrojs/check`
 
 ```
 public/            legacy pages, served verbatim, shrinking each slice
-├── quiz.html  flashcards.html
+├── quiz.html
 ├── assets/         data.js, store.js, legacy-hash.js, home.js, img/
 └── docs/           printable PDFs
 src/
-├── pages/index.astro, 404.astro, practice.astro,
+├── pages/index.astro, 404.astro, practice.astro, flashcards.astro,
 │                    belts/index.astro, belts/[slug].astro,
 │                    kata/index.astro, kata/[slug].astro
 │                    every migrated page, in migration order: belts, kata,
-│                    home, practice. practice.astro is the only one that
-│                    hydrates anything — it mounts the Practice island
+│                    home, practice, flashcards. The last two hydrate an
+│                    island; the rest ship no JavaScript at all
 ├── content/kata/    kata prose as markdown, one file per kata, validated
 │                    against a content collection schema at build time
 ├── components/      shared pieces a route composes, e.g. BeltGuide.astro,
 │                    KataGuide.astro. Practice.tsx is the first React island;
 │                    practice-labels.ts holds its strings as pure functions so
-│                    they are testable without a browser. StreakChip.tsx,
+│                    they are testable without a browser, and flashcards-labels.ts
+│                    does the same for that island. StreakChip.tsx,
 │                    StreakChipSlot.astro and streak-chip-id.ts are the chip's
 │                    three parts — the element, the portal into it, and the id
 │                    they share. use-browser-store.ts is the ONLY thing that
@@ -106,6 +107,9 @@ src/
                     parity.ts and kata-prose.ts (cross-reference, legacy-parity
                     and kata prose/markdown build guards)
 └── domain/         pure TypeScript: no DOM, no storage, no clock of its own.
+                    flashcards-queue.ts holds the deck ordering — shuffle, then
+                    stably sort by miss count — behind an injected random source,
+                    which is what makes an invisible rule assertable.
                     store.ts is the progress store and the only thing in src/
                     that touches localStorage — it takes both storage and a clock
                     as arguments, which is what makes the day-boundary arithmetic
@@ -162,14 +166,36 @@ before committing it rather than shrinking it in CSS, and add
 
 ## Migration rules
 
+**Deferrals are written `DEFER(slice-N):`.** Work put off to a named later slice — a
+value Slice 9 will normalise, a defect Slice 8 will fix, a file Slice 6 retires —
+carries that literal token in its comment. It is the difference between slice 9
+starting with `grep -rn "DEFER(slice-9)"` and reading six stylesheets hoping the
+phrasing was consistent. It was not: "Slice 9" and "slice 9" both appear today.
+
 **Accessibility during a port.** Semantics that change no pixels — an `aria-pressed`
 on a toggle, a `type="button"`, a role — are in scope for a migration and should be
 added, because the legacy pages have almost none and a later "accessibility slice"
 would have to re-read every page to find them. Anything needing new markup, focus
 management or a live region is NOT: it changes what a student experiences, so it
 defers alongside the defects. `/practice`'s tiles gained `aria-pressed` under this
-rule; the quiz's screen switcher, which announces nothing when the view changes,
-does not qualify and waits.
+rule.
+
+**With one exception, because the rule above got it wrong once.** A markup change is
+in scope when the current markup makes the page unusable by keyboard or screen
+reader, and pixel-identity can be proven. `/flashcards`' card was a `<div onclick>`
+— flipping it is the only way to see an answer, so the page could not be used
+without a mouse at all. That is not a semantic nicety, and "defer it" was the wrong
+answer. Such a change must be named in the slice plan before implementation.
+
+**And it obliges something.** A control that gains a role gains an accessible name,
+and that name has to be checked: making the card a button made its name the
+question AND the answer concatenated, so a screen reader read out the answer on
+focus — an accessibility regression introduced by an accessibility fix. Where a
+control's accessible name changes with its state, tests address it by element
+rather than by role, and say why.
+
+The quiz's screen switcher, which announces nothing when the view changes, needs a
+live region and focus management, so it still waits.
 
 ## Content rules — read before writing ANY martial content
 
@@ -213,7 +239,8 @@ MAXIMS  = [ "string", ... ]   // shown randomly after quiz rounds; the home rout
                               // the day", filled in by public/assets/home.js
 
 DECKS   = [ {id, name, cls, cards:[[front, back], ...]}, ... ]
-          // cls is a colour class defined in flashcards.html (d1–d7)
+          // cls is a colour class defined in src/styles/flashcards.css (d1–d7);
+          // d7 is not a deck, it is the "Everything" button
 
 GRADES  = [ {slug, key, banner, hex, white, tier, maxim, mind}, ... ]
           // one per belt, syllabus order. slug is the URL hash (e.g. "5th-kyu");
@@ -226,8 +253,8 @@ SYLLABUS = [ {grade, track, section, item, detail}, ... ]
 PRACTICE = [ {id, name, hint}, ... ]
           // the /practice tiles, passed to the island as a prop. Timings in hints
           // come from the Syllabus 2026
-          // Simplified sheet. quiz.html auto-logs 'terms'/'kumite', flashcards.html
-          // auto-logs 'philosophy' on completion.
+          // Simplified sheet. quiz.html auto-logs 'terms'/'kumite'; the
+          // flashcards island auto-logs 'philosophy' on deck completion.
 
 KATA    = [ {slug, name, translation, hex, white, match, quote?, sections}, ... ]
           // /kata and /kata/<slug> are real Astro routes now; public/kata.html
@@ -293,8 +320,8 @@ before hand-copying a hex code or width into a new page.
 - System font stack, mobile-first, content max-width 480–560px (drifts by page —
   480px on quiz, 520px on index, 560px on belts and kata; a later slice normalises
   this), cards with 14px radius and soft shadows. Buttons are big and thumb-friendly.
-- No emojis in content except the existing streak flame and the ☯ that flashcards.html
-  shows on deck completion. The club mark is the Ki logo (see Imagery), not ☯.
+- No emojis in content except the existing streak flame and the ☯ the flashcards
+  island shows on deck completion. The club mark is the Ki logo (see Imagery), not ☯.
 
 ## Persistence
 
@@ -315,10 +342,10 @@ Every key is optional: a student who has only ever done a quiz has `streak` and
 `best` and no `plog`.
 
 **Two implementations write this key until slice 6.** `src/domain/store.ts` is the
-typed one, used by the practice island; `public/assets/store.js` is the legacy one
-that `quiz.html`, `flashcards.html` and `assets/home.js` still load. Both are live
-at once, and a student can tick an activity on the island and finish a quiz round
-on a legacy page the same day — so they must write byte-identical state.
+typed one, used by the practice and flashcards islands; `public/assets/store.js` is
+the legacy one that `quiz.html` and `assets/home.js` still load. Both are live at
+once, and a student can finish a deck on an island and a quiz round on the legacy
+page the same day — so they must write byte-identical state.
 `tests/unit/store-parity.test.ts` drives both through the same operation sequences
 and compares the stored JSON as a string plus every value returned. It deletes
 itself along with `store.js`.
