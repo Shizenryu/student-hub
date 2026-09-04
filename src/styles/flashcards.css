@@ -15,6 +15,20 @@
    `.card-ui` is this page's own card, a third alongside .card and the belt/kata
    guides' — same idea, different padding. Also Slice 9's. */
 
+/* Only what differs from app.css's shared .streak-chip rule, which carries the
+   colour and the reserved line. The legacy page set all four inline; the other two
+   are here, matching practice.css exactly.
+
+   Duplicated rather than hoisted on purpose: the home page's chip is a different
+   size with different margins, and its override lives in a scoped block whose
+   order relative to app.css is decided by bundling. Two identical two-line rules
+   are worth more than a rule that wins or loses by build order. Slice 9 owns
+   deciding whether the site has one chip or three. */
+.streak-chip {
+  font-size: .75rem;
+  margin-top: 6px;
+}
+
 .intro {
   font-size: .85rem;
   color: #666;

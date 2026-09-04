@@ -36,6 +36,13 @@ export default function Flashcards({ decks }: Props) {
   const [session, setSession] = useState<Session | null>(null);
   const [finished, setFinished] = useState<Finished | null>(null);
   const [flipped, setFlipped] = useState(false);
+  // Separate from `flipped` because the legacy page's flip() only ever REMOVED the
+  // hide class; the only thing that put it back was moving to a new card. So a
+  // student who flips to check the answer and flips back to re-read the question
+  // keeps the grading buttons — and since the buttons are hidden with `visibility`,
+  // tying them to `flipped` would have taken them out of the tab order too, making
+  // them unreachable until a third flip.
+  const [revealed, setRevealed] = useState(false);
   const [streak, setStreak] = useState<StreakView>(NO_STREAK);
 
   // The chip shows the streak as it stood when the page opened, and again after a
@@ -57,6 +64,7 @@ export default function Flashcards({ decks }: Props) {
       setSession({ deck, name, queue, total: queue.length, laps: 0 });
       setFinished(null);
       setFlipped(false);
+      setRevealed(false);
     },
     [decks, store],
   );
@@ -74,6 +82,7 @@ export default function Flashcards({ decks }: Props) {
       const remaining = gotIt ? rest : [...rest, current];
       const laps = gotIt ? session.laps : session.laps + 1;
       setFlipped(false);
+      setRevealed(false);
 
       if (remaining.length > 0) {
         setSession({ ...session, queue: remaining, laps });
@@ -126,20 +135,29 @@ export default function Flashcards({ decks }: Props) {
               type="button"
               className={flipped ? 'flash flipped' : 'flash'}
               aria-pressed={flipped}
-              onClick={() => setFlipped(!flipped)}
+              onClick={() => {
+                setFlipped(!flipped);
+                if (!flipped) setRevealed(true);
+              }}
             >
-              <div className="face front">
+              {/* Both faces are always in the DOM — that is how the 3D flip works
+                  — and backface-visibility hides the far one from the eye but not
+                  from assistive technology. Without this the button's accessible
+                  name would concatenate question AND answer, so a screen-reader
+                  user is read the answer on focus and the exercise is pointless.
+                  Changes no pixels. */}
+              <div className="face front" aria-hidden={flipped}>
                 <div className="cat">{current?.category}</div>
                 <div className="txt">{current?.front}</div>
                 <div className="tapnote">TAP TO REVEAL</div>
               </div>
-              <div className="face back">
+              <div className="face back" aria-hidden={!flipped}>
                 <div className="cat">{current?.category}</div>
                 <div className="txt">{current?.back}</div>
               </div>
             </button>
           </div>
-          <div className={flipped ? 'btns' : 'btns hide'}>
+          <div className={revealed ? 'btns' : 'btns hide'}>
             <button type="button" className="again" onClick={() => grade(false)}>
               Again
             </button>
@@ -174,12 +192,17 @@ export default function Flashcards({ decks }: Props) {
               onClick={() => start(deck, deck.name)}
             >
               {deck.name}
-              <small>{deck.cards.length} cards</small>
+              {/* One expression, not `{n} cards`: React separates adjacent text
+                  nodes with an empty comment, which splits the text run and
+                  changes how the browser shapes it. Invisible to the eye, but it
+                  is the difference between a screenshot that matches the page this
+                  replaced and one that nearly does. */}
+              <small>{`${deck.cards.length} cards`}</small>
             </button>
           ))}
           <button type="button" className="deck-btn d7" onClick={() => start(EVERYTHING, 'Everything')}>
             Everything
-            <small>{everythingTotal} cards</small>
+            <small>{`${everythingTotal} cards`}</small>
           </button>
         </div>
       </div>

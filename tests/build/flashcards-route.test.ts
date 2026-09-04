@@ -16,12 +16,13 @@ import { astroEscapeText } from './astro-html';
 // whether a page was emitted. Same lesson as tests/build/practice-route.test.ts.
 const FLASHCARDS_PAGE = join('dist', 'flashcards', 'index.html');
 
-// React's server renderer separates adjacent text nodes with an empty comment, so
-// `{count} cards` ships as `11<!-- --> cards` and a naive contains() misses it.
-// Stripping the markers asserts what a student reads rather than how React chose
-// to split it. Astro's own output does not do this, which is why no earlier build
-// test needed it — the quiz island in slice 6 will.
-const asRead = (html: string): string => html.replace(/<!--\s*-->/g, '');
+// These assert the counts as plain text on purpose, with no allowance for React's
+// text-node splitting. React separates adjacent text nodes with an empty comment,
+// so `{count} cards` would ship as `11<!-- --> cards` — invisible to a reader, but
+// it splits the text run and changes how the browser shapes it, which was enough
+// to stop the page matching the one it replaced pixel for pixel. Flashcards.tsx
+// builds each count as a single expression to avoid that, and these assertions are
+// what keeps it that way.
 
 describe('the flashcards route (/flashcards)', () => {
   let html: string;
@@ -52,11 +53,11 @@ describe('the flashcards route (/flashcards)', () => {
     // invisible until they finish a deck earlier or later than it promised.
     for (const deck of DECKS) {
       expect(html, `${deck.name} is missing from the built menu`).toContain(astroEscapeText(deck.name));
-      expect(asRead(html), `${deck.name}'s card count is missing`).toContain(`${deck.cards.length} cards`);
+      expect(html, `${deck.name}'s card count is missing`).toContain(`${deck.cards.length} cards`);
     }
 
     const total = DECKS.reduce((count, deck) => count + deck.cards.length, 0);
-    expect(asRead(html)).toContain(`${total} cards`);
+    expect(html).toContain(`${total} cards`);
     // Six decks plus Everything.
     expect(html.match(/class="deck-btn/g) ?? []).toHaveLength(DECKS.length + 1);
   });

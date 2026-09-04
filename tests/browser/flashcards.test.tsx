@@ -32,6 +32,15 @@ const visibilityOf = (selector: string): string => {
   return element === null ? 'missing' : getComputedStyle(element).visibility;
 };
 
+// The flip control's accessible name is whichever face is showing — that is the
+// point of it, so a screen-reader user hears the question and not the answer. It
+// therefore CHANGES when the card flips, and a role query that worked before the
+// first flip cannot find it after. Tests address the control by its element.
+const flipCard = async (): Promise<void> => {
+  document.querySelector<HTMLElement>('.flash')?.click();
+  await new Promise((resolve) => setTimeout(resolve, 60));
+};
+
 const isFlipped = (): boolean => document.querySelector('.flash')?.classList.contains('flipped') ?? false;
 
 // A deterministic deck to study: the smallest real one, so a test can finish it.
@@ -103,7 +112,7 @@ describe('the card', () => {
   test('reveals the answer and the grading buttons when tapped', async () => {
     const screen = await startSmallestDeck();
 
-    await screen.getByRole('button', { name: /TAP TO REVEAL/ }).click();
+    await flipCard();
 
     await expect.element(screen.getByRole('button', { name: 'Got it' })).toBeVisible();
     await expect.element(screen.getByRole('button', { name: 'Again' })).toBeVisible();
@@ -122,12 +131,58 @@ describe('the card', () => {
   });
 
   test('can be flipped back', async () => {
-    const screen = await startSmallestDeck();
-    await screen.getByRole('button', { name: /TAP TO REVEAL/ }).click();
+    await startSmallestDeck();
+    await flipCard();
 
-    await screen.getByRole('button', { name: /TAP TO REVEAL/ }).click();
+    await flipCard();
 
     expect(isFlipped()).toBe(false);
+  });
+
+  test('keeps the grading buttons once the answer has been seen, even face down', async () => {
+    // The legacy page's flip() only ever REMOVED the hide class; the only thing
+    // that put it back was moving to the next card. So a student who reveals the
+    // answer and flips back to re-read the question can still grade it.
+    //
+    // Tying the buttons to `flipped` instead looks equivalent and is not: they are
+    // hidden with `visibility`, so they leave the tab order too and the student has
+    // to flip a third time to reach them.
+    await startSmallestDeck();
+    await flipCard();
+
+    await flipCard();
+
+    expect(visibilityOf('.got')).toBe('visible');
+    expect(visibilityOf('.again')).toBe('visible');
+  });
+
+  test('hides them again for the next card', async () => {
+    const screen = await startSmallestDeck();
+    await flipCard();
+
+    await screen.getByRole('button', { name: 'Got it' }).click();
+
+    await expect.poll(() => visibilityOf('.got')).toBe('hidden');
+  });
+
+  test('does not announce the answer while the card is face down', async () => {
+    // Both faces are in the DOM at once and backface-visibility hides the far one
+    // from the eye but not from assistive technology. Without aria-hidden the
+    // button's accessible name concatenates question AND answer, so a
+    // screen-reader user is told the answer on focus and the exercise is pointless.
+    await startSmallestDeck();
+
+    expect(document.querySelector('.face.front')?.getAttribute('aria-hidden')).toBe('false');
+    expect(document.querySelector('.face.back')?.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  test('announces the answer once it has been revealed', async () => {
+    await startSmallestDeck();
+
+    await flipCard();
+
+    expect(document.querySelector('.face.back')?.getAttribute('aria-hidden')).toBe('false');
+    expect(document.querySelector('.face.front')?.getAttribute('aria-hidden')).toBe('true');
   });
 });
 
@@ -135,7 +190,7 @@ describe('grading a card', () => {
   test('"Got it" retires it and moves on', async () => {
     const screen = await startSmallestDeck();
     const first = faceText('front');
-    await screen.getByRole('button', { name: /TAP TO REVEAL/ }).click();
+    await flipCard();
 
     await screen.getByRole('button', { name: 'Got it' }).click();
 
@@ -147,7 +202,7 @@ describe('grading a card', () => {
 
   test('"Again" sends the card to the back, so the count does not fall', async () => {
     const screen = await startSmallestDeck();
-    await screen.getByRole('button', { name: /TAP TO REVEAL/ }).click();
+    await flipCard();
 
     await screen.getByRole('button', { name: 'Again' }).click();
 
@@ -157,12 +212,12 @@ describe('grading a card', () => {
   test('brings a missed card back round', async () => {
     const screen = await startSmallestDeck();
     const missed = faceText('front');
-    await screen.getByRole('button', { name: /TAP TO REVEAL/ }).click();
+    await flipCard();
     await screen.getByRole('button', { name: 'Again' }).click();
 
     // Work through the rest of the deck; the missed card must be waiting at the end.
     for (let remaining = smallestDeck.cards.length - 1; remaining > 0; remaining--) {
-      await screen.getByRole('button', { name: /TAP TO REVEAL/ }).click();
+      await flipCard();
       await screen.getByRole('button', { name: 'Got it' }).click();
     }
 
@@ -171,7 +226,7 @@ describe('grading a card', () => {
 
   test('records a missed card so it comes first next time', async () => {
     const screen = await startSmallestDeck();
-    await screen.getByRole('button', { name: /TAP TO REVEAL/ }).click();
+    await flipCard();
 
     await screen.getByRole('button', { name: 'Again' }).click();
 
@@ -186,7 +241,7 @@ describe('finishing a deck', () => {
   const finishDeck = async () => {
     const screen = await startSmallestDeck();
     for (let remaining = smallestDeck.cards.length; remaining > 0; remaining--) {
-      await screen.getByRole('button', { name: /TAP TO REVEAL/ }).click();
+      await flipCard();
       await screen.getByRole('button', { name: 'Got it' }).click();
     }
     return screen;
@@ -208,10 +263,10 @@ describe('finishing a deck', () => {
 
   test('counts the cards that needed a second look', async () => {
     const screen = await startSmallestDeck();
-    await screen.getByRole('button', { name: /TAP TO REVEAL/ }).click();
+    await flipCard();
     await screen.getByRole('button', { name: 'Again' }).click();
     for (let remaining = smallestDeck.cards.length; remaining > 0; remaining--) {
-      await screen.getByRole('button', { name: /TAP TO REVEAL/ }).click();
+      await flipCard();
       await screen.getByRole('button', { name: 'Got it' }).click();
     }
 
