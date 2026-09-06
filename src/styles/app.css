@@ -24,6 +24,10 @@ body {
   padding: 20px 16px 40px;
 }
 
+.app--narrow {
+  --app-max: 480px;
+}
+
 .app--wide {
   --app-max: 560px;
 }
@@ -35,6 +39,25 @@ body {
    subheading colour or two. */
 .app--flashcards header .sub {
   color: var(--gold);
+}
+
+/* The quiz page's heading pair is a size larger than every other page's, and its
+   column narrower. Three values, carried across so the migrated page matches the
+   one it replaced; the width goes through the shell's own `width` vocabulary
+   above, and these two have to live here because PageShell renders the elements.
+   DEFER(slice-9): one heading scale, and one column width. */
+.app--quiz header h1 {
+  font-size: 1.35rem;
+}
+
+.app--quiz header .sub {
+  font-size: .75rem;
+}
+
+/* The two-size decision the .intro rule below anticipated: quiz's lede is .9rem.
+   DEFER(slice-9). */
+.app--quiz .intro {
+  font-size: .9rem;
 }
 
 /* The practice page's header sits 4px closer to its card than every other page's.
@@ -93,8 +116,8 @@ header {
 }
 
 /* The centred grey lede a page opens with, above its first card. Three pages had
-   this rule character for character before it was hoisted; quiz makes four.
-   DEFER(slice-9): quiz's is .9rem, so this becomes a two-size decision. */
+   this rule character for character before it was hoisted; quiz makes four, at
+   its own size — see .app--quiz .intro above. */
 .intro {
   font-size: .85rem;
   color: #666;

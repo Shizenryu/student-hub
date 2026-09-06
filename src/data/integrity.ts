@@ -110,7 +110,7 @@ export function assertContentIntegrity(content: ContentBundle = REAL_CONTENT): v
     problems.push(`practice activity id "${id}" is used more than once`);
   }
 
-  // quiz.html builds "which kumite is this?" questions and distractors from
+  // The quiz builds "which kumite is this?" questions and distractors from
   // KUMITE[].n alone — a duplicate produces two identical answer labels for
   // genuinely different step sequences.
   for (const n of duplicates(kumite.map((bout) => String(bout.n)))) {

@@ -23,8 +23,8 @@ type Props = {
   description: string;
   heading?: string;
   subheading?: string;
-  width?: 'default' | 'wide';
-  variant?: 'inner' | 'home' | 'practice' | 'flashcards';
+  width?: 'default' | 'narrow' | 'wide';
+  variant?: 'inner' | 'home' | 'practice' | 'flashcards' | 'quiz';
 };
 
 const { title, description, heading, subheading, width, variant } = Astro.props;
@@ -57,10 +57,12 @@ if (!Astro.slots.has('header') && (!heading || !subheading)) {
   class:list={[
     'app',
     {
+      'app--narrow': width === 'narrow',
       'app--wide': width === 'wide',
       'app--home': variant === 'home',
       'app--practice': variant === 'practice',
       'app--flashcards': variant === 'flashcards',
+      'app--quiz': variant === 'quiz',
     },
   ]}
 >

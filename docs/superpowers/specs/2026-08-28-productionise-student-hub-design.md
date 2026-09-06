@@ -121,7 +121,7 @@ who train most.
 4. **Small kumite ranges lose an option.** `startKumite(3)` leaves only two other kumite for
    "which kumite is this?" distractors, rendering three buttons instead of four.
 
-Two more were found during the migration itself, after this list was written. They are
+Three more were found during the migration itself, after this list was written. They are
 recorded here because this list is what slice 8 reads; a comment in the code and a task in a
 merged plan are not a register, and both were nearly lost.
 
@@ -137,6 +137,15 @@ merged plan are not a register, and both were nearly lost.
    card missed three times reports three cards. Pinned in
    `tests/unit/flashcards-labels.test.ts`; the code is `completionSubline` in
    `src/components/flashcards-labels.ts`.
+
+7. **The quiz's run line outlives its round.** `quiz.html` writes "🔥 N in a row!" only from
+   `answer()`, and `renderQ()` never clears it — so the line a student earned on the last
+   answer of one round is still on screen for the first, unanswered question of the next,
+   claiming a run that has already been reset to zero. Unlike 1, 2 and 4 this one is
+   reachable with today's content: end a round on a run of three and tap "Train again".
+   Found while porting the page in slice 6 and ported unchanged. Pinned in
+   `tests/browser/quiz.test.tsx`; the code is the `runLine` state in
+   `src/components/Quiz.tsx`, and the fix is one line.
 
 ## Testing
 
@@ -221,7 +230,7 @@ deploys a working site.
 | 5 | `flashcards` island | |
 | 6 | `quiz` island + defect pins; `data.js` retires | No pages left in `public/` |
 | 7 | Strict CSP, header hardening, supply-chain CI, CSP-violation test | Hardened |
-| 8 | All six defect fixes, one RED→GREEN commit each | Behaviour deliberately changed |
+| 8 | All six outstanding defect fixes, one RED→GREEN commit each | Behaviour deliberately changed |
 | 9 | Visual normalisation: greys, spacing scale, max-widths | Every diff intentional |
 
 CSP lands at 7 rather than earlier because the legacy inline-script pages in `public/` would

@@ -6,7 +6,7 @@
 
 **Branch**: `plan/slice-6-quiz-island` (this plan) → `feat/slice-6-quiz-questions` →
 `feat/slice-6-quiz-island`
-**Status**: Active
+**Status**: Complete
 
 ## Goal
 
@@ -60,17 +60,17 @@ it rather than delete it; see Task 5.
 
 ## Acceptance Criteria
 
-- [ ] `/quiz` runs both modes — terminology by level and kumite sequences — through menu,
+- [x] `/quiz` runs both modes — terminology by level and kumite sequences — through menu,
       question and result screens. `public/quiz.html` is gone; `/quiz.html` 301s to it.
-- [ ] Pixel-identical to the page it replaces on **all three screens plus an answered
+- [x] Pixel-identical to the page it replaces on **all three screens plus an answered
       question in both the correct and wrong states**, proven with
       `node scripts/compare-pixels.mjs --page quiz --ref <ref>`.
-- [ ] Answering scores, streaks at three in a row, and finishing records a personal best,
+- [x] Answering scores, streaks at three in a row, and finishing records a personal best,
       logs the right practice activity, and marks the streak — all surviving a reload.
-- [ ] Defects 1, 2 and 4 are pinned by unit tests against crafted inputs, each naming its
+- [x] Defects 1, 2 and 4 are pinned by unit tests against crafted inputs, each naming its
       trigger condition and slice 8.
-- [ ] `public/assets/data.js` is gone, with `src/data/parity.ts` and its test.
-- [ ] `public/` holds no pages. No new runtime dependencies. No `any`, no assertions.
+- [x] `public/assets/data.js` is gone, with `src/data/parity.ts` and its test.
+- [x] `public/` holds no pages. No new runtime dependencies. No `any`, no assertions.
 
 ## Delivery Shape
 
@@ -89,9 +89,9 @@ the familiar "is the port faithful?" review, the same shape as slices 4 and 5.
 | 2 | the quiz island and route | PR1's branch | the island, `/quiz`, retiring `quiz.html` and `data.js` | **Deployable** — completes the migration |
 
 ### Whole-stack gate
-- [ ] Every acceptance criterion passes cumulatively at PR2
-- [ ] PR1 is safe to merge alone (dormant module + tests; built site identical to `main`)
-- [ ] Merged bottom-up, PR1 first, then PR2 rebased and re-checked
+- [x] Every acceptance criterion passes cumulatively at PR2
+- [x] PR1 is safe to merge alone (dormant module + tests; built site identical to `main`)
+- [x] Merged bottom-up, PR1 first, then PR2 rebased and re-checked
 
 ## What the current page does
 
@@ -125,20 +125,20 @@ PR's readiness.
 
 ### PR1 — question generation
 
-- [ ] **Step 1: The terms round (RED→GREEN, node)**
+- [x] **Step 1: The terms round (RED→GREEN, node)**
 
 `src/domain/quiz-questions.ts`, pure, taking `random` the way `flashcards-queue.ts` does.
 Cover: a level draws from its own tier and every tier below; "Everything" draws from all four;
 a round is at most ten questions; each question has four options; the correct answer is among
 them; direction flips to English about 30% of the time and the prompt hint follows it.
 
-- [ ] **Step 2: The kumite round (RED→GREEN, node)**
+- [x] **Step 2: The kumite round (RED→GREEN, node)**
 
 Three question shapes, their prompts and hints; "what comes next" draws wrong answers from the
 whole step vocabulary; "which kumite" draws from the other kumite in range; "which side" is
 always OS/SS.
 
-- [ ] **Step 3: Pin the three defects (node, crafted inputs)**
+- [x] **Step 3: Pin the three defects (node, crafted inputs)**
 
 Each in its own `describe`, naming the trigger and slice 8:
 
@@ -152,35 +152,35 @@ Each in its own `describe`, naming the trigger and slice 8:
 Each test asserts today's wrong behaviour, and says in a comment that it is a pin, not a
 specification. Register nothing new: these three are already in the spec's list.
 
-- [ ] **Step 4: Mutation gate**, then PR. The built site must be byte-identical to `main`'s —
+- [x] **Step 4: Mutation gate**, then PR. The built site must be byte-identical to `main`'s —
       nothing imports the module yet.
 
 ### PR2 — the island
 
-- [ ] **Step 1: The island (RED→GREEN, browser)** — `Quiz.tsx`, three screens from one
+- [x] **Step 1: The island (RED→GREEN, browser)** — `Quiz.tsx`, three screens from one
       session value as `Flashcards.tsx` does, `useBrowserStore()`, `StreakChipSlot`. Drive
       both modes by role and text.
-- [ ] **Step 2: Pixel fidelity** — add a `quiz` entry to `scripts/compare-pixels.mjs` with
+- [x] **Step 2: Pixel fidelity** — add a `quiz` entry to `scripts/compare-pixels.mjs` with
       states for menu, a question, an answered-correct question, an answered-wrong question,
       and the result. Reseed before each state that consumes randomness.
-- [ ] **Step 3: Layout shift** — the menu is a build-time prop, so it should server-render
+- [x] **Step 3: Layout shift** — the menu is a build-time prop, so it should server-render
       like the flashcards menu. Measure and reserve only what is genuinely unknowable.
-- [ ] **Step 4: Retire the page** — `git rm public/quiz.html`, drop its manifest line, empty
+- [x] **Step 4: Retire the page** — `git rm public/quiz.html`, drop its manifest line, empty
       `LEGACY_PAGES`, add the 301, repoint the home tile, confirm the route-shadow guard
       fails before the deletion and passes after.
-- [ ] **Step 5: Retire `data.js`** — delete it, `src/data/parity.ts`, and
+- [x] **Step 5: Retire `data.js`** — delete it, `src/data/parity.ts`, and
       `tests/unit/legacy-data-parity.test.ts`, plus their manifest lines and the
       `astro.config.mjs` hook if it references them. This is the whole reason the typed JSON
       exists; the proof has served its purpose.
-- [ ] **Step 6: Narrow the store parity proof** — `store.js` is now a reader only. Keep the
+- [x] **Step 6: Narrow the store parity proof** — `store.js` is now a reader only. Keep the
       comparison of what both stores READ from the same state; retire the write sequences,
       and say in the file why the remaining half still matters (`home.js` reads what the
       islands write).
-- [ ] **Step 7: Documentation** — `CLAUDE.md`'s tree, page counts, the Persistence section
+- [x] **Step 7: Documentation** — `CLAUDE.md`'s tree, page counts, the Persistence section
       and the "To add content" procedure, which currently instructs a maintainer to edit
       `data.js` and regenerate. After this slice `src/data/*.json` is edited directly and
       `scripts/extract-legacy-data.mjs` retires with it. `README.md`'s table.
-- [ ] **Step 8: Mutation gate**, full gate, PR.
+- [x] **Step 8: Mutation gate**, full gate, PR.
 
 ## Pre-PR Quality Gate
 

@@ -1,0 +1,26 @@
+---
+// The dojo quiz — the site's third and last React island, and the page that ends
+// the migration: nothing is left in public/ that a student can open.
+//
+// The terminology, kumite sequences and maxims are content and ship from src/data
+// at build time; which of them a round asks about, in what order and with which
+// wrong answers, is decided in the browser. Those rules live in a pure module so
+// they are testable without one — see src/domain/quiz-questions.ts, which is also
+// where three of the page's four known defects are pinned.
+import PageShell from '../layouts/PageShell.astro';
+import StreakChipSlot from '../components/StreakChipSlot.astro';
+import Quiz from '../components/Quiz';
+import { KUMITE, MAXIMS, TERMS } from '../data';
+import '../styles/quiz.css';
+---
+<PageShell
+  title="Shizenryu Dojo Quiz"
+  description="Japanese terminology by belt level, and the Kumite 1–12 sequences — ten questions a round."
+  width="narrow"
+  variant="quiz"
+  heading="SHIZENRYU DOJO QUIZ"
+  subheading="Know the words · Own the art"
+>
+  <StreakChipSlot slot="header" />
+  <Quiz client:load terms={TERMS} kumite={KUMITE} maxims={MAXIMS} />
+</PageShell>

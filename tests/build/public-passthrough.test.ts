@@ -10,15 +10,18 @@ const PAGES_DIR = 'src/pages';
 const MANIFEST_PATH = 'tests/build/legacy-content.sha256';
 const ROUTABLE_EXTENSIONS = ['.astro', '.md', '.mdx', '.html'];
 
-// index.html is deliberately absent: it is no longer a legacy page copied out of
-// public/ but a route Astro renders from src/pages/index.astro. Leaving it here
-// would keep passing for the wrong reason — the built file exists either way, so
-// the assertion would no longer prove anything about public/. tests/build/
-// home-route.test.ts owns proving the route ships.
-const LEGACY_PAGES = ['quiz.html'];
+// Empty, and that is the point: every page a student can open is now a route Astro
+// renders from src/pages/. What is left in public/ is the assets below — the three
+// client scripts the home page still uses, the imagery and the printable PDFs.
+//
+// The list stays rather than being deleted with its last entry. It is what the two
+// assertions below are written against, and an empty one states the migration's
+// terminal condition where no list at all would just look like nobody had checked.
+const LEGACY_PAGES: readonly string[] = [];
 
 const LEGACY_ASSETS = [
-  'assets/data.js',
+  'assets/home.js',
+  'assets/legacy-hash.js',
   'assets/store.js',
   'assets/img/icon.png',
   'assets/img/ki.png',
@@ -103,6 +106,16 @@ describe('legacy pages served through public/', () => {
       const built = await sha256(join(DIST_DIR, file));
       expect(built, `${file} changed during the build`).toBe(source);
     }
+  });
+
+  it('has no page left in public/ at all', async () => {
+    // The migration's terminal condition, asserted directly rather than inferred
+    // from an empty LEGACY_PAGES. What remains under public/ is scripts, imagery and
+    // PDFs; a .html file reappearing there is a page that skipped src/pages/, which
+    // is the mistake this whole suite exists to make loud.
+    const sources = await filesUnder(PUBLIC_DIR);
+
+    expect(sources.filter((file) => file.endsWith('.html'))).toEqual([]);
   });
 
   it('renders the 404 route Astro owns', async () => {

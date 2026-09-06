@@ -1,0 +1,252 @@
+/* The quiz page's own styling, transcribed from the hand-written public/quiz.html
+   this route replaced.
+
+   A plain stylesheet imported by src/pages/quiz.astro rather than a scoped <style>
+   block, for the reason practice.css records: almost everything here styles markup
+   React renders, and Astro's scoped styles stamp a data-astro-cid attribute on
+   elements the .astro file emits, which an island's DOM never gets. Astro bundles
+   it into this page alone.
+
+   Values come from tokens.css wherever one matches exactly. The literals left are
+   #e5e0d8 (the option border), #eee (the progress track), #555 (the maxim's text,
+   between --ink-soft #444 and --muted #888) and #b07d00 (the run line's gold, which
+   is NOT --gold #9A7D00 — the page has always used a lighter one here).
+   DEFER(slice-9): whether those two golds should be one.
+
+   The chip, the lede and the roomier card are not here: they are shared rules in
+   app.css. So are this page's three shell differences — a 480px column and a
+   slightly larger heading pair — which live with the .app--quiz variant, because
+   PageShell renders the elements they style. */
+
+.belts {
+  display: grid;
+  gap: 10px;
+}
+
+/* The level buttons. Nearly the flashcards page's .deck-btn, and deliberately not
+   shared with it: the two differ in three values, and a shared rule with three
+   overrides is harder to read than two transcriptions.
+   DEFER(slice-9): one button scale for decks, levels and ranges. */
+.belt-btn {
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 14px 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: transform .08s;
+}
+
+.belt-btn:active {
+  transform: scale(.97);
+}
+
+.belt-btn small {
+  font-weight: 400;
+  opacity: .85;
+  font-size: .72rem;
+}
+
+/* The level gradients, transcribed whole. They mirror the belt colours without
+   being them — b2 runs #d4b100 to green where the belt yellow is #E3BC00 — so they
+   are left as written rather than half-tokenised, on the precedent flashcards.css
+   set for its deck colours. b5 is "Everything"; b2 and b4 are reused by the two
+   kumite ranges. */
+.b1 { background: linear-gradient(90deg, #C8102E, #ED8B00); }
+.b2 { background: linear-gradient(90deg, #d4b100, #00843D); }
+.b3 { background: linear-gradient(90deg, #0072CE, #702F8A); }
+.b4 { background: linear-gradient(90deg, #8B5A2B, #161616); }
+.b5 { background: linear-gradient(90deg, #C8102E, #161616); }
+
+.modehead {
+  font-size: .78rem;
+  letter-spacing: .15em;
+  color: var(--muted-light);
+  text-transform: uppercase;
+  text-align: center;
+  margin: 16px 0 8px;
+}
+
+.kumite-lede {
+  font-size: .8rem;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.progress {
+  height: 8px;
+  background: #eee;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+/* Width is set by the island, per question. It is the one value on this page that
+   cannot be a class: it is a percentage of a round length that is not known until
+   the round is dealt. React assigns it through the CSSOM rather than writing a
+   style attribute, and this element never server-renders — the question screen does
+   not exist until a level is chosen — so the page still ships no inline styles for
+   the CSP in slice 7 to refuse. tests/build/quiz-route.test.ts holds that. */
+.progress div {
+  height: 100%;
+  background: var(--red);
+  width: 0%;
+  transition: width .3s;
+}
+
+.qcount {
+  font-size: .75rem;
+  color: var(--muted);
+  letter-spacing: .1em;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.jp {
+  font-size: 1.7rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 14px 0 4px;
+  color: var(--dark);
+}
+
+/* A kumite sequence is a line of prose where a term is one word, so it is set
+   smaller and allowed to wrap. */
+.jp.seq {
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.hint {
+  text-align: center;
+  font-size: .8rem;
+  color: var(--muted-light);
+  margin-bottom: 16px;
+}
+
+.opts {
+  display: grid;
+  gap: 10px;
+}
+
+.opt {
+  border: 2px solid #e5e0d8;
+  background: var(--surface);
+  border-radius: var(--radius-control);
+  padding: 13px 14px;
+  font-size: .95rem;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+
+.opt:active {
+  border-color: var(--dark);
+}
+
+.opt.correct {
+  border-color: var(--good);
+  background: #e9f7ef;
+  font-weight: 600;
+}
+
+.opt.wrong {
+  border-color: var(--bad);
+  background: #fdecea;
+}
+
+.opt:disabled {
+  cursor: default;
+  opacity: .9;
+}
+
+/* Holds its line whether or not there is anything to say, so answering does not
+   push the Next button up into where the student's thumb already was. */
+.feedback {
+  text-align: center;
+  min-height: 28px;
+  font-weight: 600;
+  margin-top: 12px;
+}
+
+.feedback.good { color: var(--good); }
+.feedback.bad { color: var(--bad); }
+
+.streak {
+  text-align: center;
+  font-size: .8rem;
+  color: #b07d00;
+  height: 18px;
+  margin-top: 4px;
+}
+
+.next-btn,
+.home-btn {
+  width: 100%;
+  margin-top: 14px;
+  padding: 13px;
+  border: none;
+  border-radius: var(--radius-control);
+  background: var(--dark);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.home-btn {
+  background: var(--surface);
+  color: var(--dark);
+  border: 2px solid var(--dark);
+}
+
+.score-big {
+  font-size: 3rem;
+  font-weight: 800;
+  text-align: center;
+  color: var(--red);
+}
+
+.rank {
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 6px 0 14px;
+}
+
+/* The result's gold line: this round against the student's best, and whether today
+   counts. An inline style attribute on the legacy page. */
+.progress-line {
+  text-align: center;
+  font-size: .82rem;
+  color: var(--gold);
+  margin-bottom: 12px;
+  min-height: 1em;
+}
+
+.maxim {
+  background: var(--surface-warm);
+  border-left: 4px solid var(--red);
+  padding: 12px 14px;
+  font-style: italic;
+  font-size: .9rem;
+  color: #555;
+  border-radius: 0 8px 8px 0;
+  margin-top: 6px;
+}
+
+.maxim span {
+  display: block;
+  font-style: normal;
+  font-size: .7rem;
+  letter-spacing: .15em;
+  color: var(--red);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}

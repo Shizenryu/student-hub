@@ -25,6 +25,11 @@
   to = "/flashcards"
   status = 301
 
+[[redirects]]
+  from = "/quiz.html"
+  to = "/quiz"
+  status = 301
+
 # Unlike every other rule here, the home page's old URL still resolves to a real built
 # file — Astro emits the root route as dist/index.html — so without `force` a
 # request for /index.html would serve that file directly and the rule would
