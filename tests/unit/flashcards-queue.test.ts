@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { DECKS } from '../../src/data';
 import type { Deck } from '../../src/data';
 import { EVERYTHING, buildQueue, totalCards } from '../../src/domain/flashcards-queue';
+import { alwaysFirst, noShuffle } from './random-sources';
 
 // The order a deck comes at a student in is the flashcards page's one piece of
 // real cleverness, and it is invisible from the outside: the queue is shuffled,
@@ -25,15 +26,6 @@ const deckOf = (name: string, fronts: readonly string[]): Deck => ({
 
 const fronts = (queue: ReturnType<typeof buildQueue>): readonly string[] =>
   queue.map((entry) => entry.front);
-
-// The legacy shuffle walks from the end, swapping each element with one at
-// Math.floor(random() * (i + 1)). A source returning 0 therefore always picks
-// index 0 — a known, complete reversal-free permutation rather than "some order".
-const alwaysFirst = () => 0;
-
-// Never swaps: Math.floor(random() * (i + 1)) === i for every i, so the deck comes
-// out in its authored order. The clearest baseline for the sorting assertions.
-const noShuffle = () => 0.999999;
 
 describe('choosing a single deck', () => {
   it('offers every card in it, once', () => {
