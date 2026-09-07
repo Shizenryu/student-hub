@@ -31,8 +31,8 @@
 
 import { createHash } from 'node:crypto';
 import { execFileSync, spawn } from 'node:child_process';
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { chromium } from 'playwright';
 
 const VIEWPORT = { width: 390, height: 900 };
@@ -46,6 +46,7 @@ const PAGES = {
   practice: {
     legacy: 'public/practice.html',
     route: '/practice',
+    needs: ['assets/data.js'],
     states: {
       settled: async () => {},
       ticked: async (page) => {
@@ -58,6 +59,7 @@ const PAGES = {
   flashcards: {
     legacy: 'public/flashcards.html',
     route: '/flashcards',
+    needs: ['assets/data.js'],
     states: {
       menu: async () => {},
       study: async (page) => {
@@ -83,7 +85,52 @@ const PAGES = {
       },
     },
   },
+  quiz: {
+    legacy: 'public/quiz.html',
+    route: '/quiz',
+    needs: ['assets/data.js'],
+    states: {
+      menu: async () => {},
+      question: async (page) => {
+        await freezeRandom(page);
+        await startBeginner(page);
+      },
+      correct: async (page) => {
+        await freezeRandom(page);
+        await startBeginner(page);
+        await page.locator('.opt').first().click();
+      },
+      wrong: async (page) => {
+        await freezeRandom(page);
+        await startBeginner(page);
+        await page.locator('.opt').nth(1).click();
+      },
+      result: async (page) => {
+        await freezeRandom(page);
+        await startBeginner(page);
+        for (let question = 0; question < 10; question += 1) {
+          await page.locator('.opt').first().click();
+          // The legacy page keeps ONE Next button in the DOM and hides it between
+          // questions, and its result screen has another; :visible is what makes
+          // one selector mean the same thing on both implementations.
+          await page.locator('.next-btn:visible').click();
+        }
+      },
+    },
+  },
 };
+
+// `needs` lists files a legacy page loads that the working tree no longer has, to be
+// restored from the same ref beside it. All three pages read public/assets/data.js,
+// which retired with the quiz — its last consumer. Without it an extracted page loads,
+// 404s, and renders a menu whose buttons throw; the menu state would still have
+// compared successfully and reported a match, which is exactly the kind of
+// passing-for-the-wrong-reason result the rest of this script exists to prevent.
+
+// The first of the five level buttons. Addressed by position because its label is
+// the same on both implementations but its handler is not: one is an inline onclick
+// attribute, the other a React listener.
+const startBeginner = (page) => page.locator('.belt-btn').first().click();
 
 // A student who has trained, so any streak chip is actually painted. A chip that
 // renders empty on both pages hides a difference in how it is styled.
@@ -103,6 +150,26 @@ const reseedRandom = (page) =>
       seed = (seed * 1103515245 + 12345) % 2147483648;
       return seed / 2147483648;
     };
+  });
+
+// A CONSTANT, where the flashcards page needs a sequence — and the difference is
+// the whole reason the quiz can be compared at all.
+//
+// The legacy quiz decides a question's direction and its wrong answers at the
+// moment it is DISPLAYED; the island decides them when the round is dealt. So the
+// two draw the same numbers in a different ORDER, and any seeded sequence deals
+// them two different quizzes while looking perfectly controlled — the same class of
+// silent false result as bug 2 above, one layer further in.
+//
+// A constant has no order to get wrong. 0.999999 makes every swap in a
+// Fisher-Yates pass land on itself, so nothing is shuffled; it puts `random() < 0.3`
+// on the false side, so a terminology question is asked forwards; and it selects the
+// last of any list, so the praise line and the maxim are fixed too. Both
+// implementations then show the same question, in the same order, with the correct
+// answer first.
+const freezeRandom = (page) =>
+  page.evaluate(() => {
+    Math.random = () => 0.999999;
   });
 
 function parseArguments(argv) {
@@ -165,11 +232,21 @@ async function main() {
 
   // Extracted to a name that cannot shadow the route it is being compared with.
   const legacyName = `__legacy-${name}.html`;
+  const fromRef = (path) => execFileSync('git', ['show', `${ref}:${path}`], { encoding: 'utf8' });
+
   mkdirSync('dist', { recursive: true });
-  writeFileSync(
-    join('dist', legacyName),
-    execFileSync('git', ['show', `${ref}:${page.legacy}`], { encoding: 'utf8' }),
-  );
+  writeFileSync(join('dist', legacyName), fromRef(page.legacy));
+
+  // Anything the legacy page loads that the working tree no longer has, put back at
+  // the path it asks for. Restored only if it is genuinely absent: a file that still
+  // ships must be compared as it ships, not as it was at the ref.
+  const restored = (page.needs ?? [])
+    .filter((path) => !existsSync(join('dist', path)))
+    .map((path) => {
+      mkdirSync(dirname(join('dist', path)), { recursive: true });
+      writeFileSync(join('dist', path), fromRef(`public/${path}`));
+      return join('dist', path);
+    });
 
   // Astro's CLI directly, not `npm run preview`. npm is a wrapper that spawns a
   // grandchild, and killing the wrapper leaves that grandchild holding the port —
@@ -211,6 +288,7 @@ async function main() {
     await browser.close();
     stopPreview(preview, port);
     rmSync(join('dist', legacyName), { force: true });
+    for (const path of restored) rmSync(path, { force: true });
   }
 
   console.log(

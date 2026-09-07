@@ -46,7 +46,7 @@ describe('the home route (/)', () => {
     },
     {
       title: 'Dojo Quiz',
-      href: '/quiz.html',
+      href: '/quiz',
       description:
         'Terminology by belt level, plus the Kumite 1–12 sequences. Ten questions a round — know the words, own the art.',
     },

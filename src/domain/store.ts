@@ -19,12 +19,12 @@
 // Construct the store after mount, and bind it through one shared helper rather
 // than three hand-written call sites.
 //
-// It must write exactly what public/assets/store.js writes, byte for byte, for as
-// long as both exist: quiz.html still logs practice and marks the streak through
-// the old one, so a student can move between an island and that page on the same
-// day. tests/unit/store-parity.test.ts holds them together. Where a rule below
-// looks odd, it is almost certainly matching that file rather than expressing a
-// preference.
+// It must write state public/assets/store.js can still READ. Since slice 6 that
+// file has no writers left — the quiz was the last one — but the home page reads
+// through it, so a streak marked on an island has to be the streak the home page's
+// chip shows. tests/unit/store-parity.test.ts holds that half together. Where a
+// rule below looks odd, it is almost certainly matching that file rather than
+// expressing a preference; the ones that are now unobservable say so.
 
 export type StorageLike = {
   getItem: (key: string) => string | null;

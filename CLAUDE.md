@@ -8,9 +8,8 @@ Live site deployed to Netlify, built from source into `dist/`. Repo: github.com/
 **Astro, TypeScript, no runtime dependencies of our own.** The site is built by
 Netlify from source on every push to `main`; `dist/` is never committed. Static
 pages ship zero JavaScript; the three interactive pages (quiz, flashcards,
-practice) become React islands as they are migrated. Practice and flashcards are
-across; `quiz.html` is the last of the original hand-written HTML left in
-`public/`, and slice 6 empties the directory.
+practice) are React islands. The migration is finished: every page a student can
+open is a route under `src/pages/`, and nothing in `public/` is a page any more.
 
 `/practice` is that island. Everything on it except the tile list is a fact about
 one student's own browser — what they ticked today, which of the last thirty days
@@ -21,12 +20,23 @@ shared `<header>`, above the island's own markup, so the island renders it
 through a React portal into `#streakChip`: one root and one piece of state, since
 ticking the first activity of the day changes the chip.
 
+`/quiz` is the third island and the one that ended the migration. The
+terminology, kumite sequences and maxims are content and ship from `src/data`;
+which of them a round asks about, in what order, and with which wrong answers is
+decided in the browser, so those rules live in `src/domain/quiz-questions.ts` —
+pure, taking its random source injected the way `store.ts` takes its clock. That
+module is also the only place three of the page's four known defects can be
+pinned, because none of them is reachable through the UI with the content the
+site ships today. `public/quiz.html` is gone, `netlify.toml` 301s `/quiz.html`
+to `/quiz`, and `public/assets/data.js` retired with it — the quiz was its last
+consumer, so `src/data` is now the only copy of the content.
+
 Belt study guides and kata reference are the first pages out: they are real
 Astro routes at `/belts`, `/belts/<slug>`, `/kata` and `/kata/<slug>`,
 statically generated from `src/data`. Kata prose itself is authored as
 markdown in `src/content/kata/` — a content collection, not hand-written
-HTML — and it must stay in step with `public/assets/data.js`'s `KATA` array
-until that file retires; `astro.config.mjs`'s `astro:build:start` hook enforces
+HTML — and it must stay in step with `src/data/kata.json`;
+`astro.config.mjs`'s `astro:build:start` hook enforces
 this on every build via `assertKataProseParity()` in `src/data/kata-prose.ts`
 (the same check `tests/unit/kata-prose-parity.test.ts` runs, without a build).
 `public/belts.html` and `public/kata.html` are both gone;
@@ -56,10 +66,6 @@ chip agreeing on when a day begins. `public/index.html` is gone;
 
 Pages no longer open from `file://` — run `npm run dev`. See README.md.
 
-Migration in progress: pages not yet ported live untouched in `public/`, which
-Astro copies to the build output verbatim. That directory shrinks to empty as
-slices land, and this note is deleted with the last page.
-
 Do not add runtime dependencies, third-party scripts, analytics, or CDN assets.
 That constraint has not changed and is what keeps this site cheap to own.
 
@@ -68,24 +74,24 @@ TypeScript is pinned to `^6.0.3` — do not upgrade to 7 yet. `@astrojs/check`
 `peerDependencies.typescript: "^5.0.0 || ^6.0.0"`, and TypeScript 7 breaks it outright.
 
 ```
-public/            legacy pages, served verbatim, shrinking each slice
-├── quiz.html
-├── assets/         data.js, store.js, legacy-hash.js, home.js, img/
+public/            no pages left — only what a built page loads at runtime
+├── assets/         store.js, legacy-hash.js, home.js, img/
 └── docs/           printable PDFs
 src/
 ├── pages/index.astro, 404.astro, practice.astro, flashcards.astro,
-│                    belts/index.astro, belts/[slug].astro,
+│                    quiz.astro, belts/index.astro, belts/[slug].astro,
 │                    kata/index.astro, kata/[slug].astro
-│                    every migrated page, in migration order: belts, kata,
-│                    home, practice, flashcards. The last two hydrate an
-│                    island; the rest ship no JavaScript at all
+│                    every page the site has, in migration order: belts, kata,
+│                    home, practice, flashcards, quiz. The last three hydrate
+│                    an island; the rest ship no JavaScript at all
 ├── content/kata/    kata prose as markdown, one file per kata, validated
 │                    against a content collection schema at build time
 ├── components/      shared pieces a route composes, e.g. BeltGuide.astro,
-│                    KataGuide.astro. Practice.tsx is the first React island;
-│                    practice-labels.ts holds its strings as pure functions so
-│                    they are testable without a browser, and flashcards-labels.ts
-│                    does the same for that island. StreakChip.tsx,
+│                    KataGuide.astro. Practice.tsx, Flashcards.tsx and Quiz.tsx
+│                    are the three React islands; practice-labels.ts,
+│                    flashcards-labels.ts and quiz-labels.ts hold their strings
+│                    as pure functions so the wording is testable without a
+│                    browser — which is where DEFECT 2 is pinned. StreakChip.tsx,
 │                    StreakChipSlot.astro and streak-chip-id.ts are the chip's
 │                    three parts — the element, the portal into it, and the id
 │                    they share. use-browser-store.ts is the ONLY thing that
@@ -97,15 +103,17 @@ src/
 │                    chip; home passes no props and supplies only the slot).
 │                    Spacing that predates the shared scale is an enumerated
 │                    `variant` applied as a modifier class, never a route
-│                    reaching in with :global() — see .app--home and
-│                    .app--practice in app.css, both of which Slice 9 deletes
+│                    reaching in with :global() — see .app--home, .app--practice
+│                    and .app--quiz in app.css, all of which Slice 9 deletes
 ├── styles/          tokens.css (design tokens, the source of truth for colours,
 │                    radii and widths) and app.css (shell/reset styles); routes
 │                    and components add their own scoped <style> alongside this
-├── data/           typed content — src/data/index.ts is the module pages import
-                    content from; the JSON files behind it, plus integrity.ts,
-                    parity.ts and kata-prose.ts (cross-reference, legacy-parity
-                    and kata prose/markdown build guards)
+├── data/           typed content, and since slice 6 the ONLY copy of it —
+                    src/data/index.ts is the module pages import content from,
+                    the JSON files behind it, plus integrity.ts and kata-prose.ts
+                    (cross-reference and prose/markdown build guards). parity.ts
+                    retired with public/assets/data.js: there is nothing left to
+                    prove the JSON against
 └── domain/         pure TypeScript: no DOM, no storage, no clock of its own.
                     flashcards-queue.ts holds the deck ordering — shuffle, then
                     stably sort by miss count — behind an injected random source,
@@ -113,30 +121,33 @@ src/
                     store.ts is the progress store and the only thing in src/
                     that touches localStorage — it takes both storage and a clock
                     as arguments, which is what makes the day-boundary arithmetic
-                    testable in node. It must persist byte-identical state to
-                    public/assets/store.js until that file retires in slice 6;
-                    tests/unit/store-parity.test.ts holds the two together and
-                    deletes itself alongside it.
-scripts/            extract-legacy-data.mjs — regenerates src/data/*.json from
-                    public/assets/data.js after a content edit
+                    testable in node. public/assets/store.js must still be able
+                    to READ what it writes, because the home page's chip is drawn
+                    through that file; tests/unit/store-parity.test.ts holds that
+                    half together. quiz-questions.ts builds a round of questions
+                    from the same injected-random seam, and carries the pins for
+                    DEFECTS 1 and 4. shuffle.ts is the Fisher-Yates both the deck
+                    and the quiz deal from — one algorithm, because two would
+                    drift silently.
+scripts/            compare-pixels.mjs — proves a migrated route renders
+                    identically to the page it replaced, run by hand against a
+                    git ref (see README)
 tests/
 ├── build/          build-output assertions
 ├── browser/        Vitest Browser Mode
-└── unit/           content integrity, legacy-parity and kata-prose-parity tests,
-                    plus the src/domain/store.ts suite (Node, no browser). The
-                    kata-prose one keeps src/content/kata/ in step with data.js's
-                    KATA array word for word; store-parity does the same job for
-                    the two progress stores. Shared helpers that vitest does not
-                    collect sit beside the suites: store-fixtures.ts, fake-storage.ts
+└── unit/           content integrity and kata-prose-parity tests, plus the
+                    src/domain suites (Node, no browser). The kata-prose one
+                    keeps src/content/kata/ in step with kata.json word for word;
+                    store-parity proves the home page still reads what the
+                    islands write. Shared helpers that vitest does not collect
+                    sit beside the suites: store-fixtures.ts, fake-storage.ts,
+                    random-sources.ts
 docs/superpowers/   committed specs and plans — not to be confused with
                     public/docs/, the student-facing printable PDFs above
 astro.config.mjs  tsconfig.json  vitest.config.ts  vitest.browser.config.ts
 netlify.toml      build command and publish directory
 .github/workflows/ci.yml   PR gate: typecheck, build, and both test suites
 ```
-
-Pages still in `public/` load `assets/data.js` via a plain `<script src>` tag before
-their inline app script, same as before the migration.
 
 ## Imagery (`public/assets/img/`)
 
@@ -150,11 +161,8 @@ Two rules the pages depend on:
 
 - Set `width`/`height` to the image's **intrinsic** pixel size and control the displayed
   size in CSS, so the browser reserves the space and nothing shifts as the page loads.
-- Path style differs by where the page lives. The legacy pages in `public/`
-  keep relative paths (`assets/img/…`) — they are served from the site root,
-  so relative resolves correctly there and should not be changed as part of
-  a migration. Astro routes under `src/pages/` must use root-relative paths
-  (`/assets/img/…`), as `src/pages/404.astro` already does — a nested route
+- Paths are root-relative (`/assets/img/…`), everywhere. Every page is a route
+  under `src/pages/` now, and a nested route
   (e.g. `/belts/5th-kyu`) resolves a relative `assets/img/ki.png` against its
   own path, not the site root, and the crest breaks.
 
@@ -223,7 +231,7 @@ live region and focus management, so it still waits.
    slice may decide belts and kata should agree — so do not "fix" kata's syllabus rows to
    expand JJ without raising that decision first.
 
-## Data schemas (`public/assets/data.js`)
+## Data schemas (`src/data/*.json`)
 
 ```js
 TERMS   = { 1:[[japanese, english], ...], 2:[...], 3:[...], 4:[...] }
@@ -253,15 +261,15 @@ SYLLABUS = [ {grade, track, section, item, detail}, ... ]
 PRACTICE = [ {id, name, hint}, ... ]
           // the /practice tiles, passed to the island as a prop. Timings in hints
           // come from the Syllabus 2026
-          // Simplified sheet. quiz.html auto-logs 'terms'/'kumite'; the
-          // flashcards island auto-logs 'philosophy' on deck completion.
+          // Simplified sheet. The quiz island auto-logs 'terms'/'kumite' on
+          // finishing a round; flashcards auto-logs 'philosophy' on deck completion.
 
 KATA    = [ {slug, name, translation, hex, white, match, quote?, sections}, ... ]
-          // /kata and /kata/<slug> are real Astro routes now; public/kata.html
-          // is gone. This array is still the source of truth data.js loads and
-          // extract-legacy-data.mjs reads from — the prose itself is authored
-          // as markdown in src/content/kata/ and must say the same thing word
-          // for word; astro.config.mjs fails the build if it drifts
+          // /kata and /kata/<slug> are real Astro routes; public/kata.html is
+          // gone. kata.json is the source of truth for everything EXCEPT the
+          // prose, which is authored as markdown in src/content/kata/ and must
+          // say the same thing word for word; astro.config.mjs fails the build
+          // if the two drift
           // (assertKataProseParity in src/data/kata-prose.ts — same check as
           // tests/unit/kata-prose-parity.test.ts, without a build).
           // match = lowercase substrings used to auto-build the "In
@@ -271,42 +279,33 @@ KATA    = [ {slug, name, translation, hex, white, match, quote?, sections}, ... 
           // in this repo, never user input.
 ```
 
-To add content:
+To add content, edit the JSON file in `src/data/` directly. Since slice 6 that is
+the only copy: `public/assets/data.js` and the extraction script that regenerated
+the JSON from it both retired with the quiz page, which was data.js's last
+consumer. `npm run build` runs `assertContentIntegrity()` over the result, so a
+belt pointing at a missing tier or a kata whose `match` finds nothing fails the
+build rather than shipping a blank section.
 
-1. Edit `public/assets/data.js` — it is still the source the legacy pages load and the
-   one place a content edit is made.
-2. Run `node scripts/extract-legacy-data.mjs` to regenerate the typed JSON in `src/data/`
-   from your edit.
-3. Update the `public/assets/data.js` line in `tests/build/legacy-content.sha256` to the
-   new file's checksum. Run `sha256sum public/assets/data.js` (or, on Windows,
-   `certutil -hashfile public/assets/data.js SHA256`) and replace the hash on that line
-   with what it prints, keeping the filename after it unchanged.
+A change to a kata's `sections[].b` prose is a second step: update the matching
+kata's markdown file in `src/content/kata/` too, word for word. Those two are
+authored copies of the same prose, and the build fails the moment they disagree
+(`assertKataProseParity()` in `src/data/kata-prose.ts`, run from
+`astro.config.mjs`'s `astro:build:start` hook; `tests/unit/kata-prose-parity.test.ts`
+proves the same thing without a build).
 
-Step 3 matters because that checksum records the known-good content — a deliberate
-content change means deliberately re-recording it, so the checksum test keeps catching
-accidental drift without blocking real edits.
+Editing anything under `public/` is different, and needs one extra step. Those files
+ship to the browser unbundled — `assets/store.js`, `assets/legacy-hash.js` and
+`assets/home.js` are live code, and the imagery and PDFs are content — so a checksum
+manifest records the known-good version of each. Update that file's line in
+`tests/build/legacy-content.sha256` with what `sha256sum <path>` prints (on Windows,
+`certutil -hashfile <path> SHA256`), keeping the filename after it unchanged. A
+deliberate change means deliberately re-recording it, which is what lets the check
+catch accidental drift without blocking real edits. The test names the file and
+prints both hashes when you forget.
 
-The same step applies to **every** file under `public/`, not just `data.js`. Most of them
-are frozen legacy content, but `assets/store.js`, `assets/legacy-hash.js` and
-`assets/home.js` are live code that outlives the pages around them — they are in the
-manifest because they ship to the browser unbundled, so editing one means re-recording its
-line too, exactly as above. The test names the file and prints both hashes when you
-forget.
-
-A change to a `KATA` entry's `sections[].b` prose is a fourth step: update the matching
-kata's markdown file in `src/content/kata/` too, word for word — `data.js` and the
-markdown are two authored copies of the same prose until `data.js` retires, and the
-build fails the moment they disagree (`assertKataProseParity()` in
-`src/data/kata-prose.ts`, run from `astro.config.mjs`'s `astro:build:start` hook;
-`tests/unit/kata-prose-parity.test.ts` proves the same thing without a build).
-
-The pages in `public/` are legacy — hand-rolled HTML with inline CSS and JS,
-kept only until each one is migrated into a real Astro route, and being
-migrated out one page per slice. They are not a template to copy.
-
-To add a new page, add an Astro route under `src/pages/` (see
-`src/pages/404.astro` for the current pattern), not a new file in `public/`.
-Root-relative asset paths are required there — see Imagery, above.
+To add a new page, add an Astro route under `src/pages/`. Every page is one now —
+`src/pages/flashcards.astro` is the pattern for an island, `src/pages/404.astro`
+for a static route. Nothing new belongs in `public/`, which holds no pages at all.
 
 ## Design system
 
@@ -341,14 +340,21 @@ One `localStorage` key, `shizenryu-progress-v1`:
 Every key is optional: a student who has only ever done a quiz has `streak` and
 `best` and no `plog`.
 
-**Two implementations write this key until slice 6.** `src/domain/store.ts` is the
-typed one, used by the practice and flashcards islands; `public/assets/store.js` is
-the legacy one that `quiz.html` and `assets/home.js` still load. Both are live at
-once, and a student can finish a deck on an island and a quiz round on the legacy
-page the same day — so they must write byte-identical state.
-`tests/unit/store-parity.test.ts` drives both through the same operation sequences
-and compares the stored JSON as a string plus every value returned. It deletes
-itself along with `store.js`.
+**One writer, one reader.** `src/domain/store.ts` is the typed store, and since
+slice 6 it is the only thing that WRITES this key — all three islands go through
+it. `public/assets/store.js` survives as a reader: the home page is deliberately
+not an island (React on the landing page is roughly 60KB gzipped to render one
+line of text, on the page a student opens on poor signal at the dojo), so
+`assets/home.js` still calls `Store.today()` and `Store.streakInfo()` through it
+for the maxim of the day and the streak chip. Those two calls are the whole
+surviving contract, and `tests/unit/store-parity.test.ts` proves it: state written
+by the island, read by both, same answers. Do not "finish the job" by islanding
+the home page.
+
+Where `store.ts` looks odd because it was matching `store.js`'s writes, that is
+now unobservable rather than required — the code says which parts those are. A
+change there is safe in a way it was not before slice 6, but it is still a change
+to state a reader has to understand.
 
 Three things about `store.ts` that look odd and are deliberate:
 

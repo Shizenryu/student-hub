@@ -12,7 +12,6 @@
 #
 # Format: <sha256>  <path relative to public/, forward slashes>, sorted by path.
 
-7fdfc665e801eac32abbaf16920806cb74b032d98e0f3ad175c190898f9f0b86  assets/data.js
 abf2771c9de564d5d1b9743b9b5a4edbd27e55f7b92a5176aca562424f9b3a4f  assets/home.js
 c152c0de1ba1c09a143a495b7f59a3f85857e3050d88f3af8be0a39bc48d83b1  assets/img/icon.png
 066200e4c56f23f6f87d5677af6abe0b6aa2400e2a22222b16625116c33e2592  assets/img/ki.png
@@ -22,4 +21,3 @@ b5732c4f050ead2fa9624f3b2eba7068e53b627d0879870e47d56923a1b7a750  assets/legacy-
 250eba5a9d845efa9be198ae993c52b34d5473795d686c348346ed4242df87cc  docs/belt-passport.pdf
 e271f18b2ab64e5bfc06a91d5874cceedbece7d98c0fb8f6c53d3d5cb8eef749  docs/philosophy-guide.pdf
 4e204378d640be22773eca7a22027f9afc61ce5654ed20f6d1cd6a1ee6e94a82  docs/study-guides.pdf
-e05fae5ea55cae69da24f22de9e46ec0b86f3c620da83763e09442d4bceec8c7  quiz.html
