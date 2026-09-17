@@ -41,6 +41,12 @@ jobs:
       - name: Browser tests
         run: npm run test:browser
 
+      # The built pages, served with the exact headers netlify.toml declares, in
+      # the Chromium installed above: fails on any Content-Security-Policy
+      # violation before the policy can reach a student's phone.
+      - name: Deploy tests
+        run: npm run test:deploy
+
       # Last, because it fails on the advisory database moving rather than on
       # anything in the diff. Running it here keeps a new advisory from masking
       # a genuine test failure, while still blocking the merge.
