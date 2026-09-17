@@ -7,6 +7,12 @@ import { assertKataProseParity } from './src/data/kata-prose';
 
 export default defineConfig({
   output: 'static',
+  // Every stylesheet ships as a file, never inlined into a <style> element.
+  // Astro's default inlines anything under 4KB, and every page here is under
+  // it — so without this, `style-src` in netlify.toml's Content-Security-Policy
+  // would need a hash per page that changed with every scoped-style edit.
+  // External files are covered by 'self' and cached across pages.
+  build: { inlineStylesheets: 'never' },
   // Astro's markdown default silently rewrites straight quotes/apostrophes to
   // curly ones at render time. public/kata.html (and every other legacy page
   // still being migrated) injects its authored HTML with innerHTML, so the
