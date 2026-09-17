@@ -14,6 +14,30 @@ import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { filesUnder } from '../support/files';
+
+export type BuiltPage = {
+  // The URL a student would type: /belts/5th-kyu/ for dist/belts/5th-kyu/index.html.
+  // 404.html keeps its filename, since it has no URL of its own — Netlify serves
+  // it for any path that has none.
+  readonly route: string;
+  readonly html: string;
+};
+
+// Every page the build produced. The security suites in tests/build and
+// tests/deploy both enumerate the site from this one list, so a page one of
+// them checks is a page the other visits.
+export async function builtPages(): Promise<readonly BuiltPage[]> {
+  const files = (await filesUnder('dist')).filter((file) => file.endsWith('.html'));
+  if (files.length === 0) throw new Error('dist has no built pages — run `npm run build` first');
+  return Promise.all(
+    files.map(async (file) => ({
+      route: file === '404.html' ? '/404.html' : `/${file.replace(/index\.html$/, '')}`,
+      html: await readFile(join('dist', file), 'utf8'),
+    })),
+  );
+}
+
 // Astro escapes interpolated text (its equivalent of the legacy pages' own
 // esc() helper): content containing &, <, >, " or ' comes out entity-escaped in
 // the built HTML, so fixture text is escaped the same way before comparing.

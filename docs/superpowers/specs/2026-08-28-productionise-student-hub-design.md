@@ -187,6 +187,17 @@ Permissions-Policy         = "camera=(), microphone=(), geolocation=(), interest
 
 Nothing requires `'unsafe-inline'`.
 
+**Corrected in slice 7 (2026-09-17), planned in
+`docs/superpowers/plans/2026-09-16-slice-7-csp-hardening.md`.** The section above was
+written against Astro 5. What shipped: Astro 7's stable `security.csp` generates the hashed
+half of the policy (script-src, style-src and the fixed directives) as a `<meta>` on every
+page, and `netlify.toml` sends only what a `<meta>` cannot carry — `frame-ancestors 'none'`
+plus the hardening headers above — so no adapter, no hand-copied hashes, and stylesheets
+stay inlined. Two policies intersect. A second header rule caches `/_astro/*` as immutable.
+The raw-HTML ban is a source-scan test, not a linter. The CSP-violation test serves `dist/`
+with the headers read from `netlify.toml` and drives the islands in Chromium
+(`npm run test:deploy`).
+
 ### innerHTML eliminated by construction
 
 JSX escapes by default; kata prose is rendered to HTML at build time and never handled as a

@@ -55,8 +55,8 @@ things that cannot be baked in at build time: the maxim of the day, which
 would otherwise freeze until the next deploy, and the streak chip, which
 lives in the visitor's own `localStorage`. `public/assets/home.js` fills both
 in — an external script rather than an Astro component script, because Astro
-inlines those and slice 7's CSP would reject them, the same reason
-`legacy-hash.js` is external. It reads the maxims from a data attribute the
+inlines those and the Content-Security-Policy rejects them (see Security), the
+same reason `legacy-hash.js` is external. It reads the maxims from a data attribute the
 route writes, so the content stays in `src/data` rather than being copied
 into a script, and it picks the day's maxim with `Store.today()` rather than
 its own `Date.now()` arithmetic — that is what keeps the maxim and the streak
@@ -135,18 +135,29 @@ scripts/            compare-pixels.mjs — proves a migrated route renders
 tests/
 ├── build/          build-output assertions
 ├── browser/        Vitest Browser Mode
+├── deploy/         the built site served with netlify.toml's headers, walked in
+│                   Chromium — `npm run test:deploy`, needs a build. Fails on any
+│                   Content-Security-Policy violation. serve-dist.ts is the
+│                   stand-in for Netlify (see Security)
+├── support/        helpers more than one suite imports and vitest does not
+│                   collect: files.ts (one directory walk), netlify-headers.ts
+│                   (the [[headers]] reader). Helpers one suite family owns stay
+│                   beside it, e.g. build/astro-html.ts
 └── unit/           content integrity and kata-prose-parity tests, plus the
                     src/domain suites (Node, no browser). The kata-prose one
                     keeps src/content/kata/ in step with kata.json word for word;
                     store-parity proves the home page still reads what the
-                    islands write. Shared helpers that vitest does not collect
-                    sit beside the suites: store-fixtures.ts, fake-storage.ts,
-                    random-sources.ts
+                    islands write; no-raw-html scans src/ and public/assets/ for
+                    sinks. Helpers only these suites use sit beside them:
+                    store-fixtures.ts, fake-storage.ts, random-sources.ts
 docs/superpowers/   committed specs and plans — not to be confused with
                     public/docs/, the student-facing printable PDFs above
 astro.config.mjs  tsconfig.json  vitest.config.ts  vitest.browser.config.ts
-netlify.toml      build command and publish directory
-.github/workflows/ci.yml   PR gate: typecheck, build, and both test suites
+vitest.deploy.config.ts
+netlify.toml      build command, publish directory, redirects and the security
+                  headers (see Security)
+.github/workflows/ci.yml   PR gate: typecheck, build, and all three test suites
+.github/dependabot.yml     weekly, grouped dependency PRs
 ```
 
 ## Imagery (`public/assets/img/`)
@@ -321,6 +332,68 @@ before hand-copying a hex code or width into a new page.
   this), cards with 14px radius and soft shadows. Buttons are big and thumb-friendly.
 - No emojis in content except the existing streak flame and the ☯ the flashcards
   island shows on deck completion. The club mark is the Ki logo (see Imagery), not ☯.
+
+## Security
+
+Every page ships a strict Content-Security-Policy, in two halves that intersect:
+
+- **Astro generates the half that needs hashes**, as a `<meta>` on every page, the
+  404 included. `security.csp` in `astro.config.mjs` sets the fixed directives
+  (`default-src 'none'`, `img-src 'self'`, `object-src`/`base-uri`/`form-action`
+  `'none'`) and `'self'` for scripts and styles; Astro adds a hash for each inline
+  script and style it emits — its island bootstrap, the `astro-island` display
+  rule, every stylesheet it inlines. Nothing is copied by hand, so an Astro
+  upgrade cannot leave a stale hash behind.
+- **`netlify.toml` sends what a `<meta>` cannot carry**: `frame-ancestors 'none'`
+  as the header CSP, plus HSTS, `X-Content-Type-Options`, `X-Frame-Options`,
+  `Referrer-Policy`, `Cross-Origin-Opener-Policy` and `Permissions-Policy`, on
+  every response. A second rule caches `/_astro/*` for a year — every file there
+  is named by content hash. Each value is one line; an HTTP header cannot hold a
+  newline, and `tests/support/netlify-headers.ts` refuses any other TOML string
+  form so the mistake fails in a test rather than at the edge.
+
+What that means for anyone changing a page:
+
+- **There is no way to add an inline `<script>` to a page that Astro did not put
+  there, and there should not be.** Component scripts in `.astro` files are
+  inlined by Astro and hashed, so they do work under the policy, but the doctrine
+  since slice 3 stands: page scripts live in `public/assets/` or in a React
+  island. A `style=""` attribute is refused outright; set runtime values through
+  the CSSOM, the way the quiz progress bar does. Nothing loads from another
+  origin — no CDN, no font service, no analytics — and
+  `tests/build/security-headers.test.ts` fails on a cross-origin script,
+  stylesheet, image or CSS `url()` before the policy would block it.
+- **`npm run test:deploy` is the pre-merge proof.** It serves the built `dist/`
+  with the headers read from `netlify.toml`, walks every page in Chromium and
+  drives all three islands, failing on any `securitypolicyviolation` or page
+  error. `astro preview` cannot stand in for it: it does not read `netlify.toml`.
+  CI runs it after the browser tests; locally it needs `npm run build` and
+  Chromium first. What it cannot prove is what Netlify's edge actually sends —
+  its server echoes the file's values — so after a deploy that touches
+  `netlify.toml`, confirm by hand:
+
+  ```
+  curl -sI https://<site>/quiz/ | grep -iE "content-security|strict-transport|x-frame|permissions"
+  curl -sI https://<site>/no-such-page | grep -i content-security
+  curl -sI https://<site>/_astro/<any>.css | grep -i cache-control
+  ```
+
+  The second line is the one assumption the stand-in makes that Netlify's
+  documentation does not settle: that `/*` rules reach its 404 responses. It
+  held on 2026-09-17 (slice 7's deploy preview), and the page's own `<meta>`
+  policy applies regardless — but a Netlify behaviour is Netlify's to change,
+  so re-run the three lines after any edit to `netlify.toml`.
+- **No HTML strings reach the DOM.** `tests/unit/no-raw-html.test.ts` fails
+  `npm test` on `.innerHTML =`, `set:html`, `dangerouslySetInnerHTML`,
+  `setHTMLUnsafe`, `srcdoc` and the rest, anywhere in `src/` or `public/assets/`,
+  matched as code so a comment may still name them. Kata prose is markdown
+  rendered at build time; that is the only trusted-HTML path, and it never
+  touches the browser as a string.
+
+Supply chain: committed lockfile, `npm ci` everywhere, Node pinned in `.nvmrc`
+and `netlify.toml`, `npm audit --audit-level=high` last in CI, Dependabot weekly
+and grouped (`.github/dependabot.yml`). No runtime dependencies of our own, no
+third-party scripts, no CDN — the constraint stated under Architecture.
 
 ## Persistence
 

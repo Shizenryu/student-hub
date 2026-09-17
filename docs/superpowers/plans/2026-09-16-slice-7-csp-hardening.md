@@ -5,7 +5,7 @@
 > PR** against `main`; see **Delivery Shape**.
 
 **Branch**: `plan/slice-7-csp-hardening` (this plan) → `feat/slice-7-csp-hardening`
-**Status**: Active
+**Status**: Implemented — awaiting live-header check after deploy
 
 ## Goal
 
@@ -57,6 +57,49 @@ stylesheet, and every scoped `<style>` edit anywhere would change one. The quiz 
 sets its width through the CSSOM at runtime (see the note in `Quiz.tsx`), which CSP does not
 govern, so no `'unsafe-hashes'` and no `'unsafe-inline'` anywhere in the policy.
 
+*Found during implementation:* Astro injects one `<style>` of its own on every island page
+regardless of that setting — `astro-island,astro-slot,astro-static-slot{display:contents}`,
+59 bytes, identical on all three. So `style-src` carries one fixed hash after all, handled
+exactly like the two script hashes: recorded in `netlify.toml`, re-derived and checked for
+staleness by the build test. Three hashes in total, all Astro's.
+
+*Also found during implementation:* **the policy must be one line in `netlify.toml`.**
+Netlify joins the lines of a multi-line TOML string with commas, and a comma separates
+*policies* in CSP, so the readable multi-line form in the first draft of this plan would
+have shipped as several broken policies. The parser in `tests/support/netlify-headers.ts`
+reads one-line basic strings only and refuses anything else, naming the header.
+
+**Superseded at review (2026-09-17) — what actually shipped.** The PR review found a third
+delivery route that neither correction 1 nor the spec had considered, and Rich chose it:
+Astro 7's stable `security.csp` generates the hashed half of the policy (script-src,
+style-src and the fixed directives) as a `<meta>` on every page, the 404 included, and
+`netlify.toml` sends only what a `<meta>` cannot carry — `frame-ancestors 'none'` plus the
+hardening headers. Two policies intersect. That deletes every hand-copied hash, the
+staleness half of the build test and the re-record procedure; stylesheets stay inlined,
+so the extra render-blocking request of correction 2 never ships; and Dependabot's Astro
+bumps stop going red on hash drift. Corrections 1 and 2 above are kept as the record of
+the reasoning, not as a description of the code.
+
+The review also corrected a claim this plan made in four places: Netlify does **not** join
+the lines of a multi-line TOML string with commas — its parser trims a value and normalises
+whitespace around commas that are already there. The one-line rule stands for a simpler
+reason: an HTTP header value cannot contain a newline. The wording in `netlify.toml`,
+`tests/support/netlify-headers.ts` and CLAUDE.md now says that.
+
+Two more things the review added: a `[[headers]]` rule caching `/_astro/*` as immutable,
+since every file there is content-hashed and Netlify's default re-validates on every
+navigation; and the build test now scans emitted CSS for cross-origin `url()`s, matches
+`style=`/`on*=` attributes in any quoting, and asserts each page's policy skeleton whole
+rather than directive by directive, so a directive from nowhere fails. The PDF concern the
+review raised (a `default-src 'none'` header landing on `/docs/*.pdf`) is moot under the
+split — only `frame-ancestors` and the hardening headers reach a PDF — but opening a PDF
+in a real browser is on the post-deploy list because `X-Frame-Options: DENY` does too.
+
+Deferred with reasons, for a later slice: `require-trusted-types-for 'script'` (would
+retire the source-scan test platform-side; needs the islands proven under it first), and a
+`deployment_status` workflow that curls the Deploy Preview so the live-header check stops
+being a manual step.
+
 **3. The raw-HTML ban is a test, not a linter.** The spec says "lint bans
 `dangerouslySetInnerHTML` and `set:html`". The repo has no linter, and adopting Biome or ESLint
 to enforce one rule is a dependency and a config surface for a ban a ten-line source scan
@@ -71,28 +114,39 @@ CI step. What slice 7 adds on the supply-chain side is Dependabot only.
 
 ## Acceptance Criteria
 
-- [ ] Every response Netlify serves — every route, every asset, the 404 page — carries a
-      `Content-Security-Policy` with `default-src 'none'`, `script-src 'self'` plus exactly the
-      island bootstrap hashes, `style-src 'self'`, `img-src 'self'`, `object-src 'none'`,
-      `base-uri 'none'`, `form-action 'none'`, `frame-ancestors 'none'`, and no
-      `'unsafe-inline'`, `'unsafe-eval'` or `'unsafe-hashes'`.
-- [ ] Every response also carries `Strict-Transport-Security`, `X-Content-Type-Options`,
+- [x] Every built page carries one `<meta>` Content-Security-Policy with `default-src 'none'`,
+      `script-src 'self'` and `style-src 'self'` plus exactly the hashes Astro computed for
+      that build, `img-src 'self'`, `object-src 'none'`, `base-uri 'none'`, `form-action 'none'`,
+      and no `'unsafe-inline'`, `'unsafe-eval'` or `'unsafe-hashes'`; and every response Netlify
+      serves carries `Content-Security-Policy: frame-ancestors 'none'`. (Revised at review —
+      see "Superseded at review" above.)
+- [x] Every response also carries `Strict-Transport-Security`, `X-Content-Type-Options`,
       `Referrer-Policy`, `Cross-Origin-Opener-Policy`, `Permissions-Policy` and
       `X-Frame-Options` with the values in the spec's Security section.
-- [ ] Under that exact policy in a real Chromium, every built page loads, the three islands
+- [x] Under that exact policy in a real Chromium, every built page loads, the three islands
       hydrate and work — tick a practice tile, flip a flashcard, answer a quiz question — with
       **zero** `securitypolicyviolation` events and zero page errors. This runs in CI on every
       PR.
-- [ ] A build test fails, naming the page and printing the hash to record, when a built page
-      contains an inline script whose hash is not in the policy, any `<style>` element, any
-      `style=""` attribute, any `on*=` attribute, or any cross-origin script, stylesheet or image.
-- [ ] `npm test` fails if `src/` or `public/assets/` gains a raw-HTML sink.
+- [x] A build test fails, naming the page, when a built page contains an inline script or
+      style its own policy does not allow, when a page's policy skeleton is anything other than
+      the expected one, when a page has any `style=` attribute or `on*=` handler in any quoting,
+      or when a page or emitted stylesheet references a cross-origin script, stylesheet, image
+      or CSS `url()`. A second assertion pins the `/_astro/*` immutable cache rule.
+- [x] `npm test` fails if `src/` or `public/assets/` gains a raw-HTML sink.
 - [ ] Dependabot opens weekly, grouped PRs for npm and GitHub Actions.
-- [ ] Pixel-identical on every page to `main` before this slice, proven with
-      `node scripts/compare-pixels.mjs --page <page> --ref <ref>` for at least one static page
-      and one island page — the stylesheet move is the only rendering-adjacent change.
-- [ ] Verified on the live site with `curl -sI` after deploy: all headers present on `/`,
-      `/quiz/`, an asset, and a nonexistent path.
+- [x] Pixel-identical on every page to `main` before this slice — the stylesheet move is the
+      only rendering-adjacent change. `compare-pixels.mjs` could not do this: it compares a
+      route with the legacy page it replaced, and none of those exist at `main` any more. A
+      throwaway script built the site twice, with and without `inlineStylesheets: 'never'`,
+      screenshotted all 23 routes from each in one Chromium at 390×900 @2x, and compared the
+      PNGs byte for byte: 23 identical, 0 differ. Output is in the PR.
+- [x] Verified against Netlify, on the PR's deploy preview before merge (2026-09-17): `/quiz/`
+      carries the header CSP and all six hardening headers (Netlify appends `; preload` to
+      HSTS); `/no-such-page` is a 404 **with** the same headers, so the stand-in server's one
+      assumption holds; `/_astro/*.js` is `public,max-age=31536000,immutable`; a PDF under
+      `/docs/` carries only `frame-ancestors` and `X-Frame-Options`, as intended.
+- [ ] One of the three PDFs under `/docs/` opens in Chrome and Safari on a phone — a
+      by-hand check, since headless Chromium downloads PDFs rather than rendering them.
 
 ## Delivery Shape
 
@@ -128,18 +182,18 @@ below in Step 2: no parser dependency.
 
 ### Step 1: The policy, pinned against the built site (RED→GREEN, node)
 
-- [ ] `tests/build/security-headers.test.ts`. Reads `netlify.toml` as text and takes the
+- [x] `tests/build/security-headers.test.ts`. Reads `netlify.toml` as text and takes the
       `for = "/*"` headers block. RED first: assert a `Content-Security-Policy` value exists
       with each directive above, and the five hardening headers with their spec values. This
       fails today.
-- [ ] In the same file, walk every `dist/**/*.html` and assert, per page: every inline
+- [x] In the same file, walk every `dist/**/*.html` and assert, per page: every inline
       `<script>` body's SHA-256 (base64, `sha256-` prefixed — exactly what the browser
       computes) is listed in the policy's `script-src`; the policy lists **no** hash that no
       page uses (a stale hash is a stale allow); no `<style>` element; no `style="`; no
       ` on[a-z]+=`; every `<script src>`, `<link href>` and `<img src>` is root-relative.
       The failure message names the page and prints the hash it found, the way
       `public-passthrough.test.ts` prints both checksums.
-- [ ] GREEN: `netlify.toml` gains the policy and the headers (below), `astro.config.mjs` gains
+- [x] GREEN: `netlify.toml` gains the policy and the headers (below), `astro.config.mjs` gains
       `build: { inlineStylesheets: 'never' }`. Rebuild; the test passes.
 
 The `[[headers]]` block, verbatim, so review is against the spec's text:
@@ -148,16 +202,7 @@ The `[[headers]]` block, verbatim, so review is against the spec's text:
 [[headers]]
   for = "/*"
   [headers.values]
-    Content-Security-Policy = '''
-      default-src 'none';
-      script-src 'self' 'sha256-QzWFZi+FLIx23tnm9SBU4aEgx4x8DsuASP07mfqol/c=' 'sha256-Ya0pUYrC7nM5Cn/056TyVuEiz6dFGrzmkWzgON0pF0U=';
-      style-src 'self';
-      img-src 'self';
-      object-src 'none';
-      base-uri 'none';
-      form-action 'none';
-      frame-ancestors 'none'
-    '''
+    Content-Security-Policy = "default-src 'none'; script-src 'self' 'sha256-QzWFZi+FLIx23tnm9SBU4aEgx4x8DsuASP07mfqol/c=' 'sha256-Ya0pUYrC7nM5Cn/056TyVuEiz6dFGrzmkWzgON0pF0U='; style-src 'self' 'sha256-vv9IoKo7BSLbWcUHr3tNmfNVmm5L/9Cfn2H6LMk7/ow='; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
     Strict-Transport-Security  = "max-age=31536000; includeSubDomains"
     X-Content-Type-Options     = "nosniff"
     X-Frame-Options            = "DENY"
@@ -166,10 +211,9 @@ The `[[headers]]` block, verbatim, so review is against the spec's text:
     Permissions-Policy         = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
 ```
 
-The two hashes are today's, from `dist/practice/index.html` at commit `6c6d403`; the test
-re-derives them, so the values above are documentation, not the source of truth. Netlify
-collapses a multi-line TOML string into one header value per HTTP/1.1, and the test collapses
-whitespace the same way before comparing. `X-Frame-Options` stays alongside
+The three hashes are today's, from `dist/practice/index.html` at commit `6c6d403`; the test
+re-derives them, so the values above are documentation, not the source of truth. The value
+is one line, and must stay one — see correction 2. `X-Frame-Options` stays alongside
 `frame-ancestors` for browsers that predate CSP 2; a comment says so.
 
 **On `includeSubDomains`:** it is in the spec, and it is right for a domain that serves only
@@ -180,11 +224,12 @@ belt-and-braces.
 
 ### Step 2: Reading `netlify.toml` without a TOML parser
 
-- [ ] `tests/support/netlify-headers.ts` (shared by Steps 1 and 3): returns
+- [x] `tests/support/netlify-headers.ts` (shared by Steps 1 and 3): returns
       `{ for: string, values: Record<string, string> }[]` from the `[[headers]]` tables, handling
-      exactly two TOML string forms — `"basic"` on one line and `'''literal multi-line'''` —
-      and nothing else. Around twenty lines; unit-tested in `tests/unit/netlify-headers.test.ts`
-      against a fixture string with both forms, a header the file does not have, and two tables.
+      exactly one TOML string form — `"basic"` on one line — and refusing anything else by
+      name, because a multi-line value would ship as a comma-joined, broken policy. Around
+      twenty lines; unit-tested in `tests/unit/netlify-headers.test.ts` against two tables,
+      comments and other tables to ignore, a file with no headers, and the refused form.
 
 Why not a parser: Node 22 has none built in, `smol-toml` would be a fourth devDependency for
 three fixed keys, and the file is ours — if someone writes a header in a third TOML string
@@ -192,52 +237,52 @@ form, the test fails loudly on a missing header rather than silently reading it 
 
 ### Step 3: The deploy test — every page and every island under the enforced policy (RED→GREEN, Chromium)
 
-- [ ] `tests/deploy/csp-violations.test.ts`, run by a new `npm run test:deploy` with its own
+- [x] `tests/deploy/csp-violations.test.ts`, run by a new `npm run test:deploy` with its own
       `vitest.deploy.config.ts` (`include: ['tests/deploy/**/*.test.ts']`, node environment)
       so `npm test` stays Chromium-free. It needs `npm run build` first and the Chromium
       that `npx playwright install chromium` provides — the same one the browser tests use.
-- [ ] The test starts a `node:http` server on an ephemeral port serving `dist/` with the
+- [x] The test starts a `node:http` server on an ephemeral port serving `dist/` with the
       `/*` headers from Step 2 applied to every response, `404.html` for unknown paths, and
       the correct `Content-Type` for `.html`, `.css`, `.js`, `.png`, `.pdf`. Around forty
       lines, in `tests/deploy/serve-dist.ts`.
-- [ ] It launches Chromium through the `playwright` package already installed, registers
+- [x] It launches Chromium through the `playwright` package already installed, registers
       `page.addInitScript` to collect `securitypolicyviolation` events into a window array
       before any page script runs, and collects `pageerror` and console errors.
-- [ ] RED first: for every route (`dist/**/index.html` mapped to its URL, plus `/404.html`
+- [x] RED first: for every route (`dist/**/index.html` mapped to its URL, plus `/404.html`
       and one unknown path), assert the response carries the `Content-Security-Policy`
       header. This fails before Step 1's GREEN and passes after — it is the same RED seen
       from the browser's side.
-- [ ] Then, for each page, assert zero violations and zero errors after load, and after
+- [x] Then, for each page, assert zero violations and zero errors after load, and after
       driving the islands: on `/practice` tick a tile and see the streak chip appear in the
       header; on `/flashcards` pick a deck and flip a card; on `/quiz` start Kumite 1–6,
       answer a question, and see the progress bar move. The quiz step is the one that
       proves the CSSOM claim in correction 2.
-- [ ] Also assert every page ships **no** `<meta http-equiv="content-security-policy">` —
+- [x] Also assert every page ships **no** `<meta http-equiv="content-security-policy">` —
       the policy comes from the header alone, so there is exactly one place to edit it.
-- [ ] `ci.yml`: add `npm run test:deploy` after the browser tests, before the audit. Both
+- [x] `ci.yml`: add `npm run test:deploy` after the browser tests, before the audit. Both
       need Chromium, which is already installed by then. README's "Working on this repo"
       section gains the one-line recipe.
 
 ### Step 4: The raw-HTML ban (RED→GREEN, node)
 
-- [ ] `tests/unit/no-raw-html.test.ts`: scans `src/**/*.{astro,ts,tsx}` and
+- [x] `tests/unit/no-raw-html.test.ts`: scans `src/**/*.{astro,ts,tsx}` and
       `public/assets/*.js` for `innerHTML`, `outerHTML`, `insertAdjacentHTML`,
       `document.write`, `set:html` and `dangerouslySetInnerHTML`. RED by adding a
       `dangerouslySetInnerHTML` to a scratch component and watching it fail; remove it;
       GREEN is the clean tree. The message names the file and line.
-- [ ] Delete the `esc()` helper if any copy survives anywhere; the inventory found none, so
+- [x] Delete the `esc()` helper if any copy survives anywhere; the inventory found none, so
       this is a check, not a task.
 
 ### Step 5: Dependabot
 
-- [ ] `.github/dependabot.yml`: `npm` weekly, one group for all minor and patch updates,
+- [x] `.github/dependabot.yml`: `npm` weekly, one group for all minor and patch updates,
       majors as individual PRs; `github-actions` weekly. Evidence is operational: the first
       run opens PRs within a week of merge; record the first PR number in the PR description
       after the fact, or note "not yet" honestly.
 
 ### Step 6: Documentation
 
-- [ ] `CLAUDE.md`: a **Security** section. What the policy allows and why; that there is no
+- [x] `CLAUDE.md`: a **Security** section. What the policy allows and why; that there is no
       way to add an inline script or style to a page and there should not be; the re-record
       procedure when Astro changes its bootstrap (the test prints the hash; put it in
       `netlify.toml`; say in the commit why the bootstrap changed); that `npm run test:deploy`
@@ -246,7 +291,7 @@ form, the test fails loudly on a missing header rather than silently reading it 
       note: "the CSP in slice 7 to refuse") and `CLAUDE.md` line 58 ("slice 7's CSP would
       reject them"). Reword both to the present tense; the facts they state stay true.
       `index.astro`'s comment about CSP forbidding inlined component scripts stays as it is.
-- [ ] Spec: append a dated note under Security recording corrections 1–3, as slice 6's plan
+- [x] Spec: append a dated note under Security recording corrections 1–3, as slice 6's plan
       did for its own corrections, so the spec and the deploy agree.
 
 ### Step 7: PRE-PR gate — alternate evidence, then the PR
@@ -254,15 +299,16 @@ form, the test fails loudly on a missing header rather than silently reading it 
 Mutation testing: **N/A** — the production diff is two config files and a workflow; there is
 no logic to mutate. Proportionate evidence, each recorded in the PR description:
 
-- [ ] **The hash guard bites.** Delete one hash from `netlify.toml`; `npm test` must fail
+- [x] **The hash guard bites.** Delete one hash from `netlify.toml`; `npm test` must fail
       naming the page and printing that hash; restore it.
-- [ ] **The deploy test bites, twice.** (a) With the hash still deleted, `npm run test:deploy`
+- [x] **The deploy test bites, twice.** (a) With the hash still deleted, `npm run test:deploy`
       must report a `securitypolicyviolation` on each island page — the islands must visibly
       fail to hydrate, which is exactly what production would do. (b) Add
       `style="color:red"` to one element in a copy of a built page served by the test; it
       must fail on the violation. Restore.
-- [ ] **Pixel identity.** `compare-pixels.mjs` on `/belts/5th-kyu` and `/quiz` against
-      `main`: identical, so the stylesheet move changed nothing a student sees.
+- [x] **Pixel identity.** Baseline build (inlined stylesheets) against the candidate build
+      (external), every route screenshotted in one Chromium and compared byte for byte: all
+      23 identical. See the acceptance criterion for why `compare-pixels.mjs` was not the tool.
 - [ ] **Live headers.** After merge, `curl -sI https://<site>/`, `/quiz/`,
       `/_astro/<any>.css`, `/does-not-exist`: every one shows the CSP and the five headers.
       Open `/practice` on a phone and tick a tile. Then tick the last acceptance criterion.

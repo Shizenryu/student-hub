@@ -1,0 +1,20 @@
+# Weekly, grouped: one PR for every minor and patch bump so a quiet week costs
+# one review, and a major on its own so it gets read. CI runs the whole gate on
+# each — including tests/build/security-headers.test.ts, which fails an Astro
+# bump that changes the island bootstrap until its hash is deliberately
+# re-recorded in netlify.toml.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
