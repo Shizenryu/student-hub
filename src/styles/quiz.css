@@ -90,8 +90,11 @@
    cannot be a class: it is a percentage of a round length that is not known until
    the round is dealt. React assigns it through the CSSOM rather than writing a
    style attribute, and this element never server-renders — the question screen does
-   not exist until a level is chosen — so the page still ships no inline styles for
-   the CSP in slice 7 to refuse. tests/build/quiz-route.test.ts holds that. */
+   not exist until a level is chosen — so the page ships no inline style for the
+   Content-Security-Policy to refuse, and the CSSOM is outside what style-src
+   governs. tests/build/quiz-route.test.ts holds the first half;
+   tests/deploy/csp-violations.test.ts answers a question under the real policy
+   and watches the bar move, which holds the second. */
 .progress div {
   height: 100%;
   background: var(--red);

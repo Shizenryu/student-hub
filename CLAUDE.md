@@ -55,8 +55,8 @@ things that cannot be baked in at build time: the maxim of the day, which
 would otherwise freeze until the next deploy, and the streak chip, which
 lives in the visitor's own `localStorage`. `public/assets/home.js` fills both
 in — an external script rather than an Astro component script, because Astro
-inlines those and slice 7's CSP would reject them, the same reason
-`legacy-hash.js` is external. It reads the maxims from a data attribute the
+inlines those and the Content-Security-Policy rejects them (see Security), the
+same reason `legacy-hash.js` is external. It reads the maxims from a data attribute the
 route writes, so the content stays in `src/data` rather than being copied
 into a script, and it picks the day's maxim with `Store.today()` rather than
 its own `Date.now()` arithmetic — that is what keeps the maxim and the streak
@@ -321,6 +321,51 @@ before hand-copying a hex code or width into a new page.
   this), cards with 14px radius and soft shadows. Buttons are big and thumb-friendly.
 - No emojis in content except the existing streak flame and the ☯ the flashcards
   island shows on deck completion. The club mark is the Ki logo (see Imagery), not ☯.
+
+## Security
+
+Every response Netlify serves carries a strict Content-Security-Policy and the
+hardening headers, from one `[[headers]]` rule for `/*` in `netlify.toml`. There
+is no adapter generating it and no `<meta>` copy of it: that file is the only
+place the policy exists, and it is hand-written. Read the comment above the rule
+before touching it.
+
+What the policy means for anyone changing a page:
+
+- **There is no way to add an inline `<script>` or `<style>` to a page, and there
+  should not be.** `default-src 'none'`, `script-src 'self'` and `style-src 'self'`
+  allow same-origin files only. Component scripts in `.astro` files are inlined by
+  Astro, so a page that needs a script puts it in `public/assets/` (as the home
+  page does) or in a React island. Every stylesheet ships as a file
+  (`build.inlineStylesheets: 'never'` in `astro.config.mjs`). A `style=""`
+  attribute is refused too; set runtime values through the CSSOM, the way the
+  quiz progress bar does.
+- **The three hashes in the policy are Astro's, not ours** — its two island
+  bootstrap scripts and the one `<style>` it injects on an island page. When an
+  Astro upgrade changes them, `tests/build/security-headers.test.ts` names the
+  page and prints the new hash. Re-record it in `netlify.toml` and say in the
+  commit what changed and why; that deliberate step is the point, since it is a
+  change to what every student's browser may execute. The same test fails on a
+  hash nothing uses, so remove the old one.
+- **The policy must stay on one line in `netlify.toml`.** Netlify joins the lines
+  of a multi-line TOML string with commas, and a comma separates *policies* in
+  CSP, so a wrapped value would ship as several broken policies.
+  `tests/support/netlify-headers.ts` refuses a multi-line value for that reason.
+- **`npm run test:deploy` is the pre-merge proof.** It serves the built `dist/`
+  with the exact headers from `netlify.toml` and drives every page and all three
+  islands in Chromium, failing on any `securitypolicyviolation`. `astro preview`
+  cannot stand in for it: it does not read `netlify.toml`. CI runs it after the
+  browser tests; locally it needs `npm run build` and Chromium first.
+- **No HTML strings reach the DOM.** `tests/unit/no-raw-html.test.ts` fails
+  `npm test` on `innerHTML`, `set:html`, `dangerouslySetInnerHTML` and friends
+  anywhere in `src/` or `public/assets/`. Kata prose is markdown rendered at build
+  time; that is the only trusted-HTML path, and it never touches the browser as a
+  string.
+
+Supply chain: committed lockfile, `npm ci` everywhere, Node pinned in `.nvmrc`
+and `netlify.toml`, `npm audit --audit-level=high` last in CI, Dependabot weekly
+and grouped (`.github/dependabot.yml`). No runtime dependencies of our own, no
+third-party scripts, no CDN — the constraint stated under Architecture.
 
 ## Persistence
 
