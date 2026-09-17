@@ -1,8 +1,10 @@
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { readdir, readFile } from 'node:fs/promises';
-import { join, relative, sep } from 'node:path';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
+
+import { filesUnder } from '../support/files';
 
 const PUBLIC_DIR = 'public';
 const DIST_DIR = 'dist';
@@ -30,13 +32,6 @@ const LEGACY_ASSETS = [
   'docs/philosophy-guide.pdf',
   'docs/study-guides.pdf',
 ];
-
-async function filesUnder(dir: string): Promise<string[]> {
-  const entries = await readdir(dir, { withFileTypes: true, recursive: true });
-  return entries
-    .filter((entry) => entry.isFile())
-    .map((entry) => relative(dir, join(entry.parentPath, entry.name)).split(sep).join('/'));
-}
 
 async function sha256(path: string): Promise<string> {
   return createHash('sha256').update(await readFile(path)).digest('hex');
