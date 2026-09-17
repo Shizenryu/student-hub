@@ -1,24 +1,26 @@
 // Serves the built site the way Netlify will: every file under dist/, a
-// directory's index.html at its clean URL, 404.html for anything else, and the
-// headers netlify.toml declares for "/*" on every response — including that
-// 404, which is the case a per-route rule would miss.
+// directory's index.html at its trailing-slash URL, 404.html for anything else,
+// and the headers netlify.toml declares on every response.
+//
+// Two honest limits. It applies the `/*` rule to its own 404 responses, which
+// is an assumption about Netlify that only a curl against the live site can
+// confirm (CLAUDE.md lists that check). And it serves only the canonical form
+// of each URL: Netlify 301s /quiz to /quiz/, so a link written without the
+// slash is a redirect in production, and this server answers it 404 rather
+// than quietly serving what production would not.
 //
 // `astro preview` cannot stand in for this: it does not read netlify.toml, so
-// it serves the pages with no policy at all and the browser has nothing to
-// violate. What this serves is what the deploy test proves; what Netlify
-// actually serves is confirmed once, by hand, with curl after the first deploy.
+// it serves the pages with no headers and the browser has nothing to violate.
 //
 // Not a *.test.ts file, so vitest does not collect it as a suite.
 
 import { createServer, type Server } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
-import type { AddressInfo } from 'node:net';
 
-import { headerRules } from '../support/netlify-headers';
+import { headerRules, rule } from '../support/netlify-headers';
 
 const DIST_DIR = 'dist';
-const NETLIFY_TOML = 'netlify.toml';
 
 const CONTENT_TYPES: Readonly<Record<string, string>> = {
   '.html': 'text/html; charset=utf-8',
@@ -36,42 +38,41 @@ export type BuiltSite = {
   readonly close: () => Promise<void>;
 };
 
-async function everythingHeaders(): Promise<Readonly<Record<string, string>>> {
-  const rule = headerRules(await readFile(NETLIFY_TOML, 'utf8')).find((candidate) => candidate.for === '/*');
-  if (!rule) throw new Error(`${NETLIFY_TOML} has no [[headers]] rule for "/*"`);
-  return rule.values;
-}
+const filePathFor = (pathname: string): string => (pathname.endsWith('/') ? `${pathname}index.html` : pathname);
 
-// A clean URL resolves to its directory's index.html, the way Netlify (and
-// Astro's default `build.format`) serve it; a file path resolves to itself.
-const candidatePaths = (pathname: string): readonly string[] =>
-  pathname.endsWith('/') ? [`${pathname}index.html`] : [pathname, `${pathname}/index.html`];
-
-async function readFirst(paths: readonly string[]): Promise<{ readonly path: string; readonly body: Buffer } | null> {
-  for (const path of paths) {
-    try {
-      return { path, body: await readFile(join(DIST_DIR, normalize(path))) };
-    } catch {
-      // not this candidate — try the next
-    }
+async function readOr404(path: string): Promise<{ readonly path: string; readonly body: Buffer; readonly status: number }> {
+  try {
+    return { path, body: await readFile(join(DIST_DIR, normalize(path))), status: 200 };
+  } catch {
+    return { path: '/404.html', body: await readFile(join(DIST_DIR, '404.html')), status: 404 };
   }
-  return null;
 }
 
+// `address()` is a string for a pipe or socket path; this server only ever
+// listens on a TCP port, so anything else is a bug worth failing on.
 const listen = (server: Server): Promise<number> =>
-  new Promise((resolve) => {
-    server.listen(0, '127.0.0.1', () => resolve((server.address() as AddressInfo).port));
+  new Promise((resolve, reject) => {
+    server.listen(0, '127.0.0.1', () => {
+      const address = server.address();
+      if (address === null || typeof address === 'string') {
+        reject(new Error(`expected a TCP address, got ${String(address)}`));
+        return;
+      }
+      resolve(address.port);
+    });
   });
 
 export async function serveBuiltSite(): Promise<BuiltSite> {
-  const headers = await everythingHeaders();
+  const rules = headerRules(await readFile('netlify.toml', 'utf8'));
+  const everyResponse = rule(rules, '/*');
+  const hashedAssets = rule(rules, '/_astro/*');
 
   const server = createServer(async (request, response) => {
     const pathname = decodeURIComponent(new URL(request.url ?? '/', 'http://localhost').pathname);
-    const found = await readFirst(candidatePaths(pathname));
-    const served = found ?? { path: '/404.html', body: await readFile(join(DIST_DIR, '404.html')) };
-    response.writeHead(found ? 200 : 404, {
-      ...headers,
+    const served = await readOr404(filePathFor(pathname));
+    response.writeHead(served.status, {
+      ...everyResponse,
+      ...(pathname.startsWith('/_astro/') ? hashedAssets : {}),
       'Content-Type': CONTENT_TYPES[extname(served.path)] ?? 'application/octet-stream',
     });
     response.end(served.body);
@@ -80,7 +81,7 @@ export async function serveBuiltSite(): Promise<BuiltSite> {
   const port = await listen(server);
   return {
     origin: `http://127.0.0.1:${port}`,
-    headers,
+    headers: everyResponse,
     close: () => new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve()))),
   };
 }
