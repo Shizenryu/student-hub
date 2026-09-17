@@ -69,6 +69,37 @@ Netlify joins the lines of a multi-line TOML string with commas, and a comma sep
 have shipped as several broken policies. The parser in `tests/support/netlify-headers.ts`
 reads one-line basic strings only and refuses anything else, naming the header.
 
+**Superseded at review (2026-09-17) — what actually shipped.** The PR review found a third
+delivery route that neither correction 1 nor the spec had considered, and Rich chose it:
+Astro 7's stable `security.csp` generates the hashed half of the policy (script-src,
+style-src and the fixed directives) as a `<meta>` on every page, the 404 included, and
+`netlify.toml` sends only what a `<meta>` cannot carry — `frame-ancestors 'none'` plus the
+hardening headers. Two policies intersect. That deletes every hand-copied hash, the
+staleness half of the build test and the re-record procedure; stylesheets stay inlined,
+so the extra render-blocking request of correction 2 never ships; and Dependabot's Astro
+bumps stop going red on hash drift. Corrections 1 and 2 above are kept as the record of
+the reasoning, not as a description of the code.
+
+The review also corrected a claim this plan made in four places: Netlify does **not** join
+the lines of a multi-line TOML string with commas — its parser trims a value and normalises
+whitespace around commas that are already there. The one-line rule stands for a simpler
+reason: an HTTP header value cannot contain a newline. The wording in `netlify.toml`,
+`tests/support/netlify-headers.ts` and CLAUDE.md now says that.
+
+Two more things the review added: a `[[headers]]` rule caching `/_astro/*` as immutable,
+since every file there is content-hashed and Netlify's default re-validates on every
+navigation; and the build test now scans emitted CSS for cross-origin `url()`s, matches
+`style=`/`on*=` attributes in any quoting, and asserts each page's policy skeleton whole
+rather than directive by directive, so a directive from nowhere fails. The PDF concern the
+review raised (a `default-src 'none'` header landing on `/docs/*.pdf`) is moot under the
+split — only `frame-ancestors` and the hardening headers reach a PDF — but opening a PDF
+in a real browser is on the post-deploy list because `X-Frame-Options: DENY` does too.
+
+Deferred with reasons, for a later slice: `require-trusted-types-for 'script'` (would
+retire the source-scan test platform-side; needs the islands proven under it first), and a
+`deployment_status` workflow that curls the Deploy Preview so the live-header check stops
+being a manual step.
+
 **3. The raw-HTML ban is a test, not a linter.** The spec says "lint bans
 `dangerouslySetInnerHTML` and `set:html`". The repo has no linter, and adopting Biome or ESLint
 to enforce one rule is a dependency and a config surface for a ban a ten-line source scan
@@ -83,11 +114,12 @@ CI step. What slice 7 adds on the supply-chain side is Dependabot only.
 
 ## Acceptance Criteria
 
-- [x] Every response Netlify serves — every route, every asset, the 404 page — carries a
-      `Content-Security-Policy` with `default-src 'none'`, `script-src 'self'` plus exactly the
-      island bootstrap hashes, `style-src 'self'` plus exactly Astro's island style hash,
-      `img-src 'self'`, `object-src 'none'`, `base-uri 'none'`, `form-action 'none'`,
-      `frame-ancestors 'none'`, and no `'unsafe-inline'`, `'unsafe-eval'` or `'unsafe-hashes'`.
+- [x] Every built page carries one `<meta>` Content-Security-Policy with `default-src 'none'`,
+      `script-src 'self'` and `style-src 'self'` plus exactly the hashes Astro computed for
+      that build, `img-src 'self'`, `object-src 'none'`, `base-uri 'none'`, `form-action 'none'`,
+      and no `'unsafe-inline'`, `'unsafe-eval'` or `'unsafe-hashes'`; and every response Netlify
+      serves carries `Content-Security-Policy: frame-ancestors 'none'`. (Revised at review —
+      see "Superseded at review" above.)
 - [x] Every response also carries `Strict-Transport-Security`, `X-Content-Type-Options`,
       `Referrer-Policy`, `Cross-Origin-Opener-Policy`, `Permissions-Policy` and
       `X-Frame-Options` with the values in the spec's Security section.
@@ -95,10 +127,11 @@ CI step. What slice 7 adds on the supply-chain side is Dependabot only.
       hydrate and work — tick a practice tile, flip a flashcard, answer a quiz question — with
       **zero** `securitypolicyviolation` events and zero page errors. This runs in CI on every
       PR.
-- [x] A build test fails, naming the page and printing the hash to record, when a built page
-      contains an inline script or style whose hash is not in the policy, when the policy lists
-      a hash no page uses, or when a page has any `style=""` attribute, any `on*=` attribute, or
-      any cross-origin script, stylesheet or image.
+- [x] A build test fails, naming the page, when a built page contains an inline script or
+      style its own policy does not allow, when a page's policy skeleton is anything other than
+      the expected one, when a page has any `style=` attribute or `on*=` handler in any quoting,
+      or when a page or emitted stylesheet references a cross-origin script, stylesheet, image
+      or CSS `url()`. A second assertion pins the `/_astro/*` immutable cache rule.
 - [x] `npm test` fails if `src/` or `public/assets/` gains a raw-HTML sink.
 - [ ] Dependabot opens weekly, grouped PRs for npm and GitHub Actions.
 - [x] Pixel-identical on every page to `main` before this slice — the stylesheet move is the
@@ -108,7 +141,10 @@ CI step. What slice 7 adds on the supply-chain side is Dependabot only.
       screenshotted all 23 routes from each in one Chromium at 390×900 @2x, and compared the
       PNGs byte for byte: 23 identical, 0 differ. Output is in the PR.
 - [ ] Verified on the live site with `curl -sI` after deploy: all headers present on `/`,
-      `/quiz/`, an asset, and a nonexistent path.
+      `/quiz/`, an asset (with the immutable `Cache-Control`), and a nonexistent path — the
+      last being the one assumption about Netlify's 404 handling the stand-in server makes.
+      And one of the three PDFs under `/docs/` opens in Chrome and Safari with
+      `X-Frame-Options: DENY` on it.
 
 ## Delivery Shape
 

@@ -187,16 +187,16 @@ Permissions-Policy         = "camera=(), microphone=(), geolocation=(), interest
 
 Nothing requires `'unsafe-inline'`.
 
-**Corrected in slice 7 (2026-09-16), planned in
+**Corrected in slice 7 (2026-09-17), planned in
 `docs/superpowers/plans/2026-09-16-slice-7-csp-hardening.md`.** The section above was
-written against Astro 5 before a page had been built. The built site's only inline
-scripts are Astro's two island bootstrap scripts and its only inline style is the one
-`astro-island{display:contents}` rule, all byte-identical across pages, so the policy is
-`'self'` plus three fixed hashes and is written by hand as one `[[headers]]` rule for `/*`
-in `netlify.toml` — no `@astrojs/netlify`, no `security.csp`, no `<meta>`. Stylesheets ship
-as files (`build.inlineStylesheets: 'never'`). The raw-HTML ban is a source-scan test, not
-a linter. The CSP-violation test serves `dist/` with the headers read from `netlify.toml`
-and drives the islands in Chromium (`npm run test:deploy`).
+written against Astro 5. What shipped: Astro 7's stable `security.csp` generates the hashed
+half of the policy (script-src, style-src and the fixed directives) as a `<meta>` on every
+page, and `netlify.toml` sends only what a `<meta>` cannot carry — `frame-ancestors 'none'`
+plus the hardening headers above — so no adapter, no hand-copied hashes, and stylesheets
+stay inlined. Two policies intersect. A second header rule caches `/_astro/*` as immutable.
+The raw-HTML ban is a source-scan test, not a linter. The CSP-violation test serves `dist/`
+with the headers read from `netlify.toml` and drives the islands in Chromium
+(`npm run test:deploy`).
 
 ### innerHTML eliminated by construction
 
