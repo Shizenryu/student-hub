@@ -140,11 +140,13 @@ CI step. What slice 7 adds on the supply-chain side is Dependabot only.
       throwaway script built the site twice, with and without `inlineStylesheets: 'never'`,
       screenshotted all 23 routes from each in one Chromium at 390×900 @2x, and compared the
       PNGs byte for byte: 23 identical, 0 differ. Output is in the PR.
-- [ ] Verified on the live site with `curl -sI` after deploy: all headers present on `/`,
-      `/quiz/`, an asset (with the immutable `Cache-Control`), and a nonexistent path — the
-      last being the one assumption about Netlify's 404 handling the stand-in server makes.
-      And one of the three PDFs under `/docs/` opens in Chrome and Safari with
-      `X-Frame-Options: DENY` on it.
+- [x] Verified against Netlify, on the PR's deploy preview before merge (2026-09-17): `/quiz/`
+      carries the header CSP and all six hardening headers (Netlify appends `; preload` to
+      HSTS); `/no-such-page` is a 404 **with** the same headers, so the stand-in server's one
+      assumption holds; `/_astro/*.js` is `public,max-age=31536000,immutable`; a PDF under
+      `/docs/` carries only `frame-ancestors` and `X-Frame-Options`, as intended.
+- [ ] One of the three PDFs under `/docs/` opens in Chrome and Safari on a phone — a
+      by-hand check, since headless Chromium downloads PDFs rather than rendering them.
 
 ## Delivery Shape
 

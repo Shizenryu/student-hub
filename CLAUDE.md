@@ -379,8 +379,10 @@ What that means for anyone changing a page:
   ```
 
   The second line is the one assumption the stand-in makes that Netlify's
-  documentation does not settle: that `/*` rules reach its 404 responses. The
-  page's own `<meta>` policy applies regardless.
+  documentation does not settle: that `/*` rules reach its 404 responses. It
+  held on 2026-09-17 (slice 7's deploy preview), and the page's own `<meta>`
+  policy applies regardless — but a Netlify behaviour is Netlify's to change,
+  so re-run the three lines after any edit to `netlify.toml`.
 - **No HTML strings reach the DOM.** `tests/unit/no-raw-html.test.ts` fails
   `npm test` on `.innerHTML =`, `set:html`, `dangerouslySetInnerHTML`,
   `setHTMLUnsafe`, `srcdoc` and the rest, anywhere in `src/` or `public/assets/`,
