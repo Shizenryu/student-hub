@@ -34,6 +34,7 @@ npm run dev   # local site at http://localhost:4321/
 | `npm run typecheck` | TypeScript and Astro type checking |
 | `npm test` | Node tests (run `npm run build` first) |
 | `npm run test:browser` | Browser tests in Chromium (see below) |
+| `npm run test:deploy` | Serves the built `dist/` with the exact headers in `netlify.toml` and walks every page in Chromium, failing on any Content-Security-Policy violation (run `npm run build` first; needs Chromium, see below) |
 | `node scripts/compare-pixels.mjs --page <name> --ref <git-ref>` | Proves a migrated route still renders identically to the page it replaced |
 
 Pages cannot be opened directly from disk any more — use `npm run dev`.
