@@ -41,9 +41,29 @@
   status = 301
   force = true
 
+# Every response, every path — including the 404 page Netlify serves for a path
+# that does not exist, which is why this is one rule for /* rather than a rule
+# per route. tests/build/security-headers.test.ts pins each value below against
+# the built pages, and tests/deploy/csp-violations.test.ts serves the built
+# pages with these exact headers to a real browser.
+#
+# The Content-Security-Policy is hand-written and must stay on ONE line: Netlify
+# joins the lines of a multi-line TOML string with commas, and a comma separates
+# POLICIES in CSP, so a wrapped value would ship as several broken policies.
+# The sha256 sources are Astro's own: the two island bootstrap scripts, and the
+# one <style> it injects on an island page (astro-island{display:contents}).
+# Those are the only inline scripts and styles on the site; every stylesheet of
+# ours ships as a file (see astro.config.mjs). When an Astro upgrade changes
+# them, the build test names the page and prints the new hash to record here;
+# say why in the commit. X-Frame-Options stays alongside frame-ancestors for
+# browsers that predate CSP 2.
 [[headers]]
   for = "/*"
   [headers.values]
-    X-Frame-Options = "DENY"
+    Content-Security-Policy = "default-src 'none'; script-src 'self' 'sha256-QzWFZi+FLIx23tnm9SBU4aEgx4x8DsuASP07mfqol/c=' 'sha256-Ya0pUYrC7nM5Cn/056TyVuEiz6dFGrzmkWzgON0pF0U='; style-src 'self' 'sha256-vv9IoKo7BSLbWcUHr3tNmfNVmm5L/9Cfn2H6LMk7/ow='; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
     X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
     Referrer-Policy = "strict-origin-when-cross-origin"
+    Cross-Origin-Opener-Policy = "same-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
