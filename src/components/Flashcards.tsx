@@ -22,9 +22,9 @@ type Session = {
   readonly deck: DeckChoice;
   readonly queue: readonly QueuedCard[];
   readonly total: number;
-  // Presses of Again, not distinct cards — see flashcards-labels.ts, where the
-  // sentence this feeds is registered as defect 6.
-  readonly laps: number;
+  // The cards that needed a second look, by front — a card missed three times is
+  // one card, which is what the completion sentence counts.
+  readonly missed: ReadonlySet<string>;
 };
 
 export default function Flashcards({ decks }: Props) {
@@ -59,7 +59,7 @@ export default function Flashcards({ decks }: Props) {
         hash: store.hash,
         random: Math.random,
       });
-      setSession({ deck, queue, total: queue.length, laps: 0 });
+      setSession({ deck, queue, total: queue.length, missed: new Set() });
       setFlips(0);
     },
     [decks, store],
@@ -76,9 +76,9 @@ export default function Flashcards({ decks }: Props) {
       // Got it retires the card; Again sends it to the back, so the deck is only
       // finished when every card has been got at least once.
       const queue = gotIt ? rest : [...rest, current];
-      const laps = gotIt ? session.laps : session.laps + 1;
+      const missed = gotIt ? session.missed : new Set([...session.missed, current.front]);
       setFlips(0);
-      setSession({ ...session, queue, laps });
+      setSession({ ...session, queue, missed });
 
       if (queue.length === 0) {
         store.logPractice('philosophy');
@@ -122,7 +122,7 @@ export default function Flashcards({ decks }: Props) {
       <>
         <div className="done-big">☯</div>
         <div className="done-msg">{completionMessage(session.total)}</div>
-        <div className="done-sub">{completionSubline(session.laps, shownStreak.count)}</div>
+        <div className="done-sub">{completionSubline(session.missed.size, shownStreak.count)}</div>
         <button type="button" className="next-btn" onClick={() => start(session.deck)}>
           Study again
         </button>

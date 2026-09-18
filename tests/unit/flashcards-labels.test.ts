@@ -46,18 +46,11 @@ describe('the streak is mentioned only when it is one', () => {
   });
 });
 
-describe('the repeat count is a known defect, ported unchanged', () => {
-  // This pins a BUG, so slice 8 has something to turn red and nobody "tidies" the
-  // sentence in the meantime believing it is right.
-  //
-  // `laps` counts presses of Again, not distinct cards. The component increments
-  // it on every miss, so one card missed three times reports three cards.
-
-  it('reports one card missed three times as three cards', () => {
-    // Three presses of Again is `laps: 3` whether that was three cards missed once
-    // each or one card missed three times, and the sentence claims "3 cards" for
-    // both. There is deliberately no second test contrasting the two: they produce
-    // the same argument, so a test could only compare this call to itself.
+describe('the repeat count is a count of cards', () => {
+  // The argument is how many DISTINCT cards were missed; the island keeps the set
+  // and hands over its size, which tests/browser/flashcards.test.tsx proves with
+  // one card missed three times. Here, three means three cards.
+  it('reports three cards that each needed a second look', () => {
     expect(completionSubline(3, 0)).toBe(
       '3 cards needed a second look. They will come up first next time.',
     );
