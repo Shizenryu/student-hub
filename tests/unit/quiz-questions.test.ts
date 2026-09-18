@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { KUMITE, TERMS } from '../../src/data';
 import type { Kumite, TermPair } from '../../src/data';
 import { ROUND_LENGTH, kumiteRound, termsRound } from '../../src/domain/quiz-questions';
-import { noShuffle } from './random-sources';
+import { mixing, noShuffle } from './random-sources';
 
 // Why crafted data rather than the real content: the rules about small pools at the
 // bottom of this file — a shared gloss, a range too short to supply three wrong
@@ -225,16 +225,13 @@ describe('what a round records about itself', () => {
   });
 });
 
-// --- the defects -------------------------------------------------------------
+// --- small pools -------------------------------------------------------------
 //
-// These three assert behaviour that is WRONG, so slice 8 has something to turn red
-// and nobody corrects the code in passing and wonders why nothing failed. The
-// mechanism of each is described where it lives, in src/domain/quiz-questions.ts;
-// what follows is only the data that triggers it.
-//
-// All three are unreachable with the content the site ships, which is why slice 8's
-// fixes will change nothing a student currently sees. They are guards against a
-// future content edit, on content that is edited by hand.
+// None of what follows is reachable with the content the site ships: every level
+// and both ranges can supply three wrong answers of their own, and no two terms
+// share a gloss. These are guards against a future content edit, on content that
+// is edited by hand — and the rule they pin, own pool first and the whole content
+// only after, is what keeps a Beginner from meeting a Dan-grade term today.
 
 describe('a terminology question offers four distinct options, one of them right', () => {
   // Wrong answers are chosen by the text a student will SEE — the gloss when asked
@@ -265,29 +262,33 @@ describe('a terminology question offers four distinct options, one of them right
   });
 
   it('draws every wrong answer from the level being studied when it has enough', () => {
-    // Own pool first: a Beginner must never see a Dan-grade gloss while tier 1 can
-    // supply three wrong answers of its own.
+    // Own pool first: a Beginner must never see a Dan-grade term while tier 1 can
+    // supply three wrong answers of its own. A mixing source, not a no-swap one:
+    // tier 1 sits first in the content, so a source that never moves anything
+    // would let an implementation that pools every tier together pass this.
+    const tierOne: readonly TermPair[] = [
+      ['ichi', 'one'],
+      ['ni', 'two'],
+      ['san', 'three'],
+      ['shi', 'four'],
+      ['go', 'five'],
+    ];
     const terms = {
-      '1': [
-        ['ichi', 'one'],
-        ['ni', 'two'],
-        ['san', 'three'],
-        ['shi', 'four'],
-        ['go', 'five'],
-      ],
+      '1': tierOne,
       '4': [
         ['roku', 'six'],
         ['shichi', 'seven'],
         ['hachi', 'eight'],
       ],
     } satisfies Readonly<Record<string, readonly TermPair[]>>;
+    const tierOneTexts = tierOne.flat();
 
-    const round = termsRound({ terms, level: 1, random: forward });
+    const round = termsRound({ terms, level: 1, random: mixing(7) });
 
     expect(round.questions).toHaveLength(5);
     for (const question of round.questions) {
       for (const option of question.options) {
-        expect(['one', 'two', 'three', 'four', 'five'], `"${option}" is not a tier-1 gloss`).toContain(option);
+        expect(tierOneTexts, `"${option}" is not a tier-1 term`).toContain(option);
       }
     }
   });
@@ -387,15 +388,17 @@ describe('a kumite question offers four distinct options for any range', () => {
 
   it('never reaches beyond the range while the range can supply the wrong answers', () => {
     // Six in range, one beyond. Neither its name nor its steps may appear in any
-    // option of any question, for either shape that draws wrong answers.
+    // option of any question, for either shape that draws wrong answers. The one
+    // beyond is listed FIRST, so an implementation that pooled everything together
+    // would pick it before anything in range, whatever the random source does.
     const kumite = [
+      kumiteOf(7, 'OS', ['ura-zuki', 'kaki-uke']),
       kumiteOf(1, 'OS', ['jun-zuki', 'gedan-barai', 'gyaku-zuki']),
       kumiteOf(2, 'SS', ['mae-geri', 'soto-uke']),
       kumiteOf(3, 'OS', ['mawashi-geri', 'age-uke']),
       kumiteOf(4, 'SS', ['ushiro-geri', 'shuto-uke']),
       kumiteOf(5, 'OS', ['hiza-geri', 'sekui-uke']),
       kumiteOf(6, 'SS', ['tobikomi-zuki', 'nagashi-uke']),
-      kumiteOf(7, 'OS', ['ura-zuki', 'kaki-uke']),
     ];
 
     const round = kumiteRound({ kumite, upTo: 6, random: noShuffle });
