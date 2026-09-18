@@ -16,3 +16,17 @@ export const noShuffle = () => 0.999999;
 // Always picks index 0, which is a real permutation rather than "some order" —
 // [a,b,c,d] comes out [b,c,d,a]. Use it when the order itself is the assertion.
 export const alwaysFirst = () => 0;
+
+// A deterministic source that genuinely mixes: the same seed always gives the
+// same sequence, and unlike the two above it does not favour any position. For
+// a rule about WHERE options come from, a source that never moves anything can
+// pass an implementation that ignores the rule, because the right items happen
+// to sit first. (A linear congruential step; the constants are Numerical
+// Recipes'.)
+export const mixing = (seed: number): (() => number) => {
+  let state = seed;
+  return () => {
+    state = (state * 1664525 + 1013904223) % 4294967296;
+    return state / 4294967296;
+  };
+};

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  displayedTotal,
   finalScore,
   liveScore,
   maximLine,
@@ -24,36 +23,24 @@ describe('the question counter', () => {
     expect(questionCounter(9, 10)).toBe('QUESTION 10 / 10');
   });
 
+  it('counts to whatever the round is really long, not to a constant', () => {
+    // The island passes the round's own length; tests/browser/quiz.test.tsx proves
+    // it does so for the counter, the bar and the score alike.
+    expect(questionCounter(2, 3)).toBe('QUESTION 3 / 3');
+  });
+
   it('shows the running score beside it', () => {
     expect(liveScore(0)).toBe('SCORE 0');
     expect(liveScore(7)).toBe('SCORE 7');
   });
 });
 
-describe('DEFER(slice-8): DEFECT 2 --- the total a terminology round reports', () => {
-  // A PIN, NOT A SPECIFICATION. quiz.html renders the constant N_Q while scoring
-  // against the real queue length, so a terminology round drawn from a tier with
-  // fewer than ten terms counts "QUESTION 3 / 10" and then finishes at "3 / 3".
-  //
-  // Unreachable today: the smallest tier pool is 13 terms. It bites the first time
-  // a tier is edited below ten. The kumite renderer already uses the real length,
-  // and that asymmetry is part of what is being ported.
-  it('says ten for a terminology round however long the round really is', () => {
-    expect(displayedTotal('terms', 4)).toBe(10);
-    expect(displayedTotal('terms', 10)).toBe(10);
-  });
-
-  it('says the real length for a kumite round', () => {
-    expect(displayedTotal('kumite', 4)).toBe(4);
-    expect(displayedTotal('kumite', 10)).toBe(10);
-  });
-
-  it('scores against the real length in both modes, which is where the two disagree', () => {
+describe('the final score', () => {
+  it('scores against the real length', () => {
     expect(finalScore(3, 3)).toBe('3 / 3');
     // Asymmetric on purpose: every other score in these suites is a perfect round,
     // and `score / total` reads identically to `total / score` when they are equal.
     expect(finalScore(7, 10)).toBe('7 / 10');
-    expect(questionCounter(2, displayedTotal('terms', 3))).toBe('QUESTION 3 / 10');
   });
 });
 

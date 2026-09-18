@@ -25,9 +25,9 @@ terminology, kumite sequences and maxims are content and ship from `src/data`;
 which of them a round asks about, in what order, and with which wrong answers is
 decided in the browser, so those rules live in `src/domain/quiz-questions.ts` —
 pure, taking its random source injected the way `store.ts` takes its clock. That
-module is also the only place three of the page's four known defects can be
-pinned, because none of them is reachable through the UI with the content the
-site ships today. `public/quiz.html` is gone, `netlify.toml` 301s `/quiz.html`
+module is also where the rules for small pools live — a shared gloss, a range too
+short to supply three wrong answers — which no shipped content reaches through the
+UI, so they are tested against crafted fixtures. `public/quiz.html` is gone, `netlify.toml` 301s `/quiz.html`
 to `/quiz`, and `public/assets/data.js` retired with it — the quiz was its last
 consumer, so `src/data` is now the only copy of the content.
 
@@ -91,7 +91,7 @@ src/
 │                    are the three React islands; practice-labels.ts,
 │                    flashcards-labels.ts and quiz-labels.ts hold their strings
 │                    as pure functions so the wording is testable without a
-│                    browser — which is where DEFECT 2 is pinned. StreakChip.tsx,
+│                    browser. StreakChip.tsx,
 │                    StreakChipSlot.astro and streak-chip-id.ts are the chip's
 │                    three parts — the element, the portal into it, and the id
 │                    they share. use-browser-store.ts is the ONLY thing that
@@ -125,8 +125,9 @@ src/
                     to READ what it writes, because the home page's chip is drawn
                     through that file; tests/unit/store-parity.test.ts holds that
                     half together. quiz-questions.ts builds a round of questions
-                    from the same injected-random seam, and carries the pins for
-                    DEFECTS 1 and 4. shuffle.ts is the Fisher-Yates both the deck
+                    from the same injected-random seam; wrongAnswers() there is
+                    the one rule every question shape draws its options by.
+                    shuffle.ts is the Fisher-Yates both the deck
                     and the quiz deal from — one algorithm, because two would
                     drift silently.
 scripts/            compare-pixels.mjs — proves a migrated route renders

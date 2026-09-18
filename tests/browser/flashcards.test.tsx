@@ -276,6 +276,27 @@ describe('finishing a deck', () => {
     await expect.element(screen.getByText(/1 card needed a second look/)).toBeVisible();
   });
 
+  test('counts a card missed three times as one card, not three', async () => {
+    const screen = await startSmallestDeck();
+    // Miss the first card, get the other eight, then miss the first card twice
+    // more as it comes back, then get it. One card needed the second look —
+    // three times — and the sentence counts cards, not presses of Again.
+    await flipCard();
+    await screen.getByRole('button', { name: 'Again' }).click();
+    for (let others = smallestDeck.cards.length - 1; others > 0; others--) {
+      await flipCard();
+      await screen.getByRole('button', { name: 'Got it' }).click();
+    }
+    for (let miss = 0; miss < 2; miss++) {
+      await flipCard();
+      await screen.getByRole('button', { name: 'Again' }).click();
+    }
+    await flipCard();
+    await screen.getByRole('button', { name: 'Got it' }).click();
+
+    await expect.element(screen.getByText(/1 card needed a second look/)).toBeVisible();
+  });
+
   test('records the session as philosophy practice and keeps the streak', async () => {
     await finishDeck();
 

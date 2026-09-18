@@ -5,7 +5,6 @@ import { kumiteRound, termsRound } from '../domain/quiz-questions';
 import type { Round } from '../domain/quiz-questions';
 import StreakChip from './StreakChip';
 import {
-  displayedTotal,
   finalScore,
   liveScore,
   maximLine,
@@ -29,8 +28,8 @@ import { useBrowserStore } from './use-browser-store';
 // toggled a `hidden` class on three divs.
 //
 // Which questions a round contains is not decided here: src/domain/quiz-questions.ts
-// owns that, takes its random source injected, and is where the three latent defects
-// are pinned. This file is the screens and the scoring.
+// owns that and takes its random source injected. This file is the screens and the
+// scoring.
 
 type Props = {
   readonly terms: Readonly<Record<string, readonly TermPair[]>>;
@@ -43,8 +42,8 @@ type Props = {
 // and `krange` in two module-level variables and read whichever matched `mode`.
 type Choice = { readonly mode: 'terms'; readonly level: number } | { readonly mode: 'kumite'; readonly upTo: number };
 
-// The chosen option's POSITION, not its text. A question can offer the same text
-// twice — that is defect 1 — and only the position says which button was pressed.
+// The chosen option's POSITION, not its text: it names the button that was pressed
+// without a lookup, and stays right whatever the options say.
 type Answered = { readonly option: number; readonly right: boolean; readonly feedback: string };
 
 // Settled once, when the round ends, rather than derived while rendering the result:
@@ -104,19 +103,6 @@ export default function Quiz({ terms, kumite, maxims }: Props) {
   const [session, setSession] = useState<Session | null>(null);
   const [streak, setStreak] = useState<StreakView | null>(null);
 
-  // DEFER(slice-8): DEFECT 7. The run line is its own state, and is deliberately NOT
-  // cleared when a round starts — because quiz.html does not clear it either. That
-  // page writes '#streak' only from answer(), and renderQ() leaves it alone, so the
-  // "N in a row!" a student earned on the last answer of one round is still on
-  // screen for the first, unanswered question of the next, claiming a run that has
-  // already been reset to zero.
-  //
-  // Unlike the other three this one is reachable today: end a round on a run of
-  // three and tap "Train again". Ported unchanged rather than quietly fixed, because
-  // a port whose diff also contains repairs cannot be reviewed as a port. Pinned in
-  // tests/browser/quiz.test.tsx; slice 8 owns the fix, which is one line here.
-  const [runLine, setRunLine] = useState('');
-
   // Read once, when the store stops being null — the same shape as Flashcards.tsx,
   // deliberately, so two islands do not solve one problem two ways.
   if (store !== null && streak === null) {
@@ -157,7 +143,6 @@ export default function Quiz({ terms, kumite, maxims }: Props) {
           feedback: right ? praise(Math.random) : wrongAnswerFeedback(question.correct),
         },
       });
-      setRunLine(streakRun(run));
     },
     [session],
   );
@@ -248,17 +233,17 @@ export default function Quiz({ terms, kumite, maxims }: Props) {
     ) : (
       <>
         <div className="qcount">
-          <span>{questionCounter(session.index, displayedTotal(session.round.mode, session.round.questions.length))}</span>
+          <span>{questionCounter(session.index, session.round.questions.length)}</span>
           <span>{liveScore(session.score)}</span>
         </div>
         <div className="progress">
           {/* Assigned through the CSSOM, not written as a style attribute: see the
-              note on `.progress div` in quiz.css. The denominator is the DISPLAYED
-              total, which in terminology mode is the constant — that is defect 2,
-              and the bar carries it as faithfully as the counter above does. */}
+              note on `.progress div` in quiz.css. The denominator is the round's
+              real length, the same number the counter above and the final score
+              use — quiz.html drew a terminology round against the constant ten. */}
           <div
             style={{
-              width: `${(session.index / displayedTotal(session.round.mode, session.round.questions.length)) * 100}%`,
+              width: `${(session.index / session.round.questions.length) * 100}%`,
             }}
           />
         </div>
@@ -267,8 +252,8 @@ export default function Quiz({ terms, kumite, maxims }: Props) {
         <div className="opts">
           {(question?.options ?? []).map((option, position) => (
             <button
-              // Position, not text: a question can offer the same text twice, which
-              // is defect 1, and React needs to tell those two buttons apart.
+              // Position: stable across a re-render, and the same key the
+              // answer is recorded by.
               key={position}
               type="button"
               className={optionClass(option, position, question?.correct ?? '', session.answered)}
@@ -282,7 +267,10 @@ export default function Quiz({ terms, kumite, maxims }: Props) {
         <div className={session.answered === null ? 'feedback' : `feedback ${session.answered.right ? 'good' : 'bad'}`}>
           {session.answered?.feedback}
         </div>
-        <div className="streak">{runLine}</div>
+        {/* The round's own run, not separate state: a new round starts at zero, so
+            nothing earned in the last one can outlive it. Within a round the line
+            stays through "Next" onto the following question, as it always has. */}
+        <div className="streak">{streakRun(session.run)}</div>
         {session.answered !== null && (
           <button type="button" className="next-btn" onClick={next}>
             Next
@@ -299,10 +287,8 @@ export default function Quiz({ terms, kumite, maxims }: Props) {
   );
 }
 
-// DEFER(slice-8): DEFECT 1. EVERY option whose text matches the answer is marked
-// correct, which is how a question that offers the same gloss twice ends up showing
-// two right answers. Matching on position instead would mark one button and quietly
-// repair the defect during the port. Pinned in tests/unit/quiz-questions.test.ts.
+// The right answer is marked by its text. A question's options are distinct (see
+// wrongAnswers in src/domain/quiz-questions.ts), so exactly one button matches.
 function optionClass(option: string, position: number, correct: string, answered: Answered | null): string {
   if (answered === null) return 'opt';
   if (option === correct) return 'opt correct';
