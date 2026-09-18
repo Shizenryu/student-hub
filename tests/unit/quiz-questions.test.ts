@@ -5,10 +5,11 @@ import type { Kumite, TermPair } from '../../src/data';
 import { ROUND_LENGTH, kumiteRound, termsRound } from '../../src/domain/quiz-questions';
 import { noShuffle } from './random-sources';
 
-// Why crafted data rather than the real content: the three defects pinned at the
-// bottom of this file cannot be reached through the UI at all, so each one has to
-// build the terms or kumite that trigger it. The rules themselves are described in
-// src/domain/quiz-questions.ts.
+// Why crafted data rather than the real content: the rules about small pools at the
+// bottom of this file — a shared gloss, a range too short to supply three wrong
+// answers — cannot be reached through the UI with the content the site ships, so
+// each case builds the terms or kumite that reach it. The rules themselves are
+// described in src/domain/quiz-questions.ts.
 
 // The direction roll is `random() < 0.3`. `forward` doubles as a no-swap shuffle at
 // these sizes — Math.floor(0.9 * (n + 1)) === n for any n below 9 — which is why
@@ -176,9 +177,7 @@ describe('the three kinds of kumite question', () => {
 
   it('draws what-comes-next wrong answers from every step in range', () => {
     // Not just from the sequence being asked about. These sequences are two and
-    // three steps long, so one of them could not supply three wrong answers and the
-    // question would quietly offer fewer options — defect 4's shape, arriving
-    // somewhere nobody was looking for it.
+    // three steps long, so one of them alone could not supply three wrong answers.
     const [question] = askedWithHint('What comes next?');
     const ownSteps = ['jun-zuki', 'gedan-barai', 'gyaku-zuki'];
     const fromElsewhere = (question?.options ?? []).filter((option) => !ownSteps.includes(option));
@@ -346,11 +345,34 @@ describe('a short level yields a short round', () => {
   });
 });
 
-describe('DEFER(slice-8) defect 4: a small kumite range loses an option', () => {
-  it('offers three options instead of four when there are too few other kumite', () => {
-    // A range of three leaves only two other kumite to draw wrong answers from. The
-    // menu offers 1-6 and 1-12, so this is unreachable; a "Kumite 1-3" button would
-    // reach it.
+describe('a kumite question offers four distinct options for any range', () => {
+  // The same rule as the terminology questions: wrong answers come from the range
+  // being studied first, and from the sequences beyond it only when the range
+  // cannot supply three. The menu offers 1–6 and 1–12, both of which can, so today
+  // a student never meets a sequence from beyond their range; a "Kumite 1–3"
+  // button would, and these are what it would get.
+
+  const NEXT_HINTS = ['The attack that starts it', 'What comes next?'];
+
+  it('names sequences beyond the range when the range has too few others', () => {
+    // A range of three leaves two others; the fourth sequence supplies the third.
+    const kumite = [
+      kumiteOf(1, 'OS', ['jun-zuki', 'gedan-barai']),
+      kumiteOf(2, 'SS', ['mae-geri', 'soto-uke']),
+      kumiteOf(3, 'OS', ['mawashi-geri', 'age-uke']),
+      kumiteOf(4, 'SS', ['ushiro-geri', 'shuto-uke']),
+    ];
+
+    const round = kumiteRound({ kumite, upTo: 3, random: noShuffle });
+    const which = round.questions.filter((question) => question.hint === 'Which kumite is this?');
+
+    expect(which.length).toBeGreaterThan(0);
+    for (const question of which) {
+      expect([...question.options].sort()).toEqual(['Kumite 1', 'Kumite 2', 'Kumite 3', 'Kumite 4']);
+    }
+  });
+
+  it('offers what exists when the whole content has fewer than four sequences', () => {
     const kumite = [
       kumiteOf(1, 'OS', ['jun-zuki', 'gedan-barai']),
       kumiteOf(2, 'SS', ['mae-geri', 'soto-uke']),
@@ -360,6 +382,48 @@ describe('DEFER(slice-8) defect 4: a small kumite range loses an option', () => 
     const round = kumiteRound({ kumite, upTo: 3, random: noShuffle });
     const [which] = round.questions.filter((question) => question.hint === 'Which kumite is this?');
 
-    expect(which?.options, 'DEFECT 4: every question should offer four options').toHaveLength(3);
+    expect([...(which?.options ?? [])].sort()).toEqual(['Kumite 1', 'Kumite 2', 'Kumite 3']);
+  });
+
+  it('never reaches beyond the range while the range can supply the wrong answers', () => {
+    // Six in range, one beyond. Neither its name nor its steps may appear in any
+    // option of any question, for either shape that draws wrong answers.
+    const kumite = [
+      kumiteOf(1, 'OS', ['jun-zuki', 'gedan-barai', 'gyaku-zuki']),
+      kumiteOf(2, 'SS', ['mae-geri', 'soto-uke']),
+      kumiteOf(3, 'OS', ['mawashi-geri', 'age-uke']),
+      kumiteOf(4, 'SS', ['ushiro-geri', 'shuto-uke']),
+      kumiteOf(5, 'OS', ['hiza-geri', 'sekui-uke']),
+      kumiteOf(6, 'SS', ['tobikomi-zuki', 'nagashi-uke']),
+      kumiteOf(7, 'OS', ['ura-zuki', 'kaki-uke']),
+    ];
+
+    const round = kumiteRound({ kumite, upTo: 6, random: noShuffle });
+
+    expect(round.questions).toHaveLength(ROUND_LENGTH);
+    for (const question of round.questions) {
+      for (const option of question.options) {
+        expect(['Kumite 7', 'ura-zuki', 'kaki-uke'], `"${option}" is from beyond the range`).not.toContain(option);
+      }
+    }
+  });
+
+  it('draws what-comes-next wrong answers from beyond the range when the range has too few steps', () => {
+    // One sequence of three steps in range cannot supply three wrong steps for any
+    // of its own questions; the sequence beyond has three new ones.
+    const kumite = [
+      kumiteOf(1, 'OS', ['jun-zuki', 'gedan-barai', 'gyaku-zuki']),
+      kumiteOf(2, 'SS', ['mae-geri', 'soto-uke', 'age-uke']),
+    ];
+
+    const round = kumiteRound({ kumite, upTo: 1, random: noShuffle });
+    const next = round.questions.filter((question) => NEXT_HINTS.includes(question.hint));
+
+    expect(next).toHaveLength(3);
+    for (const question of next) {
+      expect(question.options, `"${question.prompt}"`).toHaveLength(4);
+      expect(new Set(question.options).size, `"${question.prompt}" repeats an option`).toBe(4);
+      expect(question.options).toContain(question.correct);
+    }
   });
 });

@@ -140,18 +140,23 @@ const sideQuestion = (kumite: Kumite, random: () => number): Question => ({
   options: shuffled(['OS', 'SS'], random),
 });
 
-// DEFER(slice-8): DEFECT 4. The wrong answers are the OTHER kumite in range, so a
-// range below five cannot supply three of them and the question offers fewer than
-// four options. The menu only ever asks for 1-6 or 1-12, so this is unreachable
-// today. Ported unchanged; pinned in tests/unit/quiz-questions.test.ts.
-function whichKumiteQuestion(kumite: Kumite, inRange: readonly Kumite[], random: () => number): Question {
-  const correct = `Kumite ${kumite.n}`;
-  const others = shuffled(
-    inRange.filter((other) => other.n !== kumite.n),
+const nameOf = (kumite: Kumite): string => `Kumite ${kumite.n}`;
+
+// The wrong answers are the other sequences in range, then those beyond it —
+// wrongAnswers' rule. A range of three or fewer cannot supply three others alone.
+function whichKumiteQuestion(
+  kumite: Kumite,
+  inRange: readonly Kumite[],
+  everything: readonly Kumite[],
+  random: () => number,
+): Question {
+  const correct = nameOf(kumite);
+  const others = wrongAnswers({
+    correct,
+    own: inRange.map(nameOf),
+    everything: everything.map(nameOf),
     random,
-  )
-    .slice(0, WRONG_PER_QUESTION)
-    .map((other) => `Kumite ${other.n}`);
+  });
 
   return {
     prompt: kumite.steps.join(STEP_JOIN),
@@ -161,19 +166,18 @@ function whichKumiteQuestion(kumite: Kumite, inRange: readonly Kumite[], random:
   };
 }
 
+// `vocabulary` is every step in range, not just this sequence's: these are two
+// and three steps long, so one sequence could not supply three wrong answers, and
+// a range of one falls through to every step there is.
 function nextStepQuestion(
   kumite: Kumite,
   step: number,
   vocabulary: readonly string[],
+  everyStep: readonly string[],
   random: () => number,
 ): Question {
   const correct = kumite.steps[step] ?? '';
-  // From every step in range, not just this sequence's: these are two and three
-  // steps long, so one sequence could not supply three wrong answers.
-  const wrong = shuffled(
-    vocabulary.filter((other) => other !== correct),
-    random,
-  ).slice(0, WRONG_PER_QUESTION);
+  const wrong = wrongAnswers({ correct, own: vocabulary, everything: everyStep, random });
   const opening = step === 0;
 
   return {
@@ -194,9 +198,10 @@ export function kumiteRound(options: {
   const { kumite, upTo, random } = options;
   const inRange = kumite.filter((each) => each.n <= upTo);
 
-  // Every step in range, deduplicated: the wrong answers for "what comes next" come
-  // from the whole vocabulary a student has met.
-  const vocabulary = [...new Set(inRange.flatMap((each) => each.steps))];
+  // Every step in range: the wrong answers for "what comes next" come from the
+  // whole vocabulary a student has met, and only beyond it when that runs short.
+  const vocabulary = inRange.flatMap((each) => each.steps);
+  const everyStep = kumite.flatMap((each) => each.steps);
 
   const candidates = inRange.flatMap((each): readonly Candidate[] => [
     ...each.steps.map((_, step): Candidate => ({ kind: 'next', kumite: each, step })),
@@ -209,9 +214,9 @@ export function kumiteRound(options: {
       case 'side':
         return sideQuestion(candidate.kumite, random);
       case 'which':
-        return whichKumiteQuestion(candidate.kumite, inRange, random);
+        return whichKumiteQuestion(candidate.kumite, inRange, kumite, random);
       case 'next':
-        return nextStepQuestion(candidate.kumite, candidate.step, vocabulary, random);
+        return nextStepQuestion(candidate.kumite, candidate.step, vocabulary, everyStep, random);
     }
   };
 
