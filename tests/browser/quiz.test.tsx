@@ -293,22 +293,20 @@ describe('DEFER(slice-8): DEFECT 2 --- a short round still counts to ten', () =>
   });
 });
 
-describe('DEFER(slice-8): DEFECT 7 --- the run line outlives its round', () => {
-  // A PIN, NOT A SPECIFICATION. quiz.html writes the "N in a row" line only from
-  // answer(), and renderQ() never clears it. So the line a student earned on the
-  // last answer of one round is still on screen for the first, unanswered question
-  // of the next, claiming a run that has already been reset to zero.
-  //
-  // Reachable today, unlike defects 1, 2 and 4 --- any student who ends a round on a
-  // run of three or more and taps "Train again" sees it. Ported unchanged.
-  test('a run earned in the last round is still showing on the first question of the next', async () => {
+describe('a new round starts with no run line', () => {
+  // The run belongs to the round. quiz.html wrote the line only from answer() and
+  // never cleared it, so a run earned on the last answer of one round used to sit on
+  // the first, unanswered question of the next; the line is now the round's own run
+  // count, which a fresh round starts at zero.
+  test('a run earned in the last round is not showing on the first question of the next', async () => {
     await startLevel('Beginner');
-    await answerWholeRound();
+    expect(await answerWholeRound()).toBe('10 / 10');
 
     document.querySelector<HTMLElement>('.next-btn')?.click();
     await settle();
 
-    expect(textOf('.streak')).toBe('\u{1F525} 10 in a row!');
+    expect(textOf('.qcount')).toBe('QUESTION 1 / 10SCORE 0');
+    expect(textOf('.streak')).toBe('');
   });
 });
 

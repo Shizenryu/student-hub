@@ -104,19 +104,6 @@ export default function Quiz({ terms, kumite, maxims }: Props) {
   const [session, setSession] = useState<Session | null>(null);
   const [streak, setStreak] = useState<StreakView | null>(null);
 
-  // DEFER(slice-8): DEFECT 7. The run line is its own state, and is deliberately NOT
-  // cleared when a round starts — because quiz.html does not clear it either. That
-  // page writes '#streak' only from answer(), and renderQ() leaves it alone, so the
-  // "N in a row!" a student earned on the last answer of one round is still on
-  // screen for the first, unanswered question of the next, claiming a run that has
-  // already been reset to zero.
-  //
-  // Unlike the other three this one is reachable today: end a round on a run of
-  // three and tap "Train again". Ported unchanged rather than quietly fixed, because
-  // a port whose diff also contains repairs cannot be reviewed as a port. Pinned in
-  // tests/browser/quiz.test.tsx; slice 8 owns the fix, which is one line here.
-  const [runLine, setRunLine] = useState('');
-
   // Read once, when the store stops being null — the same shape as Flashcards.tsx,
   // deliberately, so two islands do not solve one problem two ways.
   if (store !== null && streak === null) {
@@ -157,7 +144,6 @@ export default function Quiz({ terms, kumite, maxims }: Props) {
           feedback: right ? praise(Math.random) : wrongAnswerFeedback(question.correct),
         },
       });
-      setRunLine(streakRun(run));
     },
     [session],
   );
@@ -282,7 +268,10 @@ export default function Quiz({ terms, kumite, maxims }: Props) {
         <div className={session.answered === null ? 'feedback' : `feedback ${session.answered.right ? 'good' : 'bad'}`}>
           {session.answered?.feedback}
         </div>
-        <div className="streak">{runLine}</div>
+        {/* The round's own run, not separate state: a new round starts at zero, so
+            nothing earned in the last one can outlive it. Within a round the line
+            stays through "Next" onto the following question, as it always has. */}
+        <div className="streak">{streakRun(session.run)}</div>
         {session.answered !== null && (
           <button type="button" className="next-btn" onClick={next}>
             Next
