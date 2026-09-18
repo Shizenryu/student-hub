@@ -5,7 +5,6 @@ import { kumiteRound, termsRound } from '../domain/quiz-questions';
 import type { Round } from '../domain/quiz-questions';
 import StreakChip from './StreakChip';
 import {
-  displayedTotal,
   finalScore,
   liveScore,
   maximLine,
@@ -234,17 +233,17 @@ export default function Quiz({ terms, kumite, maxims }: Props) {
     ) : (
       <>
         <div className="qcount">
-          <span>{questionCounter(session.index, displayedTotal(session.round.mode, session.round.questions.length))}</span>
+          <span>{questionCounter(session.index, session.round.questions.length)}</span>
           <span>{liveScore(session.score)}</span>
         </div>
         <div className="progress">
           {/* Assigned through the CSSOM, not written as a style attribute: see the
-              note on `.progress div` in quiz.css. The denominator is the DISPLAYED
-              total, which in terminology mode is the constant — that is defect 2,
-              and the bar carries it as faithfully as the counter above does. */}
+              note on `.progress div` in quiz.css. The denominator is the round's
+              real length, the same number the counter above and the final score
+              use — quiz.html drew a terminology round against the constant ten. */}
           <div
             style={{
-              width: `${(session.index / displayedTotal(session.round.mode, session.round.questions.length)) * 100}%`,
+              width: `${(session.index / session.round.questions.length) * 100}%`,
             }}
           />
         </div>

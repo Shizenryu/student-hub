@@ -257,10 +257,10 @@ describe('DEFER(slice-8) defect 1: a shared English gloss makes a question unans
   });
 });
 
-describe('DEFER(slice-8) defect 2: a short level still says ten questions', () => {
-  it('builds a round shorter than the length the progress display uses', () => {
-    // A tier of three. Every shipped tier has at least thirteen terms, so today the
-    // display and the score always agree.
+describe('a short level yields a short round', () => {
+  it('asks every term once when there are fewer than ten', () => {
+    // A tier of three. Every shipped tier has at least thirteen terms, so a round
+    // is ten today; the island counts and scores against whatever this returns.
     const terms = termsOf('1', [
       ['ichi', 'one'],
       ['ni', 'two'],
@@ -269,12 +269,7 @@ describe('DEFER(slice-8) defect 2: a short level still says ten questions', () =
 
     const round = termsRound({ terms, level: 1, random: noShuffle });
 
-    // The length is the guard — "shorter than ten" alone is satisfied by a round of
-    // nothing — and the comparison is the statement of intent.
     expect(round.questions).toHaveLength(3);
-    expect(round.questions.length, 'DEFECT 2: the round is shorter than the displayed total').toBeLessThan(
-      ROUND_LENGTH,
-    );
   });
 });
 

@@ -1,6 +1,3 @@
-import { ROUND_LENGTH } from '../domain/quiz-questions';
-import type { Round } from '../domain/quiz-questions';
-
 // Everything the quiz says, transcribed from public/quiz.html, as pure functions —
 // the same split as practice-labels.ts and flashcards-labels.ts, and for the same
 // reason: the wording is worth pinning in node rather than only through a browser
@@ -9,18 +6,6 @@ import type { Round } from '../domain/quiz-questions';
 export const questionCounter = (index: number, total: number): string => `QUESTION ${index + 1} / ${total}`;
 
 export const liveScore = (score: number): string => `SCORE ${score}`;
-
-// DEFER(slice-8): DEFECT 2. The progress line and the bar are drawn against the
-// CONSTANT in terminology mode and against the real queue length in kumite mode —
-// quiz.html's renderQ() uses N_Q where renderK() uses kqs.length — while both
-// modes finish by scoring against the real length. So a terminology round drawn
-// from a tier of fewer than ten terms counts up to "/ 10" and then reports "4 / 4".
-//
-// Unreachable today: the smallest tier pool is 13 terms, so a round is always ten
-// and the constant is right. It bites the first time a tier is edited below ten.
-// Ported unchanged; pinned in tests/unit/quiz-labels.test.ts.
-export const displayedTotal = (mode: Round['mode'], questionCount: number): number =>
-  mode === 'terms' ? ROUND_LENGTH : questionCount;
 
 export const finalScore = (score: number, total: number): string => `${score} / ${total}`;
 

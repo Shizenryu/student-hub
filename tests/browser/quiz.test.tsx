@@ -248,11 +248,12 @@ describe('kumite rounds', () => {
   });
 });
 
-describe('DEFER(slice-8): DEFECT 2 --- a short round still counts to ten', () => {
-  // The other half of the pin in tests/unit/quiz-labels.test.ts, driven through the
-  // island so the counter AND the progress bar are both covered. Reachable here
-  // because the content arrives as a prop: a tier of four terms is what a content
-  // edit would have to do to make this bite, and no tier is anywhere near it today.
+describe('a short round counts to its own length', () => {
+  // Driven through the island so the counter AND the progress bar are covered. The
+  // content arrives as a prop: a tier of four terms is what a content edit would
+  // have to do to reach this, and no shipped tier is anywhere near it. quiz.html
+  // drew a terminology round's counter and bar against the constant ten while
+  // scoring against the real length; every number now comes from the round.
   const FOUR_TERMS: Readonly<Record<string, readonly TermPair[]>> = {
     '1': [
       ['ichi', 'one'],
@@ -269,20 +270,20 @@ describe('DEFER(slice-8): DEFECT 2 --- a short round still counts to ten', () =>
     return screen;
   };
 
-  test('counts towards ten, and fills the bar towards ten, in a round of four', async () => {
+  test('counts towards four, and fills the bar towards four, in a round of four', async () => {
     await startShortRound();
 
-    expect(textOf('.qcount')).toBe('QUESTION 1 / 10SCORE 0');
+    expect(textOf('.qcount')).toBe('QUESTION 1 / 4SCORE 0');
 
     await answer(0);
     await pressNext();
 
-    expect(textOf('.qcount')).toBe('QUESTION 2 / 10SCORE 1');
-    // One of ten, not one of four — the bar is drawn against the same wrong total.
-    expect(document.querySelector<HTMLElement>('.progress div')?.style.width).toBe('10%');
+    expect(textOf('.qcount')).toBe('QUESTION 2 / 4SCORE 1');
+    // One of four: the bar is drawn against the same total as the counter.
+    expect(document.querySelector<HTMLElement>('.progress div')?.style.width).toBe('25%');
   });
 
-  test('then scores out of four, which is what the student actually answered', async () => {
+  test('and scores out of four, which is what the student actually answered', async () => {
     await startShortRound();
     for (let asked = 0; asked < 4; asked += 1) {
       await answer(0);
