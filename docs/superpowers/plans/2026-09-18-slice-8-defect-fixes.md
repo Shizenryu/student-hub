@@ -21,10 +21,10 @@ page should do.
 |---|---|---|---|---|
 | 7 | The quiz's "N in a row!" line from the last answer of one round is still showing on the first, unanswered question of the next | `tests/browser/quiz.test.tsx` | **Yes** — end a round on a run of three, tap "Train again" | The line is gone at the start of a new round |
 | 5 | The practice week strip's day labels are a day early anywhere west of UTC | `tests/unit/practice-labels.test.ts`, four timezones | Only west of UTC — never at the dojo | Nothing in the UK; a travelling student sees the right weekday |
-| 6 | "N cards needed a second look" counts presses of Again, not cards — one card missed three times says "3 cards" | `tests/unit/flashcards-labels.test.ts` (the sentence) | **Yes** — miss any card twice | The sentence counts cards |
+| 6 | "N cards needed a second look" counts presses of Again, not cards — one card missed three times says "3 cards" | `tests/unit/flashcards-labels.test.ts` pins the *sentence*, which is right for the right number; the island's count is pinned nowhere, so the RED is a new browser test in `tests/browser/flashcards.test.tsx` | **Yes** — miss any card twice | The sentence counts cards |
 | 2 | A terminology round from a tier under ten terms counts "QUESTION 3 / 10" then scores "3 / 3" | `tests/unit/quiz-labels.test.ts`, `tests/unit/quiz-questions.test.ts`, `tests/browser/quiz.test.tsx` | No — the smallest tier has 13 terms | Nothing, until a tier is edited below ten |
 | 1 | Two terms sharing an English gloss render the same option twice, and both count as correct | `tests/unit/quiz-questions.test.ts` | No — no shared glosses in the shipped 59 terms | Nothing, until a gloss is shared |
-| 4 | A kumite range under five leaves too few other kumite for "which kumite is this?", so it offers three options | `tests/unit/quiz-questions.test.ts` | No — the menu offers 1–6 and 1–12 only | Nothing, until a smaller range is offered |
+| 4 | A kumite range of three or fewer leaves too few other kumite for "which kumite is this?", so it offers three options (four in range leaves three others, which is enough) | `tests/unit/quiz-questions.test.ts` | No — the menu offers 1–6 and 1–12 only | Nothing, until a smaller range is offered |
 
 Defect 3 was fixed in #12 and is not part of this slice.
 
@@ -36,8 +36,15 @@ Rich decided on 2026-09-18: **widen to the whole content.** A terminology questi
 extra wrong answers from the other tiers when its own level cannot supply three distinct
 glosses; a kumite question draws from the sequences beyond its range. A question offers
 fewer than four options only when the whole site's content cannot provide them — which
-today it always can. A student on "Kumite 1–6" may therefore see "Kumite 9" as a wrong
-option; it is still a wrong answer.
+today it always can. A student on a small future "Kumite 1–3" range may therefore see
+"Kumite 9" as a wrong option; it is still a wrong answer.
+
+**Own pool first, and only then beyond.** With today's content every level and both ranges
+supply three wrong answers on their own, so a student must never see a Dan-grade gloss on a
+Beginner round or "Kumite 9" on "Kumite 1–6". That is acceptance criterion 8, and it needs
+its own tests: an implementation that pools own-and-beyond together, shuffles and slices
+would pass every existing test and change what students see. Commits 5 and 6 each add a
+case that pins "own first" with a fixture where the own pool is sufficient.
 
 The same rule covers a third case the register does not name but which has the same root:
 "what comes next" draws its wrong answers from the steps of the sequences in range, and a
@@ -62,8 +69,8 @@ own test, because leaving it would be fixing half a mechanism.
 - [ ] Every kumite question — "which kumite", "what comes next" — offers four distinct options
       even for a range of one, drawing from beyond the range when needed; fewer only when the
       whole content has fewer.
-- [ ] `grep -rn "slice-8\|DEFECT" src tests` returns nothing; the spec's register marks each of
-      the six as fixed with its commit; CLAUDE.md no longer says defect 2 is pinned anywhere.
+- [ ] `grep -rn -i "slice-8\|defect" src tests` returns nothing; the spec's register marks each
+      of the six as fixed with its commit; CLAUDE.md describes defects only as history.
 - [ ] Nothing else a student sees changes: the fixes for 1, 2 and 4 are unreachable with
       today's content; 5 changes nothing in the club's timezone; 6 and 7 change exactly the
       sentence and the line named above.
@@ -97,10 +104,13 @@ point at this defect; **REFACTOR** where named.
 - [ ] RED: in `tests/browser/quiz.test.tsx`, the "DEFECT 7" describe becomes "a new round starts
       with no run line": after `answerWholeRound()` and "Train again", `.streak` is empty.
 - [ ] GREEN: `Quiz.tsx`'s `start` clears the run line. One line.
-- [ ] REFACTOR to assess: the run line is separate `useState` today only because the legacy
-      page kept it separate. Deriving it from the session's own run count (`streakRun(run)` at
-      render) would make this defect impossible rather than fixed. Do it if the session
-      already carries the run; otherwise leave the one line and say why.
+- [ ] REFACTOR, in the same commit: the run line is separate `useState` only because the
+      legacy page kept it separate, and the session already carries `run` (`Quiz.tsx` line
+      75). Derive the line at render as `streakRun(session.run)` and delete the state, which
+      makes this defect impossible rather than fixed. What must NOT change: within a round the
+      line stays on screen through "Next" onto the following unanswered question, because
+      `next` keeps the session's run; that is how the legacy page behaved and the existing
+      run-line test asserts it. Only a new round (a fresh session, `run: 0`) clears it.
 - [ ] Remove the DEFECT 7 comment block in `Quiz.tsx`.
 
 ### Commit 2 — Defect 5: the week strip names the right day everywhere
@@ -118,9 +128,11 @@ point at this defect; **REFACTOR** where named.
 
 - [ ] RED, in the browser (`tests/browser/flashcards.test.tsx`), because the sentence itself is
       right when given the right number — the defect is what the island hands it: on the
-      smallest deck, press Again on the first card, Got it on every other card, Again on the
-      first card twice more as it returns, then Got it. The completion line says
-      "1 card needed a second look".
+      smallest deck (`startSmallestDeck()`, nine cards; every grade needs `flipCard()` first,
+      and this file has no `settle` helper), press Again on the first card, Got it on the
+      other eight, Again on the first card twice more as it returns, then Got it. Today the
+      completion line says "3 cards needed a second look. They will come up first next time.";
+      the test expects "1 card needed a second look. They will come up first next time.".
 - [ ] GREEN: `Flashcards.tsx`'s session carries the set of cards missed (`ReadonlySet<string>`
       of fronts, built immutably) instead of a press count; the completion line receives its
       size.
@@ -131,27 +143,35 @@ point at this defect; **REFACTOR** where named.
 
 ### Commit 4 — Defect 2: the round is as long as it really is
 
-- [ ] RED: `tests/unit/quiz-labels.test.ts` expects `displayedTotal('terms', 4)` to be 4 and
-      the counter to read "QUESTION 3 / 3"; `tests/browser/quiz.test.tsx`'s DEFECT 2 describe
-      expects "QUESTION 1 / 4", a bar at 25% after one answer, and "4 / 4" at the end;
-      `tests/unit/quiz-questions.test.ts`'s defect 2 describe keeps `toHaveLength(3)` and drops
-      the "shorter than the displayed total" assertion — a short tier simply yields a short
-      round.
-- [ ] GREEN: the displayed total is the question count in both modes.
-- [ ] REFACTOR: with both modes agreeing, `displayedTotal` says nothing; delete it, pass
-      `session.round.questions.length` to the counter and the bar, and drop `quiz-labels.ts`'s
-      import of `ROUND_LENGTH`. Remove the DEFECT 2 comments in `quiz-labels.ts` and `Quiz.tsx`.
+- [ ] RED is the browser test alone: `tests/browser/quiz.test.tsx`'s DEFECT 2 describe expects
+      "QUESTION 1 / 4" on the first question and "QUESTION 2 / 4" with a bar at 25% after one
+      answer *and Next* (the bar tracks `index`, which only advances on Next). Its second test,
+      "4 / 4" at the end, already passes today and stays as the other half of the statement.
+- [ ] GREEN: the counter and the bar use `session.round.questions.length`; `displayedTotal` is
+      deleted rather than fixed, since with both modes agreeing it would say nothing. Drop
+      `quiz-labels.ts`'s import of `ROUND_LENGTH`.
+- [ ] Unit suites in the same commit: `tests/unit/quiz-labels.test.ts`'s DEFECT 2 describe goes
+      (it tested the deleted function); `questionCounter(2, 3)` → "QUESTION 3 / 3" joins the
+      plain counter cases. `tests/unit/quiz-questions.test.ts`'s defect 2 describe keeps
+      `toHaveLength(3)` and drops the "shorter than the displayed total" assertion — a short
+      tier simply yields a short round.
+- [ ] Remove the DEFECT 2 comments in `quiz-labels.ts` and `Quiz.tsx`.
 
 ### Commit 5 — Defect 1: one right answer, four distinct options
 
-- [ ] RED: `tests/unit/quiz-questions.test.ts`'s defect 1 describe expects `'kick'` exactly once
-      among four distinct options; add a second case where a tier of two terms sharing one
-      gloss gets its other wrong answers from another tier (four distinct options, all real
-      glosses), and a third where the whole content has only two distinct glosses and the
-      question offers two options — the boundary the decision above sets.
-- [ ] GREEN: `termQuestion` chooses wrong answers by the text it will *display* (gloss when
-      forward, Japanese when backwards), deduplicated, from the level's own pool first and
-      then from every tier, until it has three. `termsRound` passes both pools.
+- [ ] RED: `tests/unit/quiz-questions.test.ts`'s defect 1 describe becomes four cases. (a) The
+      existing keri/geri fixture: *every* question in the round offers four distinct options
+      with the correct text exactly once — every question, not just the 'kick' one, because on
+      the 'punch' question the duplicate gloss sits among the *wrong* candidates, and that is
+      the case a dedupe-only-the-correct-text implementation misses. (b) Own pool first: two
+      tiers, tier 1 with five distinct glosses, level 1 — every option on every question is a
+      tier-1 gloss. (c) Widening: tier 1 is two terms sharing one gloss, tier 2 has three more
+      distinct glosses, level 1 — four distinct options, the extras from tier 2. (d) The
+      boundary: the whole content has two distinct glosses — the question offers two options.
+- [ ] GREEN, one mechanism: the candidate wrong answers are the *displayed* texts of the pool
+      (gloss when forward, Japanese when backwards), distinct, minus the correct text; taken
+      first from the level's own pool, then from every tier, until there are three. There is
+      no separate "exclude by Japanese" step to keep. `termsRound` passes both pools.
 - [ ] `Quiz.tsx`'s `optionClass` still marks by text; with options now distinct that marks
       exactly one button. Rewrite its comment to say so rather than that it is a defect.
 - [ ] Rewrite the header comment of `quiz-questions.ts`, which says it exists partly to pin
@@ -159,25 +179,37 @@ point at this defect; **REFACTOR** where named.
 
 ### Commit 6 — Defect 4: four options for any range
 
-- [ ] RED: the defect 4 describe expects "which kumite" in a range of three to offer four
-      options with the extra drawn from beyond the range (the fixture gains a fourth sequence
-      at `n: 4`); a second case with three sequences in the whole content offers three; a third
-      case, new: a range of one sequence with three steps still offers four options for "what
-      comes next", the extra steps drawn from beyond the range.
+- [ ] RED: the defect 4 describe becomes four cases. (a) "Which kumite" in a range of three
+      offers four options with the extra drawn from beyond the range (the fixture gains a
+      fourth sequence at `n: 4`). (b) Three sequences in the whole content offer three. (c) Own
+      range first: the existing six-sequence fixture plus a seventh, `upTo: 6` — no option on
+      any question names "Kumite 7", and no option is a step that only the seventh sequence
+      has. (d) "What comes next" in a range of one three-step sequence offers four options,
+      the extras drawn from beyond the range: filter the round by hint `'What comes next?'`
+      (with `noShuffle` the first candidate is step 0, whose hint is "The attack that starts
+      it"), and give the beyond-range sequences at least three steps that are neither the
+      correct step nor already in range, or dedupe leaves fewer than four.
 - [ ] GREEN: `whichKumiteQuestion` and `nextStepQuestion` take the in-range pool and the full
       pool, draw from in-range first and then beyond, deduplicated, until three wrong answers.
       `kumiteRound` builds both vocabularies.
-- [ ] Remove the DEFECT 4 comment.
+- [ ] Remove the DEFECT 4 comment, including its "under five" wording.
 
 ### Commit 7 — Docs
 
 - [ ] The spec's register: each of the six gains "Fixed in slice 8, commit `<sha>`" on its own
       line, leaving the description as the record of what was wrong.
-- [ ] CLAUDE.md: `src/components/` says the label files hold strings "which is where DEFECT 2
-      is pinned" — now simply that they are testable without a browser. Any other "defect"
-      mention that describes a current state rather than history goes with it.
-- [ ] `grep -rn "slice-8\|DEFECT" src tests` is empty. `grep -rn -i "defect" src` shows only
-      history, if anything.
+- [ ] CLAUDE.md: three lines describe the pins as current state — "which is where DEFECT 2 is
+      pinned" (components), "the only place three of the page's four known defects can be
+      pinned" (the `/quiz` paragraph) and "carries the pins for DEFECTS 1 and 4" (domain). Each
+      becomes a statement of what the module is for now.
+- [ ] Comments no earlier commit names but which describe the defects as current, all of which
+      go or become history in whichever commit touches the file, and are swept here if missed:
+      `src/pages/quiz.astro` line 9 ("where three of the page's four known defects are
+      pinned"); `src/domain/quiz-questions.ts` lines 31–34 (the `Question` type's note on
+      matching by text); `src/components/Quiz.tsx` lines 31–33, 46–47 and 270–271 (header,
+      `Answered` type, option `key` comment); `src/components/practice-labels.ts` lines 3–5;
+      `tests/unit/quiz-questions.test.ts` lines 8–11 and 177–181.
+- [ ] `grep -rn -i "slice-8\|defect" src tests` is empty.
 
 ### PR gate — mutation battery and evidence
 
@@ -187,19 +219,20 @@ must be killed by a named test:
 
 | Fix | Mutant | Must be killed by |
 |---|---|---|
-| 7 | the clearing line removed | the new browser test |
-| 7 | cleared on answer instead of on start | the existing run-line test (still shows after three) |
+| 7 | the line derived from anything but the session's run (a constant, or stale state) | the new "no run line on a new round" test, and the existing "shows after three in a row" test between them |
 | 5 | `timeZone` option removed | New York and Los Angeles cases |
 | 6 | size replaced with press count (`+ 1` per Again) | the new browser test |
 | 6 | set never grows | "1 card" test and the existing "counts the cards" test |
-| 2 | terms branch returns ten again | quiz-labels unit and the browser counter test |
-| 2 | bar denominator left at ten | the browser bar-width assertion |
-| 1 | exclude-by-Japanese restored | the 'kick once' case |
-| 1 | dedupe removed | the 'kick once' case |
-| 1 | widening removed | the cross-tier case |
-| 1 | boundary off by one (`< 3` / `<= 3`) | the two-gloss case |
-| 4 | widening removed for "which" / for "next" | each new case |
-| 4 | `slice(0, 2)` / `slice(0, 4)` | four-options assertions |
+| 2 | counter denominator hard-coded to ten | the browser counter test ("QUESTION 1 / 4") |
+| 2 | bar denominator hard-coded to ten | the browser bar-width assertion (25%) |
+| 1 | "minus the correct text" removed | case (a), the 'kick' question |
+| 1 | "distinct" removed | case (a), the 'punch' question — its wrong candidates hold 'kick' twice |
+| 1 | own-pool-first removed (own and beyond pooled together) | case (b) |
+| 1 | widening removed | case (c) |
+| 1 | `slice(0, 2)` / `slice(0, 4)` | the existing 'offers four options, one of them right' (five distinct glosses); the new fixtures have too few candidates to tell |
+| 4 | widening removed for "which" / for "next" | cases (a) and (d) |
+| 4 | own-range-first removed | case (c) |
+| 4 | `slice(0, 2)` / `slice(0, 4)` | the existing six-sequence "which kumite" and "what comes next" tests; the new fixtures have exactly three others |
 
 Plus the ordinary gate: `npm run typecheck`, `npm run build`, `npm test`,
 `npm run test:browser`, `npm run test:deploy`, `npm audit --audit-level=high`;
