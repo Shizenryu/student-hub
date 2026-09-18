@@ -6,9 +6,8 @@ import { shuffled } from './shuffle';
 //
 // Pure, with the random source injected as store.ts and flashcards-queue.ts take
 // theirs. That is what lets any of this be checked — a student sees four options
-// and cannot tell where three of them came from — and it is the only place the
-// three remaining defects can be pinned, since none is reachable through the UI
-// with the content the site ships.
+// and cannot tell where three of them came from — and it is where the rules
+// about small pools live, since no shipped content reaches them through the UI.
 //
 // One deliberate difference from the page being ported: the legacy quiz chose a
 // question's direction and wrong answers at the moment it was DISPLAYED, where
@@ -29,9 +28,8 @@ const WRONG_PER_QUESTION = OPTIONS_PER_QUESTION - 1;
 const STEP_JOIN = '  »  ';
 
 // `options` always contains `correct`, which the type cannot say. `correct` is the
-// answer's TEXT rather than its index, deliberately: the page marks every option
-// whose text matches, which is exactly why defect 1 shows two right answers instead
-// of one. An index would mark a single button and quietly change that.
+// answer's TEXT rather than its index: the options are distinct, so the text names
+// exactly one button, and the page can mark it without knowing where it landed.
 export type Question = {
   readonly prompt: string;
   readonly hint: string;
@@ -54,23 +52,51 @@ export type Round = {
 const tiersFor = (level: number): readonly string[] =>
   level === 0 ? ['1', '2', '3', '4'] : Array.from({ length: level }, (_, index) => String(index + 1));
 
-function termQuestion(pair: TermPair, pool: readonly TermPair[], random: () => number): Question {
+const distinct = (texts: readonly string[]): readonly string[] => [...new Set(texts)];
+
+// The wrong answers every question shape draws from the same rule: the texts a
+// student will SEE, each at most once and never the right answer's, taken first
+// from what is being studied (`own`) and only then from the whole content
+// (`everything`), until there are three. A student on one level or range never
+// meets a term or a kumite from beyond it while their own can supply the wrong
+// answers, and a question offers fewer than four options only when the whole
+// site's content has fewer than four distinct texts to show.
+function wrongAnswers(options: {
+  readonly correct: string;
+  readonly own: readonly string[];
+  readonly everything: readonly string[];
+  readonly random: () => number;
+}): readonly string[] {
+  const { correct, own, everything, random } = options;
+  const fromOwn = shuffled(
+    distinct(own).filter((text) => text !== correct),
+    random,
+  ).slice(0, WRONG_PER_QUESTION);
+  const taken = new Set([correct, ...fromOwn]);
+  const fromBeyond = shuffled(
+    distinct(everything).filter((text) => !taken.has(text)),
+    random,
+  );
+  return [...fromOwn, ...fromBeyond].slice(0, WRONG_PER_QUESTION);
+}
+
+function termQuestion(
+  pair: TermPair,
+  pool: readonly TermPair[],
+  everything: readonly TermPair[],
+  random: () => number,
+): Question {
   const japanese = pair[0] ?? '';
   const english = pair[1] ?? '';
   const backwards = random() < BACKWARDS_CHANCE;
   const correct = backwards ? japanese : english;
-
-  // DEFER(slice-8): DEFECT 1. Wrong answers are excluded by JAPANESE term, so in the
-  // forward direction — where the options are English — a different term sharing
-  // this one's gloss survives the filter and renders as a second copy of the right
-  // answer. Both then count as correct. Ported unchanged; pinned in
-  // tests/unit/quiz-questions.test.ts.
-  const wrong = shuffled(
-    pool.filter((other) => other[0] !== japanese),
+  const displayed = (other: TermPair): string => (backwards ? (other[0] ?? '') : (other[1] ?? ''));
+  const wrong = wrongAnswers({
+    correct,
+    own: pool.map(displayed),
+    everything: everything.map(displayed),
     random,
-  )
-    .slice(0, WRONG_PER_QUESTION)
-    .map((other) => (backwards ? (other[0] ?? '') : (other[1] ?? '')));
+  });
 
   return {
     prompt: backwards ? english : japanese,
@@ -87,13 +113,14 @@ export function termsRound(options: {
 }): Round {
   const { terms, level, random } = options;
   const pool = tiersFor(level).flatMap((tier) => terms[tier] ?? []);
+  const everything = Object.values(terms).flat();
 
   return {
     mode: 'terms',
     bestKey: `level${level}`,
     questions: shuffled(pool, random)
       .slice(0, ROUND_LENGTH)
-      .map((pair) => termQuestion(pair, pool, random)),
+      .map((pair) => termQuestion(pair, pool, everything, random)),
   };
 }
 

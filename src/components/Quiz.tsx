@@ -28,8 +28,8 @@ import { useBrowserStore } from './use-browser-store';
 // toggled a `hidden` class on three divs.
 //
 // Which questions a round contains is not decided here: src/domain/quiz-questions.ts
-// owns that, takes its random source injected, and is where the three latent defects
-// are pinned. This file is the screens and the scoring.
+// owns that and takes its random source injected. This file is the screens and the
+// scoring.
 
 type Props = {
   readonly terms: Readonly<Record<string, readonly TermPair[]>>;
@@ -42,8 +42,8 @@ type Props = {
 // and `krange` in two module-level variables and read whichever matched `mode`.
 type Choice = { readonly mode: 'terms'; readonly level: number } | { readonly mode: 'kumite'; readonly upTo: number };
 
-// The chosen option's POSITION, not its text. A question can offer the same text
-// twice — that is defect 1 — and only the position says which button was pressed.
+// The chosen option's POSITION, not its text: it names the button that was pressed
+// without a lookup, and stays right whatever the options say.
 type Answered = { readonly option: number; readonly right: boolean; readonly feedback: string };
 
 // Settled once, when the round ends, rather than derived while rendering the result:
@@ -252,8 +252,8 @@ export default function Quiz({ terms, kumite, maxims }: Props) {
         <div className="opts">
           {(question?.options ?? []).map((option, position) => (
             <button
-              // Position, not text: a question can offer the same text twice, which
-              // is defect 1, and React needs to tell those two buttons apart.
+              // Position: stable across a re-render, and the same key the
+              // answer is recorded by.
               key={position}
               type="button"
               className={optionClass(option, position, question?.correct ?? '', session.answered)}
@@ -287,10 +287,8 @@ export default function Quiz({ terms, kumite, maxims }: Props) {
   );
 }
 
-// DEFER(slice-8): DEFECT 1. EVERY option whose text matches the answer is marked
-// correct, which is how a question that offers the same gloss twice ends up showing
-// two right answers. Matching on position instead would mark one button and quietly
-// repair the defect during the port. Pinned in tests/unit/quiz-questions.test.ts.
+// The right answer is marked by its text. A question's options are distinct (see
+// wrongAnswers in src/domain/quiz-questions.ts), so exactly one button matches.
 function optionClass(option: string, position: number, correct: string, answered: Answered | null): string {
   if (answered === null) return 'opt';
   if (option === correct) return 'opt correct';

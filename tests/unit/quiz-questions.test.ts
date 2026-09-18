@@ -237,10 +237,16 @@ describe('what a round records about itself', () => {
 // fixes will change nothing a student currently sees. They are guards against a
 // future content edit, on content that is edited by hand.
 
-describe('DEFER(slice-8) defect 1: a shared English gloss makes a question unanswerable', () => {
-  it('offers the same answer twice when two terms mean the same thing', () => {
-    // Two terms, one gloss. There are no shared glosses in the shipped terms; one
-    // added tomorrow would produce this.
+describe('a terminology question offers four distinct options, one of them right', () => {
+  // Wrong answers are chosen by the text a student will SEE — the gloss when asked
+  // forwards, the Japanese when asked backwards — never the same text twice, and
+  // never the right answer's text. Two terms sharing a gloss is what makes that
+  // matter; there are none in the shipped terms, and one added tomorrow would
+  // produce these fixtures.
+
+  it('never offers the same text twice, even when two terms share a gloss', () => {
+    // 'kick' is shared. On the 'kick' question it is the right answer; on every
+    // other question it sits among the wrong candidates twice. Both must dedupe.
     const terms = termsOf('1', [
       ['keri', 'kick'],
       ['geri', 'kick'],
@@ -250,10 +256,77 @@ describe('DEFER(slice-8) defect 1: a shared English gloss makes a question unans
     ]);
 
     const round = termsRound({ terms, level: 1, random: forward });
-    const kickQuestion = round.questions.find((question) => question.correct === 'kick');
-    const kicks = (kickQuestion?.options ?? []).filter((option) => option === 'kick');
 
-    expect(kicks.length, 'DEFECT 1: the correct answer should appear exactly once').toBeGreaterThan(1);
+    expect(round.questions).toHaveLength(5);
+    for (const question of round.questions) {
+      expect(question.options, `"${question.prompt}"`).toHaveLength(4);
+      expect(new Set(question.options).size, `"${question.prompt}" repeats an option`).toBe(4);
+      expect(question.options.filter((option) => option === question.correct)).toHaveLength(1);
+    }
+  });
+
+  it('draws every wrong answer from the level being studied when it has enough', () => {
+    // Own pool first: a Beginner must never see a Dan-grade gloss while tier 1 can
+    // supply three wrong answers of its own.
+    const terms = {
+      '1': [
+        ['ichi', 'one'],
+        ['ni', 'two'],
+        ['san', 'three'],
+        ['shi', 'four'],
+        ['go', 'five'],
+      ],
+      '4': [
+        ['roku', 'six'],
+        ['shichi', 'seven'],
+        ['hachi', 'eight'],
+      ],
+    } satisfies Readonly<Record<string, readonly TermPair[]>>;
+
+    const round = termsRound({ terms, level: 1, random: forward });
+
+    expect(round.questions).toHaveLength(5);
+    for (const question of round.questions) {
+      for (const option of question.options) {
+        expect(['one', 'two', 'three', 'four', 'five'], `"${option}" is not a tier-1 gloss`).toContain(option);
+      }
+    }
+  });
+
+  it('draws the rest from other tiers when the level cannot supply three', () => {
+    const terms = {
+      '1': [
+        ['keri', 'kick'],
+        ['geri', 'kick'],
+      ],
+      '2': [
+        ['zuki', 'punch'],
+        ['uke', 'block'],
+        ['dachi', 'stance'],
+      ],
+    } satisfies Readonly<Record<string, readonly TermPair[]>>;
+
+    const round = termsRound({ terms, level: 1, random: forward });
+
+    expect(round.questions).toHaveLength(2);
+    for (const question of round.questions) {
+      expect(question.correct).toBe('kick');
+      expect([...question.options].sort()).toEqual(['block', 'kick', 'punch', 'stance']);
+    }
+  });
+
+  it('offers what exists when the whole content has fewer than four distinct glosses', () => {
+    const terms = {
+      '1': [
+        ['keri', 'kick'],
+        ['geri', 'kick'],
+      ],
+      '2': [['zuki', 'punch']],
+    } satisfies Readonly<Record<string, readonly TermPair[]>>;
+
+    const [question] = termsRound({ terms, level: 1, random: forward }).questions;
+
+    expect([...(question?.options ?? [])].sort()).toEqual(['kick', 'punch']);
   });
 });
 
