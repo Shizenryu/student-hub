@@ -187,7 +187,7 @@ before committing it rather than shrinking it in CSS, and add
 ## Migration rules
 
 **Deferrals are written `DEFER(slice-N):`.** Work put off to a named later slice — a
-value Slice 9 will normalise, a defect Slice 8 will fix, a file Slice 6 retires —
+value Slice 9 will normalise, a defect Slice 8 fixed, a file Slice 6 retired —
 carries that literal token in its comment. It is the difference between slice 9
 starting with `grep -rn "DEFER(slice-9)"` and reading six stylesheets hoping the
 phrasing was consistent. It was not: "Slice 9" and "slice 9" both appear today.
@@ -197,7 +197,8 @@ on a toggle, a `type="button"`, a role — are in scope for a migration and shou
 added, because the legacy pages have almost none and a later "accessibility slice"
 would have to re-read every page to find them. Anything needing new markup, focus
 management or a live region is NOT: it changes what a student experiences, so it
-defers alongside the defects. `/practice`'s tiles gained `aria-pressed` under this
+was deferred alongside the defects — which slice 8 has since fixed; the markup
+work still waits. `/practice`'s tiles gained `aria-pressed` under this
 rule.
 
 **With one exception, because the rule above got it wrong once.** A markup change is

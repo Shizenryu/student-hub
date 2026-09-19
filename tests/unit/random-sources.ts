@@ -23,6 +23,11 @@ export const alwaysFirst = () => 0;
 // pass an implementation that ignores the rule, because the right items happen
 // to sit first. (A linear congruential step; the constants are Numerical
 // Recipes'.)
+//
+// It carries state, which the rest of this codebase does not: a random source is
+// a sequence, and the contract of `() => number` leaves nowhere else to keep the
+// position in it. One source per test, made where it is used; two calls sharing
+// a source share the sequence, so the second sees where the first left off.
 export const mixing = (seed: number): (() => number) => {
   let state = seed;
   return () => {

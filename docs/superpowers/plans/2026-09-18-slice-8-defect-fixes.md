@@ -51,6 +51,17 @@ The same rule covers a third case the register does not name but which has the s
 range of one short sequence cannot supply three. It is fixed in defect 4's commit, with its
 own test, because leaving it would be fixing half a mechanism.
 
+**Corrected at review (2026-09-20).** The PR review found the gap in defect 1's fix:
+excluding only the right answer's *text* left a second term that also means the prompt
+(asked backwards), or a second gloss of the term the prompt names (asked forwards), on offer
+as a "wrong" answer. Candidates are now chosen by the prompt's side of the pair. The review
+also moved the day-number decoding into `store.ts` beside its encoding (`localDate`), added
+two integrity guards (an empty tier, which would have dealt a round of nothing and a `NaN%`
+bar; a card front used twice, which both the store and the session treat as one card), gave
+the question builders options objects, pinned two things the fixes had left unobserved — the
+run line surviving "Next" within a round, and a kumite round's counter denominator — and took
+the reuse and simplification cleanups. Three further mutants killed.
+
 **Spec:** `docs/superpowers/specs/2026-08-28-productionise-student-hub-design.md`
 
 ## Acceptance Criteria
