@@ -91,7 +91,13 @@ describe('content cross-references hold', () => {
 
   it('rejects a belt pointing at a missing terminology tier', () => {
     const content = validContent({ grades: [grade({ tier: 99 })] });
-    expect(() => assertContentIntegrity(content)).toThrow(/belt "9th Kyu" points at missing tier 99/);
+    expect(() => assertContentIntegrity(content)).toThrow(/belt "9th Kyu" points at missing or empty tier 99/);
+  });
+
+  it('rejects a belt pointing at an empty terminology tier', () => {
+    // A level whose tier has no terms would deal a round of nothing.
+    const content = validContent({ terms: { '1': [] } });
+    expect(() => assertContentIntegrity(content)).toThrow(/belt "9th Kyu" points at missing or empty tier 1/);
   });
 
   it('rejects a syllabus row with an unknown track', () => {
@@ -161,6 +167,15 @@ describe('content cross-references hold', () => {
   it('rejects a duplicate practice activity id', () => {
     const content = validContent({ practice: [practiceActivity(), practiceActivity({ name: 'Different name' })] });
     expect(() => assertContentIntegrity(content)).toThrow(/practice activity id "kihon" is used more than once/);
+  });
+
+  it('rejects a card front used by more than one card, across decks', () => {
+    // The Everything deck merges decks, and a front is a card's identity to the
+    // store and to the session alike.
+    const content = validContent({
+      decks: [deck(), deck({ id: 'd2', name: 'Deck Two', cards: [['front', 'another back']] })],
+    });
+    expect(() => assertContentIntegrity(content)).toThrow(/card front "front" is used by more than one card/);
   });
 
   it('rejects a duplicate kumite number', () => {

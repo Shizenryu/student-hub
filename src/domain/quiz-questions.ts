@@ -6,9 +6,8 @@ import { shuffled } from './shuffle';
 //
 // Pure, with the random source injected as store.ts and flashcards-queue.ts take
 // theirs. That is what lets any of this be checked — a student sees four options
-// and cannot tell where three of them came from — and it is the only place the
-// three remaining defects can be pinned, since none is reachable through the UI
-// with the content the site ships.
+// and cannot tell where three of them came from — and it is where the rules
+// about small pools live, since no shipped content reaches them through the UI.
 //
 // One deliberate difference from the page being ported: the legacy quiz chose a
 // question's direction and wrong answers at the moment it was DISPLAYED, where
@@ -29,9 +28,8 @@ const WRONG_PER_QUESTION = OPTIONS_PER_QUESTION - 1;
 const STEP_JOIN = '  »  ';
 
 // `options` always contains `correct`, which the type cannot say. `correct` is the
-// answer's TEXT rather than its index, deliberately: the page marks every option
-// whose text matches, which is exactly why defect 1 shows two right answers instead
-// of one. An index would mark a single button and quietly change that.
+// answer's TEXT rather than its index: the options are distinct, so the text names
+// exactly one button, and the page can mark it without knowing where it landed.
 export type Question = {
   readonly prompt: string;
   readonly hint: string;
@@ -49,53 +47,109 @@ export type Round = {
   readonly questions: readonly Question[];
 };
 
+type Random = () => number;
+
 // Level 0 is the menu's "Everything"; any other level is itself and everything
 // below it, which is what "each level includes everything below it" promises.
 const tiersFor = (level: number): readonly string[] =>
   level === 0 ? ['1', '2', '3', '4'] : Array.from({ length: level }, (_, index) => String(index + 1));
 
-function termQuestion(pair: TermPair, pool: readonly TermPair[], random: () => number): Question {
-  const japanese = pair[0] ?? '';
-  const english = pair[1] ?? '';
-  const backwards = random() < BACKWARDS_CHANCE;
-  const correct = backwards ? japanese : english;
+const distinct = (texts: readonly string[]): readonly string[] => [...new Set(texts)];
 
-  // DEFER(slice-8): DEFECT 1. Wrong answers are excluded by JAPANESE term, so in the
-  // forward direction — where the options are English — a different term sharing
-  // this one's gloss survives the filter and renders as a second copy of the right
-  // answer. Both then count as correct. Ported unchanged; pinned in
-  // tests/unit/quiz-questions.test.ts.
-  const wrong = shuffled(
-    pool.filter((other) => other[0] !== japanese),
+// The wrong answers every question shape draws by the same rule: candidate texts,
+// each at most once and never the right answer's, taken first from what is being
+// studied (`own`) and only then from the whole content (`everything`), until there
+// are three. A student on one level or range never meets a term or a kumite from
+// beyond it while their own can supply the wrong answers — which, with the content
+// the site ships, is always — and a question offers fewer than four options only
+// when the whole content has fewer than four distinct texts to show.
+//
+// Which texts are candidates at all is the caller's business: see termQuestion,
+// where a text that would be a RIGHT answer to the prompt is never a candidate.
+function wrongAnswers(options: {
+  readonly correct: string;
+  readonly own: readonly string[];
+  readonly everything: readonly string[];
+  readonly random: Random;
+}): readonly string[] {
+  const { correct, own, everything, random } = options;
+  const fromOwn = shuffled(
+    distinct(own).filter((text) => text !== correct),
     random,
-  )
-    .slice(0, WRONG_PER_QUESTION)
-    .map((other) => (backwards ? (other[0] ?? '') : (other[1] ?? '')));
+  ).slice(0, WRONG_PER_QUESTION);
+  if (fromOwn.length === WRONG_PER_QUESTION) return fromOwn;
+
+  const taken = new Set([correct, ...fromOwn]);
+  const fromBeyond = shuffled(
+    distinct(everything).filter((text) => !taken.has(text)),
+    random,
+  );
+  return [...fromOwn, ...fromBeyond].slice(0, WRONG_PER_QUESTION);
+}
+
+// --- terminology --------------------------------------------------------------
+
+const japaneseOf = (pair: TermPair): string => pair[0] ?? '';
+const englishOf = (pair: TermPair): string => pair[1] ?? '';
+
+function termQuestion(options: {
+  readonly pair: TermPair;
+  readonly pool: readonly TermPair[];
+  readonly everything: readonly TermPair[];
+  readonly random: Random;
+}): Question {
+  const { pair, pool, everything, random } = options;
+  const backwards = random() < BACKWARDS_CHANCE;
+  const shown = backwards ? englishOf : japaneseOf;
+  const displayed = backwards ? japaneseOf : englishOf;
+  const prompt = shown(pair);
+  const correct = displayed(pair);
+
+  // A wrong answer is the displayed text of a term that is not itself a right
+  // answer to this prompt. Excluding by the prompt's side of the pair, not by the
+  // answer's, is what makes that true: asked backwards about 'kick', a second term
+  // that also means kick is excluded; asked forwards about a term with two
+  // glosses, its other gloss is excluded. Either would otherwise be offered as a
+  // wrong answer and mark a student wrong for being right.
+  const candidates = (pairs: readonly TermPair[]): readonly string[] =>
+    pairs.filter((other) => shown(other) !== prompt).map(displayed);
 
   return {
-    prompt: backwards ? english : japanese,
+    prompt,
     hint: backwards ? 'Which term means this?' : 'What does this mean?',
     correct,
-    options: shuffled([correct, ...wrong], random),
+    options: shuffled(
+      [correct, ...wrongAnswers({ correct, own: candidates(pool), everything: candidates(everything), random })],
+      random,
+    ),
   };
 }
 
 export function termsRound(options: {
   readonly terms: Readonly<Record<string, readonly TermPair[]>>;
   readonly level: number;
-  readonly random: () => number;
+  readonly random: Random;
 }): Round {
   const { terms, level, random } = options;
-  const pool = tiersFor(level).flatMap((tier) => terms[tier] ?? []);
+  const pairsIn = (tiers: readonly string[]): readonly TermPair[] => tiers.flatMap((tier) => terms[tier] ?? []);
+  const pool = pairsIn(tiersFor(level));
+  // The four syllabus tiers, the same "everything" the menu's Everything level
+  // asks about — not whatever keys the content happens to carry.
+  const everything = pairsIn(tiersFor(0));
 
   return {
     mode: 'terms',
     bestKey: `level${level}`,
     questions: shuffled(pool, random)
       .slice(0, ROUND_LENGTH)
-      .map((pair) => termQuestion(pair, pool, random)),
+      .map((pair) => termQuestion({ pair, pool, everything, random })),
   };
 }
+
+// --- kumite -------------------------------------------------------------------
+
+const nameOf = (kumite: Kumite): string => `Kumite ${kumite.n}`;
+const stepsOf = (sequences: readonly Kumite[]): readonly string[] => sequences.flatMap((each) => each.steps);
 
 // Everything the kumite in range could be asked, before ten are drawn from them:
 // per sequence, one "what comes next" for each step, one "which kumite is this",
@@ -106,25 +160,28 @@ type Candidate =
   | { readonly kind: 'which'; readonly kumite: Kumite }
   | { readonly kind: 'side'; readonly kumite: Kumite };
 
-const sideQuestion = (kumite: Kumite, random: () => number): Question => ({
-  prompt: `Kumite ${kumite.n}:  ${kumite.steps.join(STEP_JOIN)}`,
+// Every kumite question shape takes the same pools: the sequences in the range
+// being studied, and every sequence there is. Which texts each shape draws from
+// them — names, or steps — is its own business.
+type KumitePools = {
+  readonly kumite: Kumite;
+  readonly inRange: readonly Kumite[];
+  readonly everything: readonly Kumite[];
+  readonly random: Random;
+};
+
+const sideQuestion = ({ kumite, random }: KumitePools): Question => ({
+  prompt: `${nameOf(kumite)}:  ${kumite.steps.join(STEP_JOIN)}`,
   hint: 'Same side (SS) or opposite side (OS)?',
   correct: kumite.side,
   options: shuffled(['OS', 'SS'], random),
 });
 
-// DEFER(slice-8): DEFECT 4. The wrong answers are the OTHER kumite in range, so a
-// range below five cannot supply three of them and the question offers fewer than
-// four options. The menu only ever asks for 1-6 or 1-12, so this is unreachable
-// today. Ported unchanged; pinned in tests/unit/quiz-questions.test.ts.
-function whichKumiteQuestion(kumite: Kumite, inRange: readonly Kumite[], random: () => number): Question {
-  const correct = `Kumite ${kumite.n}`;
-  const others = shuffled(
-    inRange.filter((other) => other.n !== kumite.n),
-    random,
-  )
-    .slice(0, WRONG_PER_QUESTION)
-    .map((other) => `Kumite ${other.n}`);
+// The wrong answers are the other sequences in range, then those beyond it. A
+// range of three or fewer cannot supply three others alone.
+function whichKumiteQuestion({ kumite, inRange, everything, random }: KumitePools): Question {
+  const correct = nameOf(kumite);
+  const others = wrongAnswers({ correct, own: inRange.map(nameOf), everything: everything.map(nameOf), random });
 
   return {
     prompt: kumite.steps.join(STEP_JOIN),
@@ -134,25 +191,18 @@ function whichKumiteQuestion(kumite: Kumite, inRange: readonly Kumite[], random:
   };
 }
 
-function nextStepQuestion(
-  kumite: Kumite,
-  step: number,
-  vocabulary: readonly string[],
-  random: () => number,
-): Question {
+// The wrong answers are every step in range, not just this sequence's — these are
+// two and three steps long, so one sequence could not supply three — and a range
+// of one falls through to every step there is.
+function nextStepQuestion({ kumite, inRange, everything, random }: KumitePools, step: number): Question {
   const correct = kumite.steps[step] ?? '';
-  // From every step in range, not just this sequence's: these are two and three
-  // steps long, so one sequence could not supply three wrong answers.
-  const wrong = shuffled(
-    vocabulary.filter((other) => other !== correct),
-    random,
-  ).slice(0, WRONG_PER_QUESTION);
+  const wrong = wrongAnswers({ correct, own: stepsOf(inRange), everything: stepsOf(everything), random });
   const opening = step === 0;
 
   return {
     prompt: opening
-      ? `Kumite ${kumite.n} (${kumite.side}) opens with…`
-      : `Kumite ${kumite.n}:  ${kumite.steps.slice(0, step).join(STEP_JOIN)}${STEP_JOIN}?`,
+      ? `${nameOf(kumite)} (${kumite.side}) opens with…`
+      : `${nameOf(kumite)}:  ${kumite.steps.slice(0, step).join(STEP_JOIN)}${STEP_JOIN}?`,
     hint: opening ? 'The attack that starts it' : 'What comes next?',
     correct,
     options: shuffled([correct, ...wrong], random),
@@ -162,14 +212,10 @@ function nextStepQuestion(
 export function kumiteRound(options: {
   readonly kumite: readonly Kumite[];
   readonly upTo: number;
-  readonly random: () => number;
+  readonly random: Random;
 }): Round {
   const { kumite, upTo, random } = options;
   const inRange = kumite.filter((each) => each.n <= upTo);
-
-  // Every step in range, deduplicated: the wrong answers for "what comes next" come
-  // from the whole vocabulary a student has met.
-  const vocabulary = [...new Set(inRange.flatMap((each) => each.steps))];
 
   const candidates = inRange.flatMap((each): readonly Candidate[] => [
     ...each.steps.map((_, step): Candidate => ({ kind: 'next', kumite: each, step })),
@@ -178,13 +224,14 @@ export function kumiteRound(options: {
   ]);
 
   const ask = (candidate: Candidate): Question => {
+    const pools: KumitePools = { kumite: candidate.kumite, inRange, everything: kumite, random };
     switch (candidate.kind) {
       case 'side':
-        return sideQuestion(candidate.kumite, random);
+        return sideQuestion(pools);
       case 'which':
-        return whichKumiteQuestion(candidate.kumite, inRange, random);
+        return whichKumiteQuestion(pools);
       case 'next':
-        return nextStepQuestion(candidate.kumite, candidate.step, vocabulary, random);
+        return nextStepQuestion(pools, candidate.step);
     }
   };
 

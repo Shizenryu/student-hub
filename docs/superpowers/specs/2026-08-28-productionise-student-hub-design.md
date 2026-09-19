@@ -108,10 +108,14 @@ who train most.
    buttons show English glosses, so two Japanese terms sharing an English meaning render two
    identical options. `answer()` matches by `textContent`, so both are marked correct.
    An unanswerable question that scores itself as right.
+   *Fixed in slice 8, commit `4d930ee`: wrong answers are chosen by the text a student will
+   see, distinct, own level first and other tiers only when it cannot supply three.*
 
 2. **Round length misreported.** `renderQ` displays `QUESTION n / 10` and drives the progress
    bar from the constant `N_Q`, while `finish()` scores against `roundLen()`. Any tier
    combination under ten terms shows "/ 10" and then scores "/ 7".
+   *Fixed in slice 8, commit `8c886ef`: the counter, the bar and the score all use the round's
+   real length; `displayedTotal` was deleted rather than repaired.*
 
 3. **Streaks roll over at UTC midnight.** `day()` is `Math.floor(Date.now() / 86400000)`.
    Training at 00:30 during British Summer Time is 23:30 UTC and logs to the previous day,
@@ -120,6 +124,10 @@ who train most.
 
 4. **Small kumite ranges lose an option.** `startKumite(3)` leaves only two other kumite for
    "which kumite is this?" distractors, rendering three buttons instead of four.
+   *Fixed in slice 8, commit `4d6012e`: wrong answers come from the range first and the
+   sequences beyond it when the range cannot supply three — for "what comes next" too, which
+   had the same root and was not on this list. The threshold is a range of three or fewer,
+   not "under five".*
 
 Three more were found during the migration itself, after this list was written. They are
 recorded here because this list is what slice 8 reads; a comment in the code and a task in a
@@ -131,12 +139,16 @@ merged plan are not a register, and both were nearly lost.
    same date, which is why the club has never seen it. Pinned at four timezones in
    `tests/unit/practice-labels.test.ts`; the code is `weekdayLabel` in
    `src/components/practice-labels.ts`.
+   *Fixed in slice 8, commit `97f7bc7`: the instant is read back in UTC, the lens it was
+   written with.*
 
 6. **The repeat count counts presses, not cards.** Finishing a flashcard deck reports
    "N cards needed a second look", where N is the number of times Again was pressed — so one
    card missed three times reports three cards. Pinned in
    `tests/unit/flashcards-labels.test.ts`; the code is `completionSubline` in
    `src/components/flashcards-labels.ts`.
+   *Fixed in slice 8, commit `8ec24db`: the session keeps the set of cards missed and the
+   sentence receives its size; proven in the browser with one card missed three times.*
 
 7. **The quiz's run line outlives its round.** `quiz.html` writes "🔥 N in a row!" only from
    `answer()`, and `renderQ()` never clears it — so the line a student earned on the last
@@ -146,6 +158,8 @@ merged plan are not a register, and both were nearly lost.
    Found while porting the page in slice 6 and ported unchanged. Pinned in
    `tests/browser/quiz.test.tsx`; the code is the `runLine` state in
    `src/components/Quiz.tsx`, and the fix is one line.
+   *Fixed in slice 8, commit `5424eea`: the line is derived from the round's own run count,
+   and the separate state is gone.*
 
 ## Testing
 

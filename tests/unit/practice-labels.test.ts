@@ -67,27 +67,25 @@ describe('the streak chip', () => {
   });
 });
 
-describe('the week strip labels a known defect, ported unchanged', () => {
-  // These pin a BUG. They are here so slice 8 has something to turn red, and so
-  // nobody "tidies" the arithmetic in the meantime believing it is correct.
-  //
-  // The day number is a local calendar day, so dayNumber * 86400000 is midnight
-  // UTC. Formatting that instant in the viewer's zone lands on the previous
-  // evening anywhere west of UTC.
+describe('the week strip names the weekday of the day it records, wherever it is read', () => {
+  // A day number is a LOCAL calendar day (see localDayNumber in src/domain/store.ts),
+  // so its label must not depend on the timezone of the browser reading it back.
+  // Four zones, two of them west of UTC, because that is where the label used to
+  // land on the evening before.
 
-  it('is correct in the club timezone, which is why nobody has noticed', () => {
+  it('is Thursday in the club timezone', () => {
     expect(at('Europe/London', () => weekdayLabel(JULY_2_DAY, LOCALE))).toBe('Thu');
   });
 
-  it('is correct east of UTC too', () => {
+  it('is Thursday east of UTC', () => {
     expect(at('Pacific/Auckland', () => weekdayLabel(JULY_2_DAY, LOCALE))).toBe('Thu');
   });
 
-  it('is a day out west of UTC — 2 July 2026 is a Thursday, not a Wednesday', () => {
-    expect(at('America/New_York', () => weekdayLabel(JULY_2_DAY, LOCALE))).toBe('Wed');
+  it('is Thursday west of UTC — 2 July 2026 is a Thursday everywhere', () => {
+    expect(at('America/New_York', () => weekdayLabel(JULY_2_DAY, LOCALE))).toBe('Thu');
   });
 
-  it('is a day out as far west as the site reaches', () => {
-    expect(at('America/Los_Angeles', () => weekdayLabel(JULY_2_DAY, LOCALE))).toBe('Wed');
+  it('is Thursday as far west as the site reaches', () => {
+    expect(at('America/Los_Angeles', () => weekdayLabel(JULY_2_DAY, LOCALE))).toBe('Thu');
   });
 });

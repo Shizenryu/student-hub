@@ -25,9 +25,9 @@ terminology, kumite sequences and maxims are content and ship from `src/data`;
 which of them a round asks about, in what order, and with which wrong answers is
 decided in the browser, so those rules live in `src/domain/quiz-questions.ts` —
 pure, taking its random source injected the way `store.ts` takes its clock. That
-module is also the only place three of the page's four known defects can be
-pinned, because none of them is reachable through the UI with the content the
-site ships today. `public/quiz.html` is gone, `netlify.toml` 301s `/quiz.html`
+module is also where the rules for small pools live — a shared gloss, a range too
+short to supply three wrong answers — which no shipped content reaches through the
+UI, so they are tested against crafted fixtures. `public/quiz.html` is gone, `netlify.toml` 301s `/quiz.html`
 to `/quiz`, and `public/assets/data.js` retired with it — the quiz was its last
 consumer, so `src/data` is now the only copy of the content.
 
@@ -91,7 +91,7 @@ src/
 │                    are the three React islands; practice-labels.ts,
 │                    flashcards-labels.ts and quiz-labels.ts hold their strings
 │                    as pure functions so the wording is testable without a
-│                    browser — which is where DEFECT 2 is pinned. StreakChip.tsx,
+│                    browser. StreakChip.tsx,
 │                    StreakChipSlot.astro and streak-chip-id.ts are the chip's
 │                    three parts — the element, the portal into it, and the id
 │                    they share. use-browser-store.ts is the ONLY thing that
@@ -125,8 +125,9 @@ src/
                     to READ what it writes, because the home page's chip is drawn
                     through that file; tests/unit/store-parity.test.ts holds that
                     half together. quiz-questions.ts builds a round of questions
-                    from the same injected-random seam, and carries the pins for
-                    DEFECTS 1 and 4. shuffle.ts is the Fisher-Yates both the deck
+                    from the same injected-random seam; wrongAnswers() there is
+                    the one rule every question shape draws its options by.
+                    shuffle.ts is the Fisher-Yates both the deck
                     and the quiz deal from — one algorithm, because two would
                     drift silently.
 scripts/            compare-pixels.mjs — proves a migrated route renders
@@ -186,7 +187,7 @@ before committing it rather than shrinking it in CSS, and add
 ## Migration rules
 
 **Deferrals are written `DEFER(slice-N):`.** Work put off to a named later slice — a
-value Slice 9 will normalise, a defect Slice 8 will fix, a file Slice 6 retires —
+value Slice 9 will normalise, a defect Slice 8 fixed, a file Slice 6 retired —
 carries that literal token in its comment. It is the difference between slice 9
 starting with `grep -rn "DEFER(slice-9)"` and reading six stylesheets hoping the
 phrasing was consistent. It was not: "Slice 9" and "slice 9" both appear today.
@@ -196,7 +197,8 @@ on a toggle, a `type="button"`, a role — are in scope for a migration and shou
 added, because the legacy pages have almost none and a later "accessibility slice"
 would have to re-read every page to find them. Anything needing new markup, focus
 management or a live region is NOT: it changes what a student experiences, so it
-defers alongside the defects. `/practice`'s tiles gained `aria-pressed` under this
+was deferred alongside the defects — which slice 8 has since fixed; the markup
+work still waits. `/practice`'s tiles gained `aria-pressed` under this
 rule.
 
 **With one exception, because the rule above got it wrong once.** A markup change is

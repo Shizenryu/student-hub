@@ -158,6 +158,20 @@ describe('answering a question', () => {
     expect(textOf('.streak')).toBe('\u{1F525} 3 in a row!');
   });
 
+  test('keeps the run line through Next, onto the next unanswered question', async () => {
+    // The run is the round's, not the answer's: earned on question three, it is
+    // still showing while question four waits — which is what the legacy page did,
+    // and what a new round (not "Next") is what clears.
+    await startLevel('Beginner');
+    for (const _ of [0, 1, 2]) {
+      await answer(0);
+      await pressNext();
+    }
+
+    expect(textOf('.qcount')).toBe('QUESTION 4 / 10SCORE 3');
+    expect(textOf('.streak')).toBe('\u{1F525} 3 in a row!');
+  });
+
   test('a wrong answer ends the run', async () => {
     await startLevel('Beginner');
     for (const _ of [0, 1, 2]) {
@@ -248,11 +262,12 @@ describe('kumite rounds', () => {
   });
 });
 
-describe('DEFER(slice-8): DEFECT 2 --- a short round still counts to ten', () => {
-  // The other half of the pin in tests/unit/quiz-labels.test.ts, driven through the
-  // island so the counter AND the progress bar are both covered. Reachable here
-  // because the content arrives as a prop: a tier of four terms is what a content
-  // edit would have to do to make this bite, and no tier is anywhere near it today.
+describe('a short round counts to its own length', () => {
+  // Driven through the island so the counter AND the progress bar are covered. The
+  // content arrives as a prop: a tier of four terms is what a content edit would
+  // have to do to reach this, and no shipped tier is anywhere near it. quiz.html
+  // drew a terminology round's counter and bar against the constant ten while
+  // scoring against the real length; every number now comes from the round.
   const FOUR_TERMS: Readonly<Record<string, readonly TermPair[]>> = {
     '1': [
       ['ichi', 'one'],
@@ -269,20 +284,30 @@ describe('DEFER(slice-8): DEFECT 2 --- a short round still counts to ten', () =>
     return screen;
   };
 
-  test('counts towards ten, and fills the bar towards ten, in a round of four', async () => {
+  test('counts towards four, and fills the bar towards four, in a round of four', async () => {
     await startShortRound();
 
-    expect(textOf('.qcount')).toBe('QUESTION 1 / 10SCORE 0');
+    expect(textOf('.qcount')).toBe('QUESTION 1 / 4SCORE 0');
 
     await answer(0);
     await pressNext();
 
-    expect(textOf('.qcount')).toBe('QUESTION 2 / 10SCORE 1');
-    // One of ten, not one of four — the bar is drawn against the same wrong total.
-    expect(document.querySelector<HTMLElement>('.progress div')?.style.width).toBe('10%');
+    expect(textOf('.qcount')).toBe('QUESTION 2 / 4SCORE 1');
+    // One of four: the bar is drawn against the same total as the counter.
+    expect(document.querySelector<HTMLElement>('.progress div')?.style.width).toBe('25%');
   });
 
-  test('then scores out of four, which is what the student actually answered', async () => {
+  test('counts a kumite round to its own length too', async () => {
+    // One sequence of three steps yields five questions: three "next", one
+    // "which", one "side". Both modes count and score against the same number.
+    const screen = await render(<Quiz terms={TERMS} kumite={KUMITE.slice(0, 1)} maxims={MAXIMS} />);
+    await screen.getByRole('button', { name: 'Kumite 1–6' }).click();
+    await settle();
+
+    expect(textOf('.qcount')).toBe('QUESTION 1 / 5SCORE 0');
+  });
+
+  test('and scores out of four, which is what the student actually answered', async () => {
     await startShortRound();
     for (let asked = 0; asked < 4; asked += 1) {
       await answer(0);
@@ -293,22 +318,20 @@ describe('DEFER(slice-8): DEFECT 2 --- a short round still counts to ten', () =>
   });
 });
 
-describe('DEFER(slice-8): DEFECT 7 --- the run line outlives its round', () => {
-  // A PIN, NOT A SPECIFICATION. quiz.html writes the "N in a row" line only from
-  // answer(), and renderQ() never clears it. So the line a student earned on the
-  // last answer of one round is still on screen for the first, unanswered question
-  // of the next, claiming a run that has already been reset to zero.
-  //
-  // Reachable today, unlike defects 1, 2 and 4 --- any student who ends a round on a
-  // run of three or more and taps "Train again" sees it. Ported unchanged.
-  test('a run earned in the last round is still showing on the first question of the next', async () => {
+describe('a new round starts with no run line', () => {
+  // The run belongs to the round. quiz.html wrote the line only from answer() and
+  // never cleared it, so a run earned on the last answer of one round used to sit on
+  // the first, unanswered question of the next; the line is now the round's own run
+  // count, which a fresh round starts at zero.
+  test('a run earned in the last round is not showing on the first question of the next', async () => {
     await startLevel('Beginner');
-    await answerWholeRound();
+    expect(await answerWholeRound()).toBe('10 / 10');
 
     document.querySelector<HTMLElement>('.next-btn')?.click();
     await settle();
 
-    expect(textOf('.streak')).toBe('\u{1F525} 10 in a row!');
+    expect(textOf('.qcount')).toBe('QUESTION 1 / 10SCORE 0');
+    expect(textOf('.streak')).toBe('');
   });
 });
 

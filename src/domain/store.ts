@@ -137,6 +137,18 @@ function localDayNumber(now: Date): number {
   return Math.floor(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 86400000);
 }
 
+// The inverse: the local calendar date a day number stands for, as a Date at
+// local midnight, so it can be formatted in the reader's own zone like any other
+// Date. Multiplying the number back out gives midnight UTC of that date; reading
+// the UTC parts and re-composing them locally is what stops it landing on the
+// evening before anywhere west of UTC. Here, beside localDayNumber, so that the
+// encoding and its decoding are the same module's business and no label code
+// has to know it.
+export function localDate(dayNumber: number): Date {
+  const utc = new Date(dayNumber * 86400000);
+  return new Date(utc.getUTCFullYear(), utc.getUTCMonth(), utc.getUTCDate());
+}
+
 // Whether a session today moves the streak on, restarts it, or leaves it alone.
 //
 // The best score is recomputed even on the already-counted path. That looks

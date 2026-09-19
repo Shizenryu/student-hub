@@ -5,7 +5,7 @@
 > PR** of six RED→GREEN commits, one per defect, in the order below; see **Delivery Shape**.
 
 **Branch**: `plan/slice-8-defects` (this plan) → `feat/slice-8-defects`
-**Status**: Active
+**Status**: Complete
 
 ## Goal
 
@@ -51,27 +51,40 @@ The same rule covers a third case the register does not name but which has the s
 range of one short sequence cannot supply three. It is fixed in defect 4's commit, with its
 own test, because leaving it would be fixing half a mechanism.
 
+**Corrected at review (2026-09-20).** The PR review found the gap in defect 1's fix:
+excluding only the right answer's *text* left a second term that also means the prompt
+(asked backwards), or a second gloss of the term the prompt names (asked forwards), on offer
+as a "wrong" answer. Candidates are now chosen by the prompt's side of the pair. The review
+also moved the day-number decoding into `store.ts` beside its encoding (`localDate`), added
+two integrity guards (an empty tier, which would have dealt a round of nothing and a `NaN%`
+bar; a card front used twice, which both the store and the session treat as one card), gave
+the question builders options objects, pinned two things the fixes had left unobserved — the
+run line surviving "Next" within a round, and a kumite round's counter denominator — and took
+the reuse and simplification cleanups. Three further mutants killed.
+
 **Spec:** `docs/superpowers/specs/2026-08-28-productionise-student-hub-design.md`
 
 ## Acceptance Criteria
 
-- [ ] Starting a new quiz round clears the "N in a row!" line; it reappears only once a run of
+- [x] Starting a new quiz round clears the "N in a row!" line; it reappears only once a run of
       three is earned in that round.
-- [ ] The practice week strip labels each day with the weekday of the local calendar day it
+- [x] The practice week strip labels each day with the weekday of the local calendar day it
       records, in every timezone — pinned at London, Auckland, New York and Los Angeles.
-- [ ] Finishing a flashcard deck reports how many *distinct cards* needed a second look: one
+- [x] Finishing a flashcard deck reports how many *distinct cards* needed a second look: one
       card missed three times says "1 card".
-- [ ] A quiz round's counter, progress bar and final score all use the round's real length, in
+- [x] A quiz round's counter, progress bar and final score all use the round's real length, in
       both modes.
-- [ ] Every terminology question offers four distinct option texts, exactly one of which is
+- [x] Every terminology question offers four distinct option texts, exactly one of which is
       correct, even when two terms share a gloss; extra wrong answers come from other tiers
       when the level's own cannot supply three.
-- [ ] Every kumite question — "which kumite", "what comes next" — offers four distinct options
+- [x] Every kumite question — "which kumite", "what comes next" — offers four distinct options
       even for a range of one, drawing from beyond the range when needed; fewer only when the
       whole content has fewer.
-- [ ] `grep -rn -i "slice-8\|defect" src tests` returns nothing; the spec's register marks each
-      of the six as fixed with its commit; CLAUDE.md describes defects only as history.
-- [ ] Nothing else a student sees changes: the fixes for 1, 2 and 4 are unreachable with
+- [x] `grep -rn -i "slice-8" src tests` returns nothing, and `grep -rn -i defect src tests`
+      finds only defect 3's history (its fix in #12, in `store.ts` and its day-number test);
+      the spec's register marks each of the six as fixed with its commit; CLAUDE.md describes
+      defects only as history.
+- [x] Nothing else a student sees changes: the fixes for 1, 2 and 4 are unreachable with
       today's content; 5 changes nothing in the club's timezone; 6 and 7 change exactly the
       sentence and the line named above.
 
@@ -101,65 +114,65 @@ point at this defect; **REFACTOR** where named.
 
 ### Commit 1 — Defect 7: the run line dies with its round
 
-- [ ] RED: in `tests/browser/quiz.test.tsx`, the "DEFECT 7" describe becomes "a new round starts
+- [x] RED: in `tests/browser/quiz.test.tsx`, the "DEFECT 7" describe becomes "a new round starts
       with no run line": after `answerWholeRound()` and "Train again", `.streak` is empty.
-- [ ] GREEN: `Quiz.tsx`'s `start` clears the run line. One line.
-- [ ] REFACTOR, in the same commit: the run line is separate `useState` only because the
+- [x] GREEN: `Quiz.tsx`'s `start` clears the run line. One line.
+- [x] REFACTOR, in the same commit: the run line is separate `useState` only because the
       legacy page kept it separate, and the session already carries `run` (`Quiz.tsx` line
       75). Derive the line at render as `streakRun(session.run)` and delete the state, which
       makes this defect impossible rather than fixed. What must NOT change: within a round the
       line stays on screen through "Next" onto the following unanswered question, because
       `next` keeps the session's run; that is how the legacy page behaved and the existing
       run-line test asserts it. Only a new round (a fresh session, `run: 0`) clears it.
-- [ ] Remove the DEFECT 7 comment block in `Quiz.tsx`.
+- [x] Remove the DEFECT 7 comment block in `Quiz.tsx`.
 
 ### Commit 2 — Defect 5: the week strip names the right day everywhere
 
-- [ ] RED: in `tests/unit/practice-labels.test.ts`, the two west-of-UTC cases expect `'Thu'`,
+- [x] RED: in `tests/unit/practice-labels.test.ts`, the two west-of-UTC cases expect `'Thu'`,
       and the describe stops calling itself a known defect. Keep all four timezones: the point
       is that the answer no longer depends on the viewer's zone.
-- [ ] GREEN: `weekdayLabel` formats the instant in UTC (`timeZone: 'UTC'`). The day number
+- [x] GREEN: `weekdayLabel` formats the instant in UTC (`timeZone: 'UTC'`). The day number
       encodes a local calendar day as midnight UTC of that date, so reading it back in UTC is
       reading it back correctly. One option, no arithmetic.
-- [ ] Rewrite the comment above `weekdayLabel` to say what the number is and why UTC is the
+- [x] Rewrite the comment above `weekdayLabel` to say what the number is and why UTC is the
       right lens, not that it is a defect.
 
 ### Commit 3 — Defect 6: the second-look count counts cards
 
-- [ ] RED, in the browser (`tests/browser/flashcards.test.tsx`), because the sentence itself is
+- [x] RED, in the browser (`tests/browser/flashcards.test.tsx`), because the sentence itself is
       right when given the right number — the defect is what the island hands it: on the
       smallest deck (`startSmallestDeck()`, nine cards; every grade needs `flipCard()` first,
       and this file has no `settle` helper), press Again on the first card, Got it on the
       other eight, Again on the first card twice more as it returns, then Got it. Today the
       completion line says "3 cards needed a second look. They will come up first next time.";
       the test expects "1 card needed a second look. They will come up first next time.".
-- [ ] GREEN: `Flashcards.tsx`'s session carries the set of cards missed (`ReadonlySet<string>`
+- [x] GREEN: `Flashcards.tsx`'s session carries the set of cards missed (`ReadonlySet<string>`
       of fronts, built immutably) instead of a press count; the completion line receives its
       size.
-- [ ] `tests/unit/flashcards-labels.test.ts`: the "known defect" describe becomes a plain
+- [x] `tests/unit/flashcards-labels.test.ts`: the "known defect" describe becomes a plain
       statement that the argument is a count of distinct cards; the `(3, 0)` case stays,
       because three distinct cards *should* say "3 cards".
-- [ ] Remove the defect comments in `flashcards-labels.ts` and `Flashcards.tsx`.
+- [x] Remove the defect comments in `flashcards-labels.ts` and `Flashcards.tsx`.
 
 ### Commit 4 — Defect 2: the round is as long as it really is
 
-- [ ] RED is the browser test alone: `tests/browser/quiz.test.tsx`'s DEFECT 2 describe expects
+- [x] RED is the browser test alone: `tests/browser/quiz.test.tsx`'s DEFECT 2 describe expects
       "QUESTION 1 / 4" on the first question and "QUESTION 2 / 4" with a bar at 25% after one
       answer *and Next* (the bar tracks `index`, which only advances on Next). Its second test,
       "4 / 4" at the end, already passes today and stays as the other half of the statement.
-- [ ] GREEN: the counter and the bar use `session.round.questions.length`; `displayedTotal` is
+- [x] GREEN: the counter and the bar use `session.round.questions.length`; `displayedTotal` is
       deleted rather than fixed, since with both modes agreeing it would say nothing. Drop
       `quiz-labels.ts`'s import of `ROUND_LENGTH`.
-- [ ] Unit suites in the same commit: `tests/unit/quiz-labels.test.ts`'s DEFECT 2 describe goes
+- [x] Unit suites in the same commit: `tests/unit/quiz-labels.test.ts`'s DEFECT 2 describe goes
       (it tested the deleted function); `questionCounter(2, 3)` → "QUESTION 3 / 3" joins the
       plain counter cases. `tests/unit/quiz-questions.test.ts`'s defect 2 describe keeps
       `toHaveLength(3)` and drops the "shorter than the displayed total" assertion — a short
       tier simply yields a short round.
-- [ ] Remove the DEFECT 2 comments in `quiz-labels.ts` and `Quiz.tsx`.
+- [x] Remove the DEFECT 2 comments in `quiz-labels.ts` and `Quiz.tsx`.
 
 ### Commit 5 — Defect 1: one right answer, four distinct options
 
-- [ ] RED: `tests/unit/quiz-questions.test.ts`'s defect 1 describe becomes four cases. (a) The
+- [x] RED: `tests/unit/quiz-questions.test.ts`'s defect 1 describe becomes four cases. (a) The
       existing keri/geri fixture: *every* question in the round offers four distinct options
       with the correct text exactly once — every question, not just the 'kick' one, because on
       the 'punch' question the duplicate gloss sits among the *wrong* candidates, and that is
@@ -168,18 +181,18 @@ point at this defect; **REFACTOR** where named.
       tier-1 gloss. (c) Widening: tier 1 is two terms sharing one gloss, tier 2 has three more
       distinct glosses, level 1 — four distinct options, the extras from tier 2. (d) The
       boundary: the whole content has two distinct glosses — the question offers two options.
-- [ ] GREEN, one mechanism: the candidate wrong answers are the *displayed* texts of the pool
+- [x] GREEN, one mechanism: the candidate wrong answers are the *displayed* texts of the pool
       (gloss when forward, Japanese when backwards), distinct, minus the correct text; taken
       first from the level's own pool, then from every tier, until there are three. There is
       no separate "exclude by Japanese" step to keep. `termsRound` passes both pools.
-- [ ] `Quiz.tsx`'s `optionClass` still marks by text; with options now distinct that marks
+- [x] `Quiz.tsx`'s `optionClass` still marks by text; with options now distinct that marks
       exactly one button. Rewrite its comment to say so rather than that it is a defect.
-- [ ] Rewrite the header comment of `quiz-questions.ts`, which says it exists partly to pin
+- [x] Rewrite the header comment of `quiz-questions.ts`, which says it exists partly to pin
       three defects.
 
 ### Commit 6 — Defect 4: four options for any range
 
-- [ ] RED: the defect 4 describe becomes four cases. (a) "Which kumite" in a range of three
+- [x] RED: the defect 4 describe becomes four cases. (a) "Which kumite" in a range of three
       offers four options with the extra drawn from beyond the range (the fixture gains a
       fourth sequence at `n: 4`). (b) Three sequences in the whole content offer three. (c) Own
       range first: the existing six-sequence fixture plus a seventh, `upTo: 6` — no option on
@@ -189,27 +202,27 @@ point at this defect; **REFACTOR** where named.
       (with `noShuffle` the first candidate is step 0, whose hint is "The attack that starts
       it"), and give the beyond-range sequences at least three steps that are neither the
       correct step nor already in range, or dedupe leaves fewer than four.
-- [ ] GREEN: `whichKumiteQuestion` and `nextStepQuestion` take the in-range pool and the full
+- [x] GREEN: `whichKumiteQuestion` and `nextStepQuestion` take the in-range pool and the full
       pool, draw from in-range first and then beyond, deduplicated, until three wrong answers.
       `kumiteRound` builds both vocabularies.
-- [ ] Remove the DEFECT 4 comment, including its "under five" wording.
+- [x] Remove the DEFECT 4 comment, including its "under five" wording.
 
 ### Commit 7 — Docs
 
-- [ ] The spec's register: each of the six gains "Fixed in slice 8, commit `<sha>`" on its own
+- [x] The spec's register: each of the six gains "Fixed in slice 8, commit `<sha>`" on its own
       line, leaving the description as the record of what was wrong.
-- [ ] CLAUDE.md: three lines describe the pins as current state — "which is where DEFECT 2 is
+- [x] CLAUDE.md: three lines describe the pins as current state — "which is where DEFECT 2 is
       pinned" (components), "the only place three of the page's four known defects can be
       pinned" (the `/quiz` paragraph) and "carries the pins for DEFECTS 1 and 4" (domain). Each
       becomes a statement of what the module is for now.
-- [ ] Comments no earlier commit names but which describe the defects as current, all of which
+- [x] Comments no earlier commit names but which describe the defects as current, all of which
       go or become history in whichever commit touches the file, and are swept here if missed:
       `src/pages/quiz.astro` line 9 ("where three of the page's four known defects are
       pinned"); `src/domain/quiz-questions.ts` lines 31–34 (the `Question` type's note on
       matching by text); `src/components/Quiz.tsx` lines 31–33, 46–47 and 270–271 (header,
       `Answered` type, option `key` comment); `src/components/practice-labels.ts` lines 3–5;
       `tests/unit/quiz-questions.test.ts` lines 8–11 and 177–181.
-- [ ] `grep -rn -i "slice-8\|defect" src tests` is empty.
+- [x] `grep -rn -i "slice-8\|defect" src tests` is empty.
 
 ### PR gate — mutation battery and evidence
 

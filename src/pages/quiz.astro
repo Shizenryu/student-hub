@@ -5,8 +5,8 @@
 // The terminology, kumite sequences and maxims are content and ship from src/data
 // at build time; which of them a round asks about, in what order and with which
 // wrong answers, is decided in the browser. Those rules live in a pure module so
-// they are testable without one — see src/domain/quiz-questions.ts, which is also
-// where three of the page's four known defects are pinned.
+// they are testable without one — see src/domain/quiz-questions.ts, including the
+// rules for pools too small to supply four options, which no shipped content reaches.
 import PageShell from '../layouts/PageShell.astro';
 import StreakChipSlot from '../components/StreakChipSlot.astro';
 import Quiz from '../components/Quiz';

@@ -66,7 +66,11 @@ export function assertContentIntegrity(content: ContentBundle = REAL_CONTENT): v
 
   for (const grade of grades) {
     if (!gradedInSyllabus.has(grade.key)) problems.push(`belt "${grade.key}" has no syllabus rows`);
-    if (!terms[String(grade.tier)]) problems.push(`belt "${grade.key}" points at missing tier ${grade.tier}`);
+    // Missing or empty: a level whose tier has no terms would deal a round of
+    // nothing, and the quiz's counter would divide by it.
+    if (!terms[String(grade.tier)]?.length) {
+      problems.push(`belt "${grade.key}" points at missing or empty tier ${grade.tier}`);
+    }
   }
 
   for (const item of syllabus) {
@@ -110,11 +114,18 @@ export function assertContentIntegrity(content: ContentBundle = REAL_CONTENT): v
     problems.push(`practice activity id "${id}" is used more than once`);
   }
 
-  // The quiz builds "which kumite is this?" questions and distractors from
-  // KUMITE[].n alone — a duplicate produces two identical answer labels for
-  // genuinely different step sequences.
+  // "Kumite N" is how the quiz names a sequence, in prompts and in answers — a
+  // duplicate n makes one name the right answer for two different sequences.
   for (const n of duplicates(kumite.map((bout) => String(bout.n)))) {
     problems.push(`kumite number ${n} is used more than once`);
+  }
+
+  // A card's front is its identity everywhere: the store keys misses by a hash of
+  // it, and the flashcards island counts the cards a session missed by it. Two
+  // cards sharing a front — across decks, which the Everything deck merges — would
+  // be one card to both.
+  for (const front of duplicates(decks.flatMap((deck) => deck.cards.map((card) => card[0] ?? '')))) {
+    problems.push(`card front "${front}" is used by more than one card`);
   }
 
   // The mirror image of the brief's own motivating example: two belts with

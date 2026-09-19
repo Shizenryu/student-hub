@@ -5,24 +5,19 @@
 
 export const completionMessage = (total: number): string => `Deck complete — ${total} cards mastered.`;
 
-// KNOWN DEFECT, ported unchanged and pinned in tests/unit/flashcards-labels.test.ts.
-//
-// `laps` counts presses of Again, not distinct cards. A student who misses the
-// same card three times is told "3 cards needed a second look" when it was one
-// card, three times. The sentence has said that since the page was written.
-//
-// Slice 8 owns the fix, one RED->GREEN commit, so that "we ported it" and "we
-// changed it" never share a diff.
-const repeats = (laps: number): string =>
-  laps === 0
+// `missedCards` is a count of DISTINCT cards, not of presses of Again: a card
+// missed three times is one card that needed a second look. The island keeps the
+// set; this only words its size.
+const repeats = (missedCards: number): string =>
+  missedCards === 0
     ? 'First pass, no repeats. Grading standard.'
-    : `${laps} card${laps === 1 ? '' : 's'} needed a second look. They will come up first next time.`;
+    : `${missedCards} card${missedCards === 1 ? '' : 's'} needed a second look. They will come up first next time.`;
 
 // The streak is mentioned only from two days: one day is not yet a streak, and
 // saying so after every single session would make the word worthless.
 const streakNote = (count: number): string => (count >= 2 ? ` 🔥 ${count}-day streak.` : '');
 
-export const completionSubline = (laps: number, streakCount: number): string =>
-  `${repeats(laps)}${streakNote(streakCount)}`;
+export const completionSubline = (missedCards: number, streakCount: number): string =>
+  `${repeats(missedCards)}${streakNote(streakCount)}`;
 
 export const cardsToGo = (remaining: number): string => `${remaining} TO GO`;
