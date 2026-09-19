@@ -1,3 +1,5 @@
+import { localDate } from '../domain/store';
+
 // The strings the practice page shows, as pure functions.
 //
 // Split out of Practice.tsx so they can be driven in node without a browser or a
@@ -23,14 +25,13 @@ export const MONTH = 30;
 export const todayLabel = (now: Date, locale?: string): string =>
   `TODAY — ${now.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })}`;
 
-// `dayNumber` is a LOCAL calendar day, composed through Date.UTC from the local
-// year, month and day (see localDayNumber in src/domain/store.ts). Multiplying it
-// back out therefore gives midnight UTC OF THAT CALENDAR DATE — so it has to be
-// read back in UTC too. Formatting it in the viewer's own zone instead landed on
-// the evening before anywhere west of UTC, which is what the four-timezone test
-// in tests/unit/practice-labels.test.ts is for.
+// `dayNumber` is a LOCAL calendar day; the store that encodes it decodes it
+// (localDate in src/domain/store.ts), so this formats an ordinary local Date the
+// same way todayLabel does. Reading the number back through the viewer's zone
+// directly used to land on the evening before anywhere west of UTC, which is
+// what the four-timezone test in tests/unit/practice-labels.test.ts is for.
 export const weekdayLabel = (dayNumber: number, locale?: string): string =>
-  new Date(dayNumber * 86400000).toLocaleDateString(locale, { weekday: 'short', timeZone: 'UTC' });
+  localDate(dayNumber).toLocaleDateString(locale, { weekday: 'short' });
 
 export const statusLabel = (count: number): string =>
   count === 0

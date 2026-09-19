@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createStore } from '../../src/domain/store';
+import { createStore, localDate } from '../../src/domain/store';
 
 // The day number is the fiddliest thing in the store and already has one shipped
 // defect behind it (#12): it was Math.floor(Date.now() / 86400000), a UTC day
@@ -65,5 +65,16 @@ describe('the day number follows the local calendar date, not the UTC one', () =
     //   2026-01-01 is day 20454, so 2026-01-02 is 20455.
     expect(storeAt('2026-01-01T23:59:59Z').today()).toBe(20454);
     expect(storeAt('2026-01-02T00:00:00Z').today()).toBe(20455);
+  });
+});
+
+describe('a day number reads back as the local calendar date it was made from', () => {
+  it('round-trips the BST midnight case that defect #12 got wrong', () => {
+    // 2026-07-01T23:30:00Z is 2 July in London; the day number must come back as
+    // 2 July, at local midnight, whatever zone it is later read in.
+    const date = localDate(storeAt('2026-07-01T23:30:00Z').today());
+
+    expect([date.getFullYear(), date.getMonth(), date.getDate()]).toEqual([2026, 6, 2]);
+    expect([date.getHours(), date.getMinutes()]).toEqual([0, 0]);
   });
 });
