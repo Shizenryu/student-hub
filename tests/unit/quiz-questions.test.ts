@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { KUMITE, TERMS } from '../../src/data';
 import type { Kumite, TermPair } from '../../src/data';
 import { ROUND_LENGTH, kumiteRound, termsRound } from '../../src/domain/quiz-questions';
+import type { Question, Round } from '../../src/domain/quiz-questions';
 import { mixing, noShuffle } from './random-sources';
 
 // Why crafted data rather than the real content: the rules about small pools at the
@@ -27,6 +28,19 @@ const kumiteOf = (n: number, side: string, steps: readonly string[]): Kumite => 
   belt: '9th Kyu',
   steps,
 });
+
+// The hints are the only thing that tells a kumite question's three shapes apart
+// from outside, so they are named once here rather than spelled in each test.
+const OPENS_WITH = 'The attack that starts it';
+const WHAT_COMES_NEXT = 'What comes next?';
+const WHICH_KUMITE = 'Which kumite is this?';
+const WHICH_SIDE = 'Same side (SS) or opposite side (OS)?';
+
+const askedWithHint = (round: Round, hint: string): readonly Question[] =>
+  round.questions.filter((question) => question.hint === hint);
+
+// Option SETS are what most assertions below are about; the order is the shuffle's.
+const sortedOptions = (question: Question): readonly string[] => [...question.options].sort();
 
 describe('a terminology round draws on the right terms', () => {
   const fourTiers: Readonly<Record<string, readonly TermPair[]>> = {
@@ -158,18 +172,17 @@ describe('the three kinds of kumite question', () => {
 
   // A factory rather than a shared value: a throw inside kumiteRound then fails the
   // test that provoked it rather than the whole file's collection.
-  const askedWithHint = (hint: string) =>
-    kumiteRound({ kumite, upTo: 6, random: noShuffle }).questions.filter((question) => question.hint === hint);
+  const asked = (hint: string) => askedWithHint(kumiteRound({ kumite, upTo: 6, random: noShuffle }), hint);
 
   it('asks what opens a sequence', () => {
-    const [question] = askedWithHint('The attack that starts it');
+    const [question] = asked(OPENS_WITH);
 
     expect(question?.prompt).toBe('Kumite 1 (OS) opens with…');
     expect(question?.correct).toBe('jun-zuki');
   });
 
   it('asks what comes next, showing the steps so far', () => {
-    const [question] = askedWithHint('What comes next?');
+    const [question] = asked(WHAT_COMES_NEXT);
 
     expect(question?.prompt).toBe('Kumite 1:  jun-zuki  »  ?');
     expect(question?.correct).toBe('gedan-barai');
@@ -178,7 +191,7 @@ describe('the three kinds of kumite question', () => {
   it('draws what-comes-next wrong answers from every step in range', () => {
     // Not just from the sequence being asked about. These sequences are two and
     // three steps long, so one of them alone could not supply three wrong answers.
-    const [question] = askedWithHint('What comes next?');
+    const [question] = asked(WHAT_COMES_NEXT);
     const ownSteps = ['jun-zuki', 'gedan-barai', 'gyaku-zuki'];
     const fromElsewhere = (question?.options ?? []).filter((option) => !ownSteps.includes(option));
 
@@ -187,7 +200,7 @@ describe('the three kinds of kumite question', () => {
   });
 
   it('asks which kumite a sequence is', () => {
-    const [question] = askedWithHint('Which kumite is this?');
+    const [question] = asked(WHICH_KUMITE);
 
     expect(question?.prompt).toBe('jun-zuki  »  gedan-barai  »  gyaku-zuki');
     expect(question?.correct).toBe('Kumite 1');
@@ -195,7 +208,7 @@ describe('the three kinds of kumite question', () => {
   });
 
   it('asks which side a sequence is worked on', () => {
-    const [question] = askedWithHint('Same side (SS) or opposite side (OS)?');
+    const [question] = asked(WHICH_SIDE);
 
     expect(question?.prompt).toBe('Kumite 1:  jun-zuki  »  gedan-barai  »  gyaku-zuki');
     expect(question?.correct).toBe('OS');
@@ -228,45 +241,90 @@ describe('what a round records about itself', () => {
 // --- small pools -------------------------------------------------------------
 //
 // None of what follows is reachable with the content the site ships: every level
-// and both ranges can supply three wrong answers of their own, and no two terms
-// share a gloss. These are guards against a future content edit, on content that
-// is edited by hand — and the rule they pin, own pool first and the whole content
-// only after, is what keeps a Beginner from meeting a Dan-grade term today.
+// and both ranges can supply three wrong answers of their own, no two terms share
+// a gloss and no term has two. These are guards against a future content edit, on
+// content that is edited by hand — and the rule they pin, own pool first and the
+// whole content only after, is what keeps a Beginner from meeting a Dan-grade term
+// today.
 
-describe('a terminology question offers four distinct options, one of them right', () => {
-  // Wrong answers are chosen by the text a student will SEE — the gloss when asked
-  // forwards, the Japanese when asked backwards — never the same text twice, and
-  // never the right answer's text. Two terms sharing a gloss is what makes that
-  // matter; there are none in the shipped terms, and one added tomorrow would
-  // produce these fixtures.
+describe('a terminology question offers four distinct options, exactly one of them right', () => {
+  // A wrong answer is the displayed text — the gloss when asked forwards, the
+  // Japanese when asked backwards — of a term that is NOT itself a right answer to
+  // the prompt. So it is never the right answer's text, never the same text twice,
+  // never a second term that also means the prompt, and never a second gloss of
+  // the term the prompt names.
+
+  const sharedGloss = termsOf('1', [
+    ['keri', 'kick'],
+    ['geri', 'kick'],
+    ['zuki', 'punch'],
+    ['uke', 'block'],
+    ['dachi', 'stance'],
+  ]);
 
   it('never offers the same text twice, even when two terms share a gloss', () => {
-    // 'kick' is shared. On the 'kick' question it is the right answer; on every
+    // 'kick' is shared. On the 'kick' questions it is the right answer; on every
     // other question it sits among the wrong candidates twice. Both must dedupe.
-    const terms = termsOf('1', [
-      ['keri', 'kick'],
-      ['geri', 'kick'],
-      ['zuki', 'punch'],
-      ['uke', 'block'],
-      ['dachi', 'stance'],
-    ]);
-
-    const round = termsRound({ terms, level: 1, random: forward });
+    const round = termsRound({ terms: sharedGloss, level: 1, random: forward });
 
     expect(round.questions).toHaveLength(5);
     for (const question of round.questions) {
-      expect(question.options, `"${question.prompt}"`).toHaveLength(4);
+      expect(sortedOptions(question), `"${question.prompt}"`).toHaveLength(4);
       expect(new Set(question.options).size, `"${question.prompt}" repeats an option`).toBe(4);
       expect(question.options.filter((option) => option === question.correct)).toHaveLength(1);
     }
   });
 
+  // The next two put the sibling term ALONE in the level being studied, so it is the
+  // only own candidate and no shuffle can drop it by luck; the other three wrong
+  // answers then have to come from beyond.
+  const others = termsOf('2', [
+    ['zuki', 'punch'],
+    ['dachi', 'stance'],
+    ['tsuki', 'thrust'],
+  ]);
+
+  it('never offers another term that also means the prompt, asked backwards', () => {
+    // Asked backwards, the prompt is 'kick' and the right answer is one of keri and
+    // geri. The other means kick too, so it cannot be a wrong answer — a student
+    // who tapped it would be told "Not quite".
+    const terms = { ...termsOf('1', [['keri', 'kick'], ['geri', 'kick']]), ...others };
+
+    const round = termsRound({ terms, level: 1, random: backwards });
+    const kickQuestions = round.questions.filter((question) => question.prompt === 'kick');
+
+    expect(kickQuestions).toHaveLength(2);
+    for (const question of kickQuestions) {
+      expect(question.hint).toBe('Which term means this?');
+      expect(question.options.filter((option) => option === 'keri' || option === 'geri')).toEqual([question.correct]);
+      expect(sortedOptions(question)).toHaveLength(4);
+    }
+  });
+
+  it('never offers another gloss of the term the prompt names, asked forwards', () => {
+    // A homograph: one Japanese term, two glosses. Asked forwards about 'uke', both
+    // of its glosses are right answers, so neither may appear as the wrong one.
+    const terms = { ...termsOf('1', [['uke', 'block'], ['uke', 'receive']]), ...others };
+
+    const round = termsRound({ terms, level: 1, random: forward });
+    const ukeQuestions = round.questions.filter((question) => question.prompt === 'uke');
+
+    expect(ukeQuestions).toHaveLength(2);
+    for (const question of ukeQuestions) {
+      expect(question.options.filter((option) => option === 'block' || option === 'receive')).toEqual([
+        question.correct,
+      ]);
+      expect(sortedOptions(question)).toHaveLength(4);
+    }
+  });
+
   it('draws every wrong answer from the level being studied when it has enough', () => {
     // Own pool first: a Beginner must never see a Dan-grade term while tier 1 can
-    // supply three wrong answers of its own. A mixing source, not a no-swap one:
-    // tier 1 sits first in the content, so a source that never moves anything
-    // would let an implementation that pools every tier together pass this.
-    const tierOne: readonly TermPair[] = [
+    // supply three wrong answers of its own — in the language the question is asked
+    // in. A mixing source, not a no-swap one: tier 1 sits first in the content, so
+    // a source that never moves anything would let an implementation that pools
+    // every tier together pass this.
+    const tierOne: ReadonlyArray<readonly [string, string]> = [
       ['ichi', 'one'],
       ['ni', 'two'],
       ['san', 'three'],
@@ -274,59 +332,65 @@ describe('a terminology question offers four distinct options, one of them right
       ['go', 'five'],
     ];
     const terms = {
-      '1': tierOne,
-      '4': [
+      ...termsOf('1', tierOne),
+      ...termsOf('4', [
         ['roku', 'six'],
         ['shichi', 'seven'],
         ['hachi', 'eight'],
-      ],
-    } satisfies Readonly<Record<string, readonly TermPair[]>>;
-    const tierOneTexts = tierOne.flat();
+      ]),
+    };
+    const tierOneJapanese = tierOne.map(([japanese]) => japanese);
+    const tierOneGlosses = tierOne.map(([, english]) => english);
 
     const round = termsRound({ terms, level: 1, random: mixing(7) });
 
     expect(round.questions).toHaveLength(5);
+    expect(round.questions.some((question) => question.hint === 'Which term means this?')).toBe(true);
     for (const question of round.questions) {
+      const language = question.hint === 'Which term means this?' ? tierOneJapanese : tierOneGlosses;
       for (const option of question.options) {
-        expect(tierOneTexts, `"${option}" is not a tier-1 term`).toContain(option);
+        expect(language, `"${option}" is not a tier-1 term in the language asked`).toContain(option);
       }
     }
   });
 
   it('draws the rest from other tiers when the level cannot supply three', () => {
     const terms = {
-      '1': [
+      ...termsOf('1', [
         ['keri', 'kick'],
         ['geri', 'kick'],
-      ],
-      '2': [
+      ]),
+      ...termsOf('2', [
         ['zuki', 'punch'],
         ['uke', 'block'],
         ['dachi', 'stance'],
-      ],
-    } satisfies Readonly<Record<string, readonly TermPair[]>>;
+      ]),
+    };
 
     const round = termsRound({ terms, level: 1, random: forward });
 
     expect(round.questions).toHaveLength(2);
     for (const question of round.questions) {
       expect(question.correct).toBe('kick');
-      expect([...question.options].sort()).toEqual(['block', 'kick', 'punch', 'stance']);
+      expect(sortedOptions(question)).toEqual(['block', 'kick', 'punch', 'stance']);
     }
   });
 
   it('offers what exists when the whole content has fewer than four distinct glosses', () => {
     const terms = {
-      '1': [
+      ...termsOf('1', [
         ['keri', 'kick'],
         ['geri', 'kick'],
-      ],
-      '2': [['zuki', 'punch']],
-    } satisfies Readonly<Record<string, readonly TermPair[]>>;
+      ]),
+      ...termsOf('2', [['zuki', 'punch']]),
+    };
 
-    const [question] = termsRound({ terms, level: 1, random: forward }).questions;
+    const round = termsRound({ terms, level: 1, random: forward });
 
-    expect([...(question?.options ?? [])].sort()).toEqual(['kick', 'punch']);
+    expect(round.questions).toHaveLength(2);
+    for (const question of round.questions) {
+      expect(sortedOptions(question)).toEqual(['kick', 'punch']);
+    }
   });
 });
 
@@ -353,8 +417,6 @@ describe('a kumite question offers four distinct options for any range', () => {
   // a student never meets a sequence from beyond their range; a "Kumite 1–3"
   // button would, and these are what it would get.
 
-  const NEXT_HINTS = ['The attack that starts it', 'What comes next?'];
-
   it('names sequences beyond the range when the range has too few others', () => {
     // A range of three leaves two others; the fourth sequence supplies the third.
     const kumite = [
@@ -364,12 +426,11 @@ describe('a kumite question offers four distinct options for any range', () => {
       kumiteOf(4, 'SS', ['ushiro-geri', 'shuto-uke']),
     ];
 
-    const round = kumiteRound({ kumite, upTo: 3, random: noShuffle });
-    const which = round.questions.filter((question) => question.hint === 'Which kumite is this?');
+    const which = askedWithHint(kumiteRound({ kumite, upTo: 3, random: noShuffle }), WHICH_KUMITE);
 
     expect(which.length).toBeGreaterThan(0);
     for (const question of which) {
-      expect([...question.options].sort()).toEqual(['Kumite 1', 'Kumite 2', 'Kumite 3', 'Kumite 4']);
+      expect(sortedOptions(question)).toEqual(['Kumite 1', 'Kumite 2', 'Kumite 3', 'Kumite 4']);
     }
   });
 
@@ -380,10 +441,12 @@ describe('a kumite question offers four distinct options for any range', () => {
       kumiteOf(3, 'OS', ['mawashi-geri', 'age-uke']),
     ];
 
-    const round = kumiteRound({ kumite, upTo: 3, random: noShuffle });
-    const [which] = round.questions.filter((question) => question.hint === 'Which kumite is this?');
+    const which = askedWithHint(kumiteRound({ kumite, upTo: 3, random: noShuffle }), WHICH_KUMITE);
 
-    expect([...(which?.options ?? [])].sort()).toEqual(['Kumite 1', 'Kumite 2', 'Kumite 3']);
+    expect(which.length).toBeGreaterThan(0);
+    for (const question of which) {
+      expect(sortedOptions(question)).toEqual(['Kumite 1', 'Kumite 2', 'Kumite 3']);
+    }
   });
 
   it('never reaches beyond the range while the range can supply the wrong answers', () => {
@@ -420,11 +483,11 @@ describe('a kumite question offers four distinct options for any range', () => {
     ];
 
     const round = kumiteRound({ kumite, upTo: 1, random: noShuffle });
-    const next = round.questions.filter((question) => NEXT_HINTS.includes(question.hint));
+    const next = [...askedWithHint(round, OPENS_WITH), ...askedWithHint(round, WHAT_COMES_NEXT)];
 
     expect(next).toHaveLength(3);
     for (const question of next) {
-      expect(question.options, `"${question.prompt}"`).toHaveLength(4);
+      expect(sortedOptions(question), `"${question.prompt}"`).toHaveLength(4);
       expect(new Set(question.options).size, `"${question.prompt}" repeats an option`).toBe(4);
       expect(question.options).toContain(question.correct);
     }
