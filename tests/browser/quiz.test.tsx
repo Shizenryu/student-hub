@@ -158,6 +158,20 @@ describe('answering a question', () => {
     expect(textOf('.streak')).toBe('\u{1F525} 3 in a row!');
   });
 
+  test('keeps the run line through Next, onto the next unanswered question', async () => {
+    // The run is the round's, not the answer's: earned on question three, it is
+    // still showing while question four waits — which is what the legacy page did,
+    // and what a new round (not "Next") is what clears.
+    await startLevel('Beginner');
+    for (const _ of [0, 1, 2]) {
+      await answer(0);
+      await pressNext();
+    }
+
+    expect(textOf('.qcount')).toBe('QUESTION 4 / 10SCORE 3');
+    expect(textOf('.streak')).toBe('\u{1F525} 3 in a row!');
+  });
+
   test('a wrong answer ends the run', async () => {
     await startLevel('Beginner');
     for (const _ of [0, 1, 2]) {
@@ -281,6 +295,16 @@ describe('a short round counts to its own length', () => {
     expect(textOf('.qcount')).toBe('QUESTION 2 / 4SCORE 1');
     // One of four: the bar is drawn against the same total as the counter.
     expect(document.querySelector<HTMLElement>('.progress div')?.style.width).toBe('25%');
+  });
+
+  test('counts a kumite round to its own length too', async () => {
+    // One sequence of three steps yields five questions: three "next", one
+    // "which", one "side". Both modes count and score against the same number.
+    const screen = await render(<Quiz terms={TERMS} kumite={KUMITE.slice(0, 1)} maxims={MAXIMS} />);
+    await screen.getByRole('button', { name: 'Kumite 1–6' }).click();
+    await settle();
+
+    expect(textOf('.qcount')).toBe('QUESTION 1 / 5SCORE 0');
   });
 
   test('and scores out of four, which is what the student actually answered', async () => {

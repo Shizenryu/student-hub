@@ -241,12 +241,22 @@ describe('grading a card', () => {
 });
 
 describe('finishing a deck', () => {
+  // Grading is always flip-then-verdict; one helper says so once.
+  const grade = async (screen: Awaited<ReturnType<typeof startSmallestDeck>>, verdict: 'Again' | 'Got it') => {
+    await flipCard();
+    await screen.getByRole('button', { name: verdict }).click();
+  };
+  const gradeTimes = async (
+    screen: Awaited<ReturnType<typeof startSmallestDeck>>,
+    verdict: 'Again' | 'Got it',
+    times: number,
+  ) => {
+    for (const _ of Array.from({ length: times })) await grade(screen, verdict);
+  };
+
   const finishDeck = async () => {
     const screen = await startSmallestDeck();
-    for (let remaining = smallestDeck.cards.length; remaining > 0; remaining--) {
-      await flipCard();
-      await screen.getByRole('button', { name: 'Got it' }).click();
-    }
+    await gradeTimes(screen, 'Got it', smallestDeck.cards.length);
     return screen;
   };
 
@@ -266,33 +276,21 @@ describe('finishing a deck', () => {
 
   test('counts the cards that needed a second look', async () => {
     const screen = await startSmallestDeck();
-    await flipCard();
-    await screen.getByRole('button', { name: 'Again' }).click();
-    for (let remaining = smallestDeck.cards.length; remaining > 0; remaining--) {
-      await flipCard();
-      await screen.getByRole('button', { name: 'Got it' }).click();
-    }
+    await grade(screen, 'Again');
+    await gradeTimes(screen, 'Got it', smallestDeck.cards.length);
 
     await expect.element(screen.getByText(/1 card needed a second look/)).toBeVisible();
   });
 
   test('counts a card missed three times as one card, not three', async () => {
-    const screen = await startSmallestDeck();
     // Miss the first card, get the other eight, then miss the first card twice
     // more as it comes back, then get it. One card needed the second look —
     // three times — and the sentence counts cards, not presses of Again.
-    await flipCard();
-    await screen.getByRole('button', { name: 'Again' }).click();
-    for (let others = smallestDeck.cards.length - 1; others > 0; others--) {
-      await flipCard();
-      await screen.getByRole('button', { name: 'Got it' }).click();
-    }
-    for (let miss = 0; miss < 2; miss++) {
-      await flipCard();
-      await screen.getByRole('button', { name: 'Again' }).click();
-    }
-    await flipCard();
-    await screen.getByRole('button', { name: 'Got it' }).click();
+    const screen = await startSmallestDeck();
+    await grade(screen, 'Again');
+    await gradeTimes(screen, 'Got it', smallestDeck.cards.length - 1);
+    await gradeTimes(screen, 'Again', 2);
+    await grade(screen, 'Got it');
 
     await expect.element(screen.getByText(/1 card needed a second look/)).toBeVisible();
   });
