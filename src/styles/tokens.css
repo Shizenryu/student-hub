@@ -1,51 +1,52 @@
-/* The Shizenryu design system: every colour, radius, shadow, width and shell
-   spacing the site uses, and the only place any of them is written. The values
-   began as a transcription of the hand-written pages; where those pages
-   disagreed with each other, one value was chosen and every page took it.
-   tests/unit/tokens.test.ts pins each token, and tests/unit/design-drift.test.ts
-   fails on a colour or radius literal anywhere a rule could use one instead. */
+/* Shizenryu design tokens.
+
+   GENERATED FROM tokens.json BY scripts/build-tokens.mjs — do not edit this
+   file. Change tokens.json and run `npm run build`; CI fails if the two
+   disagree.
+
+   This file is vendored into every consuming repository byte for byte and
+   pinned there by checksum. If you are reading it inside a site, you are
+   reading a copy: the original lives in the design-system repository, and
+   editing it here will fail that site's own checksum test.
+
+   Why a value is what it is: guidelines/ in the design-system repository. */
+
 :root {
+  /* Brand, state and surface colours. Every one of them is used; see
+     guidelines/30-contrast.md before pairing two as text on a ground. */
   --red: #C8102E;
   --dark: #161616;
   --paper: #faf7f2;
   --gold: #9A7D00;
   --good: #1e8a4c;
   --bad: #c0392b;
-
   --ink: #222;
   --ink-soft: #444;
   --muted: #888;
   --muted-light: #999;
   --faint: #bbb;
   --rule: #f0ebe2;
-
   --surface: #fff;
   --surface-warm: #fbf7f1;
-  /* Text on a coloured tile, level, deck or button. Not --surface: that is a
-     background, and a page reading `color: var(--surface)` says the wrong thing. */
   --on-colour: #fff;
-
-  /* The one border colour, and the two tints an answer or a tile turns when it
-     is right or wrong. --good and --bad are the strong forms above. */
   --line: #e5e0d8;
   --good-tint: #e9f7ef;
   --bad-tint: #fdecea;
-
   --track-adult: #0072CE;
   --track-junior: #ED8B00;
 
+  /* Four radii, by role. */
   --radius-card: 14px;
   --radius-control: 10px;
   --radius-banner: 12px;
   --radius-tag: 6px;
 
+  /* One shadow. Only a card, a nav tile, a document row and the home
+     maxim carry it. */
   --shadow-card: 0 2px 10px rgba(0, 0, 0, .08);
 
-  --font-stack: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
-
-  /* The shell's spacing scale: what the page frame, the header, the cards and
-     the footer are spaced by. A page's own rhythm — tile gaps, row padding —
-     is that page's business and may sit off this scale. */
+  /* The shell scale: space-N is 4N pixels. 1 to 10 are the student
+     hub’s; 12 to 20 are the marketing band rhythm. */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -54,10 +55,16 @@
   --space-6: 24px;
   --space-8: 32px;
   --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
 
-  /* The one column width. The hand-written pages had three (480, 520, 560);
-     520 is the middle and the one most of them used, and on a phone none of
-     the three ever applied. tests/build/page-shell.test.ts holds every page
-     to the bare shell, so a page cannot ask for another. */
+  /* Three widths. The two breakpoints are literals in the
+     stylesheets — a media query cannot read a custom property. */
   --app-max: 520px;
+  --page-max: 1080px;
+  --band-max: 1440px;
+
+  /* Type. One system stack, on both sites: no web font is loaded.*/
+  --font-stack: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
 }

@@ -3,14 +3,16 @@ import { describe, expect, it } from 'vitest';
 
 import { GRADES } from '../../src/data';
 
-const BELTS_CSS_PATH = 'src/styles/belts.css';
+const BELTS_CSS_PATH = 'src/styles/base.css';
 
 // grades.json is the source of truth for belt colour. This reads the actual
 // stylesheet content and compares it against GRADES itself — never against a
-// second hardcoded list — so belts.css cannot silently drift from the data it
-// transcribes. See CLAUDE.md: comparing one literal against another proves
+// second hardcoded list — so the palette cannot silently drift from the data it
+// transcribes. The stylesheet is base.css, vendored from the design-system
+// repository: this repository owns the data, so this repository is where a
+// vendored palette that disagrees with it has to fail. See CLAUDE.md: comparing one literal against another proves
 // nothing, and this project has shipped that mistake before.
-describe('belts.css carries every belt\'s exact colour from grades.json', () => {
+describe('base.css carries every belt\'s exact colour from grades.json', () => {
   it.each(GRADES.map((grade) => grade.slug))('%s has a matching rule', async (slug) => {
     const grade = GRADES.find((entry) => entry.slug === slug);
     expect(grade).toBeDefined();

@@ -1,0 +1,5 @@
+# Shizenryu design system, pinned at v1.0.1.
+# Written by the design system’s scripts/sync.mjs. Do not edit these files
+# here — change them in the design-system repository and sync again.
+8c5166ff1bef9afe9680e3c2417ef3fd555c7e136a7944fc28e5b32eaa64c8b4  src/styles/tokens.css
+73bc19ceea17c785fefa2ee5ef71576aa915d84fd294708f2112b89ae49251cf  src/styles/base.css
