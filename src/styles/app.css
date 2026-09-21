@@ -112,7 +112,7 @@ header {
    its own size — see .app--quiz .intro above. */
 .intro {
   font-size: .85rem;
-  color: #666;
+  color: var(--muted);
   margin-bottom: 14px;
   text-align: center;
 }

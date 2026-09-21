@@ -6,18 +6,34 @@ const TOKENS_PATH = 'src/styles/tokens.css';
 const SRC_DIR = 'src';
 const SCANNED_EXTENSIONS = ['.css', '.astro'];
 
-// Transcribed from the hand-written pages before migration. If a value here has to
-// change, the rendered site changed too — which during this slice means a bug.
+// The design system, whole: every token and its value, as slice 9 settled them.
+// A value here changing means the site looks different — which is fine, but it is
+// a decision to show on a before/after sheet, not a side effect to discover.
 const REQUIRED_TOKENS: ReadonlyArray<readonly [name: string, value: string]> = [
   ['--red', '#C8102E'],
   ['--dark', '#161616'],
   ['--paper', '#faf7f2'],
   ['--gold', '#9A7D00'],
+  ['--good', '#1e8a4c'],
+  ['--bad', '#c0392b'],
+  ['--ink', '#222'],
+  ['--ink-soft', '#444'],
+  ['--muted', '#888'],
+  ['--muted-light', '#999'],
+  ['--faint', '#bbb'],
+  ['--rule', '#f0ebe2'],
+  ['--surface', '#fff'],
+  ['--surface-warm', '#fbf7f1'],
+  ['--on-colour', '#fff'],
+  ['--line', '#e5e0d8'],
+  ['--good-tint', '#e9f7ef'],
+  ['--bad-tint', '#fdecea'],
   ['--track-adult', '#0072CE'],
   ['--track-junior', '#ED8B00'],
-  ['--rule', '#f0ebe2'],
-  ['--surface-warm', '#fbf7f1'],
   ['--radius-card', '14px'],
+  ['--radius-control', '10px'],
+  ['--radius-banner', '12px'],
+  ['--radius-tag', '6px'],
   ['--shadow-card', '0 2px 10px rgba(0, 0, 0, .08)'],
   ['--app-max', '520px'],
 ];

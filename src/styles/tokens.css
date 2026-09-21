@@ -22,6 +22,15 @@
 
   --surface: #fff;
   --surface-warm: #fbf7f1;
+  /* Text on a coloured tile, level, deck or button. Not --surface: that is a
+     background, and a page reading `color: var(--surface)` says the wrong thing. */
+  --on-colour: #fff;
+
+  /* The one border colour, and the two tints an answer or a tile turns when it
+     is right or wrong. --good and --bad are the strong forms above. */
+  --line: #e5e0d8;
+  --good-tint: #e9f7ef;
+  --bad-tint: #fdecea;
 
   --track-adult: #0072CE;
   --track-junior: #ED8B00;

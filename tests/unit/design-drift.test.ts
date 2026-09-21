@@ -37,21 +37,10 @@ const ALLOWED_RADII: Readonly<Record<string, readonly string[]>> = {
 // here rather than allowed, so that nothing new can hide among them: a literal
 // not in tokens.css, not allowed, and not on this list fails the build.
 const DRIFT_STILL_TO_REMOVE: Readonly<Record<string, readonly string[]>> = {
-  'src/components/KataGuide.astro': ['#333', '#555'],
   'src/pages/404.astro': ['#faf7f2', '#222', '#161616', '#C8102E', '#555', '#999'],
-  'src/pages/index.astro': ['#555', '#fff', '#f4efe7', 'rgba(0, 0, 0, .06)', 'rgba(0, 0, 0, .10)', 'rgba(0, 0, 0, .07)'],
-  'src/styles/app.css': ['#666'],
-  'src/styles/flashcards.css': ['#fff', '#f5f1ea', '#777', 'rgba(0, 0, 0, .10)'],
-  'src/styles/practice.css': ['#e5e0d8', '#e9f7ef', '#fff', '#777', '#555'],
-  'src/styles/quiz.css': ['#fff', '#eee', '#e5e0d8', '#e9f7ef', '#fdecea', '#b07d00', '#555'],
 };
 
-const DRIFT_RADII_STILL_TO_REMOVE: Readonly<Record<string, readonly string[]>> = {
-  'src/components/BeltGuide.astro': ['0 10px 10px 0'],
-  'src/components/KataGuide.astro': ['0 10px 10px 0'],
-  'src/styles/practice.css': ['12px'],
-  'src/styles/quiz.css': ['0 8px 8px 0'],
-};
+const DRIFT_RADII_STILL_TO_REMOVE: Readonly<Record<string, readonly string[]>> = {};
 
 const stripComments = (source: string): string =>
   source

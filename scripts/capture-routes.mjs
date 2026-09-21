@@ -24,8 +24,13 @@ import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { extname, join, relative, sep } from 'node:path';
 import { chromium } from 'playwright';
 
-const VIEWPORT = { width: 390, height: 900 };
-const SCALE = 2;
+// A phone, where the site is used, and a tablet, where the column width and
+// anything that depends on it can actually be seen — on a phone every page is
+// narrower than any column the site has ever had.
+const VIEWPORTS = [
+  { name: 'phone', width: 390, height: 900, scale: 2 },
+  { name: 'tablet', width: 768, height: 1024, scale: 1 },
+];
 const OUT = join('dist', '__visual');
 
 const [beforeDir, afterDir] = process.argv.slice(2);
@@ -64,7 +69,8 @@ const routesIn = (dir) =>
     .map((file) => (file === '/404.html' ? file : file.replace(/index\.html$/, '')))
     .sort();
 
-const fileNameFor = (route) => `${route.replace(/^\//, '').replace(/\/$/, '').replace(/\//g, '__') || 'home'}.png`;
+const fileNameFor = (route, viewport) =>
+  `${viewport.name}__${route.replace(/^\//, '').replace(/\/$/, '').replace(/\//g, '__') || 'home'}.png`;
 
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex').slice(0, 12);
 
@@ -91,14 +97,16 @@ const sheet = (rows) => `<!DOCTYPE html>
   code { font-size: 12px; }
 </style></head><body>
 <h1>Before and after — every route</h1>
-<p>${rows.filter((r) => r.changed).length} of ${rows.length} routes changed. Left: before. Right: after. Full page at 390×900 @2x.</p>
+<p>${rows.filter((r) => r.changed).length} of ${rows.length} captures changed. Left: before. Right: after. Phone is 390×900 @2x; tablet is 768×1024.</p>
 ${rows
   .map(
-    (r) => `<div class="row"><div><strong>${escapeHtml(r.route)}</strong><br><span class="${r.changed ? 'changed' : 'same'}">${
-      r.changed ? 'CHANGED' : 'identical'
-    }</span><br><code>${r.before} → ${r.after}</code></div><img src="before/${r.file}" alt="before ${escapeHtml(
-      r.route,
-    )}"><img src="after/${r.file}" alt="after ${escapeHtml(r.route)}"></div>`,
+    (r) => `<div class="row"><div><strong>${escapeHtml(r.route)}</strong> <small>${r.viewport}</small><br><span class="${
+      r.changed ? 'changed' : 'same'
+    }">${r.changed ? 'CHANGED' : 'identical'}</span><br><code>${r.before} → ${r.after}</code></div><img src="before/${
+      r.file
+    }" alt="before ${escapeHtml(r.route)} ${r.viewport}"><img src="after/${r.file}" alt="after ${escapeHtml(r.route)} ${
+      r.viewport
+    }"></div>`,
   )
   .join('\n')}
 </body></html>
@@ -110,21 +118,27 @@ mkdirSync(join(OUT, 'after'), { recursive: true });
 const before = await serve(beforeDir);
 const after = await serve(afterDir);
 const browser = await chromium.launch();
-const context = await browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: SCALE });
 
 const routes = [...new Set([...routesIn(beforeDir), ...routesIn(afterDir)])].sort();
 const rows = [];
-for (const route of routes) {
-  const file = fileNameFor(route);
-  const hashBefore = await capture(context, before.origin, route, join(OUT, 'before', file));
-  const hashAfter = await capture(context, after.origin, route, join(OUT, 'after', file));
-  const changed = hashBefore !== hashAfter;
-  rows.push({ route, file, before: hashBefore, after: hashAfter, changed });
-  console.log(`${changed ? 'CHANGED  ' : 'identical'}  ${route}`);
+for (const viewport of VIEWPORTS) {
+  const context = await browser.newContext({
+    viewport: { width: viewport.width, height: viewport.height },
+    deviceScaleFactor: viewport.scale,
+  });
+  for (const route of routes) {
+    const file = fileNameFor(route, viewport);
+    const hashBefore = await capture(context, before.origin, route, join(OUT, 'before', file));
+    const hashAfter = await capture(context, after.origin, route, join(OUT, 'after', file));
+    const changed = hashBefore !== hashAfter;
+    rows.push({ route, viewport: viewport.name, file, before: hashBefore, after: hashAfter, changed });
+    console.log(`${changed ? 'CHANGED  ' : 'identical'}  ${viewport.name.padEnd(6)}  ${route}`);
+  }
+  await context.close();
 }
 
 await browser.close();
 before.server.close();
 after.server.close();
 writeFileSync(join(OUT, 'index.html'), sheet(rows));
-console.log(`\n${rows.filter((r) => r.changed).length} of ${rows.length} routes changed — ${join(OUT, 'index.html')}`);
+console.log(`\n${rows.filter((r) => r.changed).length} of ${rows.length} captures changed — ${join(OUT, 'index.html')}`);
