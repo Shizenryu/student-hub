@@ -26,9 +26,10 @@ export type BuiltPage = {
 
 // Every page the build produced. The security suites in tests/build and
 // tests/deploy both enumerate the site from this one list, so a page one of
-// them checks is a page the other visits.
+// them checks is a page the other visits. A `__` folder under dist/ is a tool's
+// scratch output (compare-pixels, capture-routes), not a route.
 export async function builtPages(): Promise<readonly BuiltPage[]> {
-  const files = (await filesUnder('dist')).filter((file) => file.endsWith('.html'));
+  const files = (await filesUnder('dist')).filter((file) => file.endsWith('.html') && !file.startsWith('__'));
   if (files.length === 0) throw new Error('dist has no built pages — run `npm run build` first');
   return Promise.all(
     files.map(async (file) => ({

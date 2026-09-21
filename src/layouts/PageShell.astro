@@ -23,11 +23,10 @@ type Props = {
   description: string;
   heading?: string;
   subheading?: string;
-  width?: 'default' | 'narrow' | 'wide';
   variant?: 'inner' | 'home' | 'practice' | 'flashcards' | 'quiz';
 };
 
-const { title, description, heading, subheading, width, variant } = Astro.props;
+const { title, description, heading, subheading, variant } = Astro.props;
 
 // heading/subheading are optional only because a page may supply the header slot
 // instead. Nothing in the type system ties those two facts together, so a route
@@ -57,8 +56,6 @@ if (!Astro.slots.has('header') && (!heading || !subheading)) {
   class:list={[
     'app',
     {
-      'app--narrow': width === 'narrow',
-      'app--wide': width === 'wide',
       'app--home': variant === 'home',
       'app--practice': variant === 'practice',
       'app--flashcards': variant === 'flashcards',

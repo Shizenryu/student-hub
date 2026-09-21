@@ -35,10 +35,9 @@
 
   --font-stack: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
 
-  /* Default .app width. Most legacy pages use 520px; PageShell's optional
-     `width?: 'default' | 'wide'` prop overrides this per-instance (belts.html
-     and kata.html use 560px) by applying the .app--wide modifier class in
-     app.css, not an inline style — a plain CSS class stays compatible with
-     the CSP this site adopts later. */
+  /* The one column width. The hand-written pages had three (480, 520, 560);
+     520 is the middle and the one most of them used, and on a phone none of
+     the three ever applied. tests/build/page-shell.test.ts holds every page
+     to the bare shell, so a page cannot ask for another. */
   --app-max: 520px;
 }

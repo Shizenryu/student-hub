@@ -20,16 +20,8 @@ body {
 
 .app {
   width: 100%;
-  max-width: var(--app-max, 520px);
+  max-width: var(--app-max);
   padding: 20px 16px 40px;
-}
-
-.app--narrow {
-  --app-max: 480px;
-}
-
-.app--wide {
-  --app-max: 560px;
 }
 
 /* The flashcards page's subheading is gold where every other page's is red. A
