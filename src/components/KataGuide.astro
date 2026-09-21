@@ -6,7 +6,7 @@
 // Section prose comes from the kata content collection (src/content/kata/) as
 // one flowing rendered document, not the per-section {h, b} pairs in
 // src/data/kata.json — see this task's brief for why the DOM can no longer
-// match the original section-by-section, and src/styles/kata.css's ".prose"
+// match the original section-by-section, and this component's own ".prose"
 // rules below for how the original .body spacing is reproduced anyway. All
 // other fields (name, translation, hex, white, quote, match) still come from
 // src/data/kata.json, the same source belts.html's migration used for GRADES.
@@ -14,14 +14,13 @@
 // The original never reads k.white — .kata-btn and .banner hardcode
 // color:#fff in the CSS regardless of what the data says. This component
 // does NOT reproduce that: text colour comes entirely from the kata-colour
-// class (src/styles/kata.css), derived from `white` via textColorForWhite,
-// same as belts.css. Every kata in kata.json today is white:true, so the
+// class (src/styles/base.css), derived from `white` via textColorForWhite,
+// same as the belt palette beside it. Every kata in kata.json today is white:true, so the
 // rendered output is byte-identical to the original's hardcoded value —
 // deriving it honestly costs nothing today, and means a future white:false
 // kata renders correctly instead of shipping unreadable white-on-light text.
 import { getEntry, render } from 'astro:content';
 import { SYLLABUS, type Kata } from '../data';
-import '../styles/kata.css';
 
 type Props = {
   kata: Kata;

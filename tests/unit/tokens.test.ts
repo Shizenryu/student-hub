@@ -9,6 +9,12 @@ const SCANNED_EXTENSIONS = ['.css', '.astro'];
 // The design system, whole: every token and its value, as slice 9 settled them.
 // A value here changing means the site looks different — which is fine, but it is
 // a decision to show on a before/after sheet, not a side effect to discover.
+//
+// DEFER(design-system): this list is now a third copy — the design-system
+// repository pins the same values, and tests/build/design-system.test.ts pins
+// every byte of the file they are written in, which is strictly stronger. Drop
+// REQUIRED_TOKENS once that repository's CI is running, and keep the scan
+// below: that one is about this site's own stylesheets, not the shared values.
 const REQUIRED_TOKENS: ReadonlyArray<readonly [name: string, value: string]> = [
   ['--red', '#C8102E'],
   ['--dark', '#161616'],

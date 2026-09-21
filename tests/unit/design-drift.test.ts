@@ -30,8 +30,6 @@ const ALLOWED: Readonly<Record<string, readonly string[]>> = {
   // are still derived from the data here rather than from the stylesheet, so a
   // vendored file that drifted from grades.json fails in this repository.
   'src/styles/base.css': [...palette(GRADES), ...palette(KATA)],
-  'src/styles/belts.css': palette(GRADES),
-  'src/styles/kata.css': palette(KATA),
   'src/styles/flashcards.css': ['#C8102E', '#161616', '#00843D', '#0072CE', '#702F8A', '#8B5A2B', '#9A7D00'],
   'src/styles/quiz.css': ['#C8102E', '#ED8B00', '#d4b100', '#00843D', '#0072CE', '#702F8A', '#8B5A2B', '#161616'],
   'src/pages/index.astro': ['#00843D', '#8B0A20', '#3a3a3a', '#6B3F1D', '#702F8A'],

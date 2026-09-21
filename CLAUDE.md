@@ -90,7 +90,8 @@ src/
 ├── components/      shared pieces a route composes, e.g. BeltGuide.astro,
 │                    KataGuide.astro, and BeltBanner.astro — a belt's banner,
 │                    which the belt guides and /kumite both open a belt with
-│                    (it imports belts.css itself). kumite-labels.ts is
+│                    (its colour comes from base.css, loaded by the shell).
+│                    kumite-labels.ts is
 │                    /kumite's one pure function. Practice.tsx, Flashcards.tsx and Quiz.tsx
 │                    are the three React islands; practice-labels.ts,
 │                    flashcards-labels.ts and quiz-labels.ts hold their strings
@@ -109,9 +110,11 @@ src/
 │                    that wants to differ has no vocabulary for it here —
 │                    tests/build/page-shell.test.ts holds every page, the 404
 │                    included, to the bare `<div class="app">`
-├── styles/          tokens.css (design tokens, the source of truth for colours,
-│                    radii and widths) and app.css (shell/reset styles); routes
-│                    and components add their own scoped <style> alongside this
+├── styles/          tokens.css and base.css are VENDORED from the
+│                    design-system repository and pinned by
+│                    tests/build/design-system.sha256 — do not edit them here.
+│                    app.css is this site's own shell. Routes and components add
+│                    their own scoped <style> alongside these
 ├── data/           typed content, and since slice 6 the ONLY copy of it —
                     src/data/index.ts is the module pages import content from,
                     the JSON files behind it, plus integrity.ts and kata-prose.ts
@@ -335,16 +338,42 @@ for a static route. Nothing new belongs in `public/`, which holds no pages at al
 
 ## Design system
 
-`src/styles/tokens.css` is the design system and the only place a colour, radius,
-shadow, width or shell spacing is written. `tests/unit/tokens.test.ts` pins every
-token and its value; `tests/unit/design-drift.test.ts` fails `npm test` (and so the
-PR gate) on a colour or radius literal in any rule that could use a token instead,
-comments excepted.
-The only literals a rule may carry are the palettes that mirror data — belt
-colours in `belts.css`, kata colours in `kata.css`, deck colours d1–d7 in
-`flashcards.css`, the quiz level gradients b1–b5 in `quiz.css`, the home tiles'
-four gradient stops — plus two named shapes (the quiz progress track's 4px, the
-practice day dot's 50%). Add a value by adding a token.
+**The design system is not written here any more.** It lives in its own
+repository, because the marketing site is maintained by someone else and a
+shared layer cannot live in a repository whose owner is not the other site's
+owner. Two files arrive from it, byte for byte:
+
+- `src/styles/tokens.css` — every colour, radius, shadow, width and shell
+  spacing, generated there from `tokens.json`.
+- `src/styles/base.css` — what both sites share: the reset, the body rule,
+  `.card`, `.tag`, the `.panel` shape, the focus ring, and the belt and kata
+  palettes.
+
+`tests/build/design-system.test.ts` fails if either is edited here. **Do not
+edit them here.** Change the value in the design-system repository, run its
+`scripts/sync.mjs`, and commit the result — which rewrites
+`tests/build/design-system.sha256` with the new hashes and the version they
+came from. A value change makes the marketing site look different too, so it
+arrives there with a contact sheet from both sites.
+
+If you need a token that does not exist and cannot wait for that review, write
+the literal in this site's own stylesheet with a `DEFER(tokens):` comment
+naming what it should become, and open a pull request against the design system
+at the same time. Do not widen `design-drift.test.ts`'s allowance list to hide
+it — that list is how a shared system stops being shared.
+
+`src/styles/app.css` and the page stylesheets are this site's own, and the
+guards on them stay: `tests/unit/tokens.test.ts` proves every `var(--…)` a
+stylesheet references is defined; `tests/unit/design-drift.test.ts` fails
+`npm test` (and so the PR gate) on a colour or radius literal in any rule that
+could use a token instead, comments excepted.
+The only literals a rule may carry are the palettes that mirror data — belt and
+kata colours in `base.css`, deck colours d1–d7 in `flashcards.css`, the quiz
+level gradients b1–b5 in `quiz.css`, the home tiles' four gradient stops — plus
+two named shapes (the quiz progress track's 4px, the practice day dot's 50%).
+`belt-colours.test.ts` and `kata-colours.test.ts` pin the two palettes to
+`grades.json` and `kata.json`: this repository owns that data, so this is where
+a vendored palette that disagrees with it has to fail.
 
 - Brand: red `#C8102E`, dark `#161616`, paper `#faf7f2`, gold `#9A7D00` (the one
   gold), good `#1e8a4c`, bad `#c0392b`; their tints `--good-tint` `#e9f7ef` and
@@ -359,6 +388,8 @@ practice day dot's 50%). Add a value by adding a token.
   `#ED8B00`, yellow `#E3BC00`, green `#00843D`, blue `#0072CE`, purple `#702F8A`,
   three browns `#8B5A2B` / `#7A4A21` / `#6B3F1D`, black `#1A1A1A`
 - Radii: card 14px, control 10px, banner 12px, tag 6px. One shadow, `--shadow-card`.
+- `--page-max`, `--band-max` and `--space-12` through `--space-20` arrive with
+  the shared tokens and belong to the marketing site; nothing here uses them.
 - One column, `--app-max: 520px`, on every page. The shell — frame, header, cards,
   chip, lede, footer — is spaced on `--space-1`…`--space-10` (4, 8, 12, 16, 20, 24,
   32, 40px); a page's own rhythm inside a card may sit off the scale.
