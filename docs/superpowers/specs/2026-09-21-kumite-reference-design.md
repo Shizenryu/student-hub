@@ -59,7 +59,8 @@ Two facts the guard surfaced when written against the real content:
 
 The page therefore shows `steps[0]` as the attack and the rest as the responses — not by
 parsing arrows, but because the data is in that order and the guard says the syllabus
-agrees. One small function, `kumiteSequence()`, is the only place that reading is written.
+agrees. `kumiteSequence()` in `src/data` is where the page takes that reading from; the
+quiz has always read step 0 the same way for its "opens with…" question.
 
 **Wording** (the page's own, each with its source):
 
@@ -69,7 +70,7 @@ agrees. One small function, `kumiteSequence()`, is the only place that reading i
 | "Each is one attack and the responses to it." | the notation, as confirmed |
 | "Attack" / "Response" labels | "The attack that starts it" is already the quiz's hint; "response" is Rich's word for `>>` |
 | "OS — opposite side", "SS — same side" | the quiz's side question: "Same side (SS) or opposite side (OS)?" |
-| Banner sub-label "KIHON KUMITE" | the syllabus section name |
+| Banner sub-label "KUMITE" | the syllabus section name, shortened to its second word so the wider belt names ("ORANGE BELT · 8TH KYU") do not wrap beside it on a phone |
 
 No "sparring", no "worked on", no description of what any technique is.
 
@@ -82,17 +83,17 @@ Kihon Kumite 1–12
 [lede] The twelve Kihon Kumite — basic partner work — in the order they are learned.
 Each is one attack and the responses to it. OS — opposite side. SS — same side.
 
-┌ RED BELT · 9TH KYU ─────── KIHON KUMITE   (the belt guide's banner, its colour)
+┌ RED BELT · 9TH KYU ─────── KUMITE   (the belt guide's banner, its colour)
 │ Kumite 1   OS · opposite side              id="kumite-1"
 │   Attack    jun-zuki
 │   Response  uchi-uke  »  gyaku-zuki
-┌ ORANGE BELT · 8TH KYU ───── KIHON KUMITE
+┌ ORANGE BELT · 8TH KYU ───── KUMITE
 │ Kumite 2   OS · opposite side
 …
-┌ BROWN BELT · 3RD KYU ────── KIHON KUMITE
+┌ BROWN BELT · 3RD KYU ────── KUMITE
 │ Kumite 11  SS · same side
 │ Kumite 12  SS · same side
-┌ BROWN BELT · 2ND KYU ────── KIHON KUMITE
+┌ BROWN BELT · 2ND KYU ────── KUMITE
 │ Kumite 1 to 12 — Show variations (Ohyo Kumite)
 ← Shizenryu home
 ```
@@ -101,7 +102,8 @@ Each is one attack and the responses to it. OS — opposite side. SS — same si
   `belts.css`'s `.belt-colour[data-slug]` rule (that file holds nothing else, so importing it
   leaks nothing). The banner's shape today lives in `BeltGuide.astro`'s scoped styles, so it
   is extracted into a `BeltBanner.astro` component both pages use, with the sub-label as a
-  prop ("STUDY GUIDE" on a belt guide, "KIHON KUMITE" here).
+  prop ("STUDY GUIDE" on a belt guide, "KUMITE" here). The component imports `belts.css`
+  itself, so a page that renders a banner gets the colour with it.
 - One block per kumite with `id="kumite-N"`, so any page can link to a sequence by number.
   Nothing links to the anchors in this slice; they cost nothing and the belt guides may use
   them later.

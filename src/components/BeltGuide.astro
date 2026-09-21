@@ -4,7 +4,7 @@
 // see that file's <style> block and openBelt() for the source of truth.
 import { SYLLABUS, termsForTier, type Grade, type SyllabusItem } from '../data';
 import { expandAbbreviations } from '../data/display';
-import '../styles/belts.css';
+import BeltBanner from './BeltBanner.astro';
 
 type Props = {
   grade: Grade;
@@ -34,10 +34,7 @@ const renderRows: readonly RenderRow[] = SYLLABUS.filter((item) => item.grade ==
 const terms = termsForTier(grade.tier);
 ---
 
-<div class="banner belt-colour" data-slug={grade.slug}>
-  <div><div class="t">{grade.banner}</div></div>
-  <div class="s">STUDY GUIDE</div>
-</div>
+<BeltBanner grade={grade} label="STUDY GUIDE" />
 <div class="card">
   <h2>What you will learn</h2>
   <div class="items">
@@ -95,27 +92,6 @@ const terms = termsForTier(grade.tier);
 </div>
 
 <style>
-  .banner {
-    border-radius: var(--radius-banner);
-    padding: 16px 18px;
-    margin-bottom: 14px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .banner .t {
-    font-size: 1.2rem;
-    font-weight: 800;
-    letter-spacing: .04em;
-  }
-
-  .banner .s {
-    font-size: .65rem;
-    letter-spacing: .18em;
-    opacity: .85;
-  }
-
   h2 {
     font-size: .78rem;
     letter-spacing: .2em;

@@ -58,13 +58,23 @@ const practiceActivity = (overrides: Partial<PracticeActivity> = {}): PracticeAc
   ...overrides,
 });
 
+// The syllabus row a kumite must agree with: same number and side in the item,
+// the belt as the grade, and the steps as `attack >>> response >> response`.
+const kihonKumiteRow = (overrides: Partial<SyllabusItem> = {}): SyllabusItem =>
+  syllabusItem({
+    section: 'Kihon Kumite',
+    item: 'Kumite 1 (OS)',
+    detail: 'jun-zuki >>> uchi-uke >> gyaku-zuki',
+    ...overrides,
+  });
+
 const validContent = (overrides: Partial<ContentBundle> = {}): ContentBundle => ({
   terms: { '1': [['osu', 'push']] },
   maxims: ['Discipline first.'],
-  kumite: [kumiteBout()],
+  kumite: [kumiteBout({ steps: ['jun-zuki', 'uchi-uke', 'gyaku-zuki'] })],
   decks: [deck()],
   grades: [grade()],
-  syllabus: [syllabusItem()],
+  syllabus: [syllabusItem(), kihonKumiteRow()],
   kata: [kata()],
   practice: [practiceActivity()],
   ...overrides,
@@ -150,7 +160,7 @@ describe('content cross-references hold', () => {
 
   it('accepts a kata whose match needle appears only in a syllabus row detail', () => {
     const content = validContent({
-      syllabus: [syllabusItem({ section: 'Kihon', item: 'Jun-zuki', detail: 'Only findable here' })],
+      syllabus: [syllabusItem({ section: 'Kihon', item: 'Jun-zuki', detail: 'Only findable here' }), kihonKumiteRow()],
       kata: [kata({ match: ['findable'] })],
     });
     expect(() => assertContentIntegrity(content)).not.toThrow();
@@ -158,7 +168,7 @@ describe('content cross-references hold', () => {
 
   it('accepts a kata whose match needle appears only in a syllabus row item', () => {
     const content = validContent({
-      syllabus: [syllabusItem({ section: 'Kihon', item: 'Only-findable-here', detail: 'Straight punch' })],
+      syllabus: [syllabusItem({ section: 'Kihon', item: 'Only-findable-here', detail: 'Straight punch' }), kihonKumiteRow()],
       kata: [kata({ match: ['only-findable-here'] })],
     });
     expect(() => assertContentIntegrity(content)).not.toThrow();
@@ -179,8 +189,68 @@ describe('content cross-references hold', () => {
   });
 
   it('rejects a duplicate kumite number', () => {
-    const content = validContent({ kumite: [kumiteBout(), kumiteBout({ side: 'SS' })] });
+    const content = validContent({
+      kumite: [kumiteBout({ steps: ['jun-zuki', 'uchi-uke', 'gyaku-zuki'] }), kumiteBout({ side: 'SS' })],
+    });
     expect(() => assertContentIntegrity(content)).toThrow(/kumite number 1 is used more than once/);
+  });
+});
+
+// kumite.json and the syllabus rows are two copies of the same twelve sequences:
+// the quiz and /kumite read the first, the belt guides render the second. The
+// syllabus writes each as `attack >>> response >> response`; the data lists the
+// same tokens in the same order, attack first. Either copy edited alone fails
+// the build, naming the kumite.
+describe('every kumite agrees with its Kihon Kumite syllabus row', () => {
+  it('accepts a kumite whose steps, order, belt and side all match its row', () => {
+    expect(() => assertContentIntegrity(validContent())).not.toThrow();
+  });
+
+  it('matches the steps case-insensitively, as 11 and 12 differ only in capitals', () => {
+    const content = validContent({ syllabus: [syllabusItem(), kihonKumiteRow({ detail: 'Jun-zuki >>> Uchi-uke >> Gyaku-zuki' })] });
+    expect(() => assertContentIntegrity(content)).not.toThrow();
+  });
+
+  it('rejects a kumite with no Kihon Kumite row', () => {
+    const content = validContent({ syllabus: [syllabusItem()] });
+    expect(() => assertContentIntegrity(content)).toThrow(/kumite 1 has no "Kihon Kumite" syllabus row/);
+  });
+
+  it('rejects a kumite whose steps differ from its row', () => {
+    const content = validContent({ kumite: [kumiteBout({ steps: ['jun-zuki', 'uchi-uke', 'mae-geri'] })] });
+    expect(() => assertContentIntegrity(content)).toThrow(/kumite 1 steps differ from its syllabus row/);
+  });
+
+  it('rejects a kumite whose steps are in a different order from its row', () => {
+    const content = validContent({ kumite: [kumiteBout({ steps: ['uchi-uke', 'jun-zuki', 'gyaku-zuki'] })] });
+    expect(() => assertContentIntegrity(content)).toThrow(/kumite 1 steps differ from its syllabus row/);
+  });
+
+  it('rejects a kumite whose belt is not the row\'s grade', () => {
+    const content = validContent({
+      kumite: [kumiteBout({ belt: '8th Kyu', steps: ['jun-zuki', 'uchi-uke', 'gyaku-zuki'] })],
+    });
+    expect(() => assertContentIntegrity(content)).toThrow(/kumite 1 belt "8th Kyu" is not its syllabus row's "9th Kyu"/);
+  });
+
+  it('rejects a row not written as a sequence — no ">>>" between attack and responses', () => {
+    const content = validContent({ syllabus: [syllabusItem(), kihonKumiteRow({ detail: 'jun-zuki >> uchi-uke >> gyaku-zuki' })] });
+    expect(() => assertContentIntegrity(content)).toThrow(/kumite 1's syllabus row is not written as/);
+  });
+
+  it('rejects a row with a second ">>>", rather than dropping what follows it', () => {
+    const content = validContent({
+      kumite: [kumiteBout({ steps: ['jun-zuki', 'uchi-uke'] })],
+      syllabus: [syllabusItem(), kihonKumiteRow({ detail: 'jun-zuki >>> uchi-uke >>> gyaku-zuki' })],
+    });
+    expect(() => assertContentIntegrity(content)).toThrow(/kumite 1's syllabus row is not written as/);
+  });
+
+  it('rejects a kumite whose side is not the row\'s', () => {
+    const content = validContent({
+      kumite: [kumiteBout({ side: 'SS', steps: ['jun-zuki', 'uchi-uke', 'gyaku-zuki'] })],
+    });
+    expect(() => assertContentIntegrity(content)).toThrow(/kumite 1 side "SS" is not its syllabus row's "OS"/);
   });
 
   it('rejects two belts sharing a key', () => {

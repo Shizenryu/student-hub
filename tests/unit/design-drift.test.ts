@@ -29,7 +29,7 @@ const ALLOWED: Readonly<Record<string, readonly string[]>> = {
   'src/styles/kata.css': palette(KATA),
   'src/styles/flashcards.css': ['#C8102E', '#161616', '#00843D', '#0072CE', '#702F8A', '#8B5A2B', '#9A7D00'],
   'src/styles/quiz.css': ['#C8102E', '#ED8B00', '#d4b100', '#00843D', '#0072CE', '#702F8A', '#8B5A2B', '#161616'],
-  'src/pages/index.astro': ['#00843D', '#8B0A20', '#3a3a3a', '#6B3F1D'],
+  'src/pages/index.astro': ['#00843D', '#8B0A20', '#3a3a3a', '#6B3F1D', '#702F8A'],
 };
 
 const ALLOWED_RADII: Readonly<Record<string, readonly string[]>> = {
