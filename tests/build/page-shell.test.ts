@@ -24,4 +24,17 @@ describe('the page shell', () => {
       expect(shellClassOf(html), route).not.toMatch(/app--(narrow|wide)/);
     }
   });
+
+  it('is the bare shell on every page — no variant for spacing, headings or colour', () => {
+    for (const { route, html } of pages) {
+      expect(shellClassOf(html), route).toBe('app');
+    }
+  });
+
+  it('wraps the 404 page too, with the shared footer', () => {
+    const notFound = pages.find((page) => page.route === '/404.html');
+    expect(notFound).toBeDefined();
+    expect(notFound?.html).toContain('<div class="app">');
+    expect(notFound?.html).toContain('← Shizenryu home');
+  });
 });

@@ -10,8 +10,7 @@
    Every value comes from tokens.css, except the deck colours below, which are
    content transcribed into CSS and stay literal.
 
-   The chip, the lede and the roomier card are not here: they are shared rules in
-   app.css, because this is the second page to want each of them. */
+   The chip, the lede and the card are not here: they are the shell's, in app.css. */
 
 .decks {
   display: grid;

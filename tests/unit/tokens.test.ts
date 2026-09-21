@@ -36,6 +36,14 @@ const REQUIRED_TOKENS: ReadonlyArray<readonly [name: string, value: string]> = [
   ['--radius-tag', '6px'],
   ['--shadow-card', '0 2px 10px rgba(0, 0, 0, .08)'],
   ['--app-max', '520px'],
+  ['--space-1', '4px'],
+  ['--space-2', '8px'],
+  ['--space-3', '12px'],
+  ['--space-4', '16px'],
+  ['--space-5', '20px'],
+  ['--space-6', '24px'],
+  ['--space-8', '32px'],
+  ['--space-10', '40px'],
 ];
 
 describe('design tokens match the site as built by hand', () => {

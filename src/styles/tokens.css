@@ -44,6 +44,18 @@
 
   --font-stack: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
 
+  /* The shell's spacing scale: what the page frame, the header, the cards and
+     the footer are spaced by. A page's own rhythm — tile gaps, row padding —
+     is that page's business and may sit off this scale. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
   /* The one column width. The hand-written pages had three (480, 520, 560);
      520 is the middle and the one most of them used, and on a phone none of
      the three ever applied. tests/build/page-shell.test.ts holds every page

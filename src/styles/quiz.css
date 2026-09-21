@@ -11,10 +11,9 @@
    the belt palette transcribed into CSS and stay literal. The run line is --gold
    like every other gold on the site; the hand-written page used a lighter one.
 
-   The chip, the lede and the roomier card are not here: they are shared rules in
-   app.css. So are this page's three shell differences — a 480px column and a
-   slightly larger heading pair — which live with the .app--quiz variant, because
-   PageShell renders the elements they style. */
+   The chip, the lede and the card are not here: they are the shell's, in app.css.
+   The hand-written page had its own column width and heading sizes; it does
+   not any more. */
 
 .belts {
   display: grid;
@@ -62,7 +61,7 @@
 
 .modehead {
   font-size: .78rem;
-  letter-spacing: .15em;
+  letter-spacing: .2em;
   color: var(--muted-light);
   text-transform: uppercase;
   text-align: center;

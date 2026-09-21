@@ -32,16 +32,6 @@ const ALLOWED_RADII: Readonly<Record<string, readonly string[]>> = {
   'src/styles/practice.css': ['50%'],
 };
 
-// What slice 9 is removing, commit by commit. Each entry is a literal that a
-// rule still carries today; the list ends empty and is then deleted. Listed
-// here rather than allowed, so that nothing new can hide among them: a literal
-// not in tokens.css, not allowed, and not on this list fails the build.
-const DRIFT_STILL_TO_REMOVE: Readonly<Record<string, readonly string[]>> = {
-  'src/pages/404.astro': ['#faf7f2', '#222', '#161616', '#C8102E', '#555', '#999'],
-};
-
-const DRIFT_RADII_STILL_TO_REMOVE: Readonly<Record<string, readonly string[]>> = {};
-
 const stripComments = (source: string): string =>
   source
     .replace(/\/\*[\s\S]*?\*\//g, '')
@@ -78,21 +68,20 @@ describe('every colour in a rule is a token', () => {
     expect(paths).toContain('src/components/KataGuide.astro');
   });
 
-  it('finds no colour literal outside tokens.css that is not a data palette or still listed for removal', () => {
+  it('finds no colour literal outside tokens.css that is not a data palette', () => {
     const offences = styledFiles
       .filter((file) => file.path !== TOKENS)
       .flatMap((file) => {
         const allowed = permitted(ALLOWED, file.path);
-        const pending = permitted(DRIFT_STILL_TO_REMOVE, file.path);
         return [...new Set(coloursIn(file.source))]
-          .filter((literal) => !allowed.has(literal) && !pending.has(literal))
+          .filter((literal) => !allowed.has(literal))
           .map((literal) => `${file.path} uses ${literal}`);
       });
     expect(offences).toEqual([]);
   });
 
-  it('lists nothing for removal that has already been removed', () => {
-    const stale = Object.entries(DRIFT_STILL_TO_REMOVE).flatMap(([path, literals]) => {
+  it('allows nothing that is no longer there — a stale allowance is a standing permission', () => {
+    const stale = Object.entries(ALLOWED).flatMap(([path, literals]) => {
       const present = new Set(coloursIn(styledFiles.find((file) => file.path === path)?.source ?? ''));
       return literals.filter((literal) => !present.has(literal)).map((literal) => `${path} no longer uses ${literal}`);
     });
@@ -101,14 +90,13 @@ describe('every colour in a rule is a token', () => {
 });
 
 describe('every radius in a rule is a token', () => {
-  it('finds no radius literal that is not a named shape or still listed for removal', () => {
+  it('finds no radius literal that is not a named shape', () => {
     const offences = styledFiles
       .filter((file) => file.path !== TOKENS)
       .flatMap((file) => {
         const allowed = permitted(ALLOWED_RADII, file.path);
-        const pending = permitted(DRIFT_RADII_STILL_TO_REMOVE, file.path);
         return [...new Set(radiiIn(file.source))]
-          .filter((literal) => !allowed.has(literal) && !pending.has(literal))
+          .filter((literal) => !allowed.has(literal))
           .map((literal) => `${file.path} uses border-radius: ${literal}`);
       });
     expect(offences).toEqual([]);

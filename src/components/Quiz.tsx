@@ -281,7 +281,7 @@ export default function Quiz({ terms, kumite, maxims }: Props) {
 
   return (
     <>
-      <div className="card card-roomy">{body}</div>
+      <div className="card">{body}</div>
       <StreakChip streak={streak ?? NO_STREAK} />
     </>
   );

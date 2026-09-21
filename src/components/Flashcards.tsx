@@ -174,7 +174,7 @@ export default function Flashcards({ decks }: Props) {
 
   return (
     <>
-      <div className="card card-roomy">{body}</div>
+      <div className="card">{body}</div>
       <StreakChip streak={shownStreak} />
     </>
   );
