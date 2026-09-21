@@ -1,28 +1,23 @@
-/* The page shell every route wraps in: the reset, body, .app column, header,
-   card and footer, plus the three things more than one page shares — the
-   streak chip, the lede and the "← back" control. One shell, no variants: a
-   page cannot ask for its own width, spacing, heading size or colour, and
-   tests/build/page-shell.test.ts holds every built page to that. Page-specific
-   rules stay with the route or island that uses them. */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  -webkit-tap-highlight-color: transparent;
-}
+/* The page shell every route wraps in: the .app column, header and footer, plus
+   the three things more than one page shares — the streak chip, the lede and
+   the "← back" control. One shell, no variants: a page cannot ask for its own
+   width, spacing, heading size or colour, and tests/build/page-shell.test.ts
+   holds every built page to that. Page-specific rules stay with the route or
+   island that uses them.
 
-body {
-  font-family: var(--font-stack);
-  background: var(--paper);
-  color: var(--ink);
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-}
+   The reset, the body rule and .card are no longer here. They are shared with
+   the marketing site and live in base.css, which is vendored from the
+   design-system repository and pinned by tests/build/design-system.sha256.
+   This file holds what is the hub's alone. */
 
+/* The column centres itself rather than being centred by a flex body: a
+   max-width block with auto inline margins sits exactly where a flex item under
+   justify-content: center sat, and it leaves `body` free for a site that is not
+   one centred column. */
 .app {
   width: 100%;
   max-width: var(--app-max);
+  margin-inline: auto;
   padding: var(--space-5) var(--space-4) var(--space-10);
 }
 
@@ -105,14 +100,6 @@ header .sub {
 .kata-btn:active,
 .deck-btn:active {
   transform: scale(.97);
-}
-
-.card {
-  background: var(--surface);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
-  padding: var(--space-5);
-  margin-bottom: var(--space-4);
 }
 
 footer {

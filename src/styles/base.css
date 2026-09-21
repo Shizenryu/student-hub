@@ -1,0 +1,140 @@
+/* Shizenryu shared base.
+
+   Loaded after tokens.css, by both sites. It holds only what both would
+   otherwise build twice and what would look wrong if the two copies drifted:
+   the reset, the ground, the focus ring, the card, the tag, the panel shape,
+   and the belt and kata palettes.
+
+   It deliberately does NOT hold a page shell, a column width, a header, a
+   footer, a nav, a button or a form. Those differ between a 520px study tool
+   and a 1080px marketing site, and a shared rule that each site then has to
+   override is worse than no shared rule. Adding something here is a decision
+   about both sites at once: see guidelines/50-two-sites.md.
+
+   This file is vendored into every consuming repository byte for byte and
+   pinned there by checksum. If you are reading it inside a site, you are
+   reading a copy. */
+
+/* ── Reset and ground ───────────────────────────────────────────────── */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* min-height is the student hub's own, kept so that adopting this file is a
+   behavioural no-op there. It does nothing visible either way — a body
+   background propagates to the canvas whatever the body's height — but an
+   existing declaration is not dropped without a reason. */
+body {
+  font-family: var(--font-stack);
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+/* One ring, on both sites. 2px dark with a 2px offset, so the element's own
+   ground shows between the ring and the element and the ring stays legible on
+   paper, on a card, and on every coloured tile and band the system defines.
+   :focus-visible, so a thumb tap never draws it. */
+:focus-visible {
+  outline: 2px solid var(--dark);
+  outline-offset: 2px;
+}
+
+/* On a dark ground the ring inverts. A site adds its own dark contexts to this
+   selector list; these two are the ones the system itself defines. */
+.m-band--dark :focus-visible,
+.m-footer :focus-visible {
+  outline-color: var(--paper);
+}
+
+/* ── Card ───────────────────────────────────────────────────────────── */
+
+/* The one lifted surface. On the student hub it stacks down a 520px column; on
+   the marketing site it sits in a grid, where the grid's gap spaces it and the
+   bottom margin is dropped. */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-5);
+  margin-bottom: var(--space-4);
+}
+
+/* ── Tag: deliberately NOT here yet ─────────────────────────────────────
+
+   A track tag beside a syllabus item belongs in this file, and one day will.
+   It is held back because the student hub already has two scoped copies of
+   `.tag` that differ from each other: the belt guide's sets letter-spacing and
+   vertical-align, the kata guide's does not. A shared `.tag` does not override
+   either — scoped rules win on specificity — but it does supply the properties
+   the kata guide's copy leaves unset, which moves its tags.
+
+   Sharing a class name that two existing components already define differently
+   changes pixels on whichever of them is the leaner copy. So the order is:
+   normalise the hub's two tags first, as a change reviewed with pictures, then
+   move the rule here. Until then a site defines its own.
+
+   Both tags carry their word, so the two tracks are never told apart by colour
+   alone. That rule holds wherever the CSS lives. */
+
+/* ── Panel ──────────────────────────────────────────────────────────── */
+
+/* A quoted voice, set apart: a 4px left rule, square on the left and
+   radius-control on the right. That asymmetry is what makes a panel read as
+   inset rather than as another card, and it is the only asymmetric radius in
+   the system.
+   
+   The student hub's .mind, .maxim and .quote are this shape written out
+   longhand, from before it was shared. They are pixel-identical to .panel and
+   .panel--red; migrating them is a tidy-up for a release with a contact sheet,
+   not a fix. */
+.panel {
+  background: var(--surface-warm);
+  border-left: 4px solid var(--gold);
+  border-radius: 0 var(--radius-control) var(--radius-control) 0;
+  padding: 13px 15px;
+  font-size: .88rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.panel--red { border-left-color: var(--red); }
+
+.panel--good {
+  border-left-color: var(--good);
+  background: var(--good-tint);
+}
+
+/* ── Belt palette ───────────────────────────────────────────────────── */
+
+/* Transcribed whole from the syllabus data, and pinned to it by a test in each
+   site that renders belts. Keyed by slug, so one rule colours a list tile, a
+   banner and a grading-path step alike. Text colour comes from the belt's own
+   data: yellow and orange take near-black, the rest take white.
+   See guidelines/10-data-palettes.md. */
+.belt-colour[data-slug="9th-kyu"] { background: #C8102E; color: #fff; }
+.belt-colour[data-slug="8th-kyu"] { background: #ED8B00; color: #1A1A1A; }
+.belt-colour[data-slug="7th-kyu"] { background: #E3BC00; color: #1A1A1A; }
+.belt-colour[data-slug="6th-kyu"] { background: #00843D; color: #fff; }
+.belt-colour[data-slug="5th-kyu"] { background: #0072CE; color: #fff; }
+.belt-colour[data-slug="4th-kyu"] { background: #702F8A; color: #fff; }
+.belt-colour[data-slug="3rd-kyu"] { background: #8B5A2B; color: #fff; }
+.belt-colour[data-slug="2nd-kyu"] { background: #7A4A21; color: #fff; }
+.belt-colour[data-slug="1st-kyu"] { background: #6B3F1D; color: #fff; }
+.belt-colour[data-slug="shodan"] { background: #1A1A1A; color: #fff; }
+.belt-colour[data-slug="nidan"] { background: #1A1A1A; color: #fff; }
+.belt-colour[data-slug="sandan"] { background: #1A1A1A; color: #fff; }
+
+/* ── Kata palette ───────────────────────────────────────────────────── */
+
+/* Its own class rather than a reuse of the belt one: belts and kata are
+   different collections with their own slug spaces, and a belt class on a kata
+   element would read as a mistake in the markup. */
+.kata-colour[data-slug="mara"] { background: #C8102E; color: #fff; }
+.kata-colour[data-slug="sanchin"] { background: #161616; color: #fff; }
+.kata-colour[data-slug="rokushu"] { background: #9A7D00; color: #fff; }
+.kata-colour[data-slug="naifuanchin"] { background: #0072CE; color: #fff; }

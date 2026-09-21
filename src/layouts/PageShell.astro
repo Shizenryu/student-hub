@@ -2,7 +2,10 @@
 // No style="" attribute and no define:vars anywhere in the shell: both compile
 // to an inline style attribute, which the Content-Security-Policy refuses and
 // cannot hash. Anything the shell styles is a class in app.css.
+// tokens.css and base.css are vendored from the design-system repository and
+// pinned by tests/build/design-system.sha256 — edit them there, not here.
 import '../styles/tokens.css';
+import '../styles/base.css';
 import '../styles/app.css';
 
 // The header renders the ordinary heading pair from props and then whatever the
