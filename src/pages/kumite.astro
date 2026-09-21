@@ -12,12 +12,11 @@ import { GRADES, KUMITE, SYLLABUS, kumiteSequence } from '../data';
 import { expandAbbreviations } from '../data/display';
 import { STEP_JOIN } from '../domain/quiz-questions';
 import PageShell from '../layouts/PageShell.astro';
-import '../styles/belts.css';
 
 // Belt order is GRADES order; a belt appears only if a kumite is learned at it.
 const groups = GRADES.map((grade) => ({
   grade,
-  kumite: [...KUMITE].filter((each) => each.belt === grade.key).sort((a, b) => a.n - b.n),
+  kumite: KUMITE.filter((each) => each.belt === grade.key).sort((a, b) => a.n - b.n),
 })).filter((group) => group.kumite.length > 0);
 
 // Where the twelve lead, in the syllabus's words. Selected by grade AND item:

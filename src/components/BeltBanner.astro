@@ -1,10 +1,11 @@
 ---
 // A belt's banner: its name in its colour, with a small label saying what the
 // page under it is. The belt guides and the kumite reference both open a belt
-// this way, so it lives once, here; the colour itself is the .belt-colour rule
-// in src/styles/belts.css, which the page imports and belt-colours.test.ts pins
-// to grades.json.
+// this way, so it lives once, here. The colour is the .belt-colour rule in
+// src/styles/belts.css, imported here so a page that renders a banner gets the
+// colour with it; belt-colours.test.ts pins that file to grades.json.
 import type { Grade } from '../data';
+import '../styles/belts.css';
 
 type Props = {
   grade: Grade;

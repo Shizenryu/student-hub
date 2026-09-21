@@ -233,6 +233,19 @@ describe('every kumite agrees with its Kihon Kumite syllabus row', () => {
     expect(() => assertContentIntegrity(content)).toThrow(/kumite 1 belt "8th Kyu" is not its syllabus row's "9th Kyu"/);
   });
 
+  it('rejects a row not written as a sequence — no ">>>" between attack and responses', () => {
+    const content = validContent({ syllabus: [syllabusItem(), kihonKumiteRow({ detail: 'jun-zuki >> uchi-uke >> gyaku-zuki' })] });
+    expect(() => assertContentIntegrity(content)).toThrow(/kumite 1's syllabus row is not written as/);
+  });
+
+  it('rejects a row with a second ">>>", rather than dropping what follows it', () => {
+    const content = validContent({
+      kumite: [kumiteBout({ steps: ['jun-zuki', 'uchi-uke'] })],
+      syllabus: [syllabusItem(), kihonKumiteRow({ detail: 'jun-zuki >>> uchi-uke >>> gyaku-zuki' })],
+    });
+    expect(() => assertContentIntegrity(content)).toThrow(/kumite 1's syllabus row is not written as/);
+  });
+
   it('rejects a kumite whose side is not the row\'s', () => {
     const content = validContent({
       kumite: [kumiteBout({ side: 'SS', steps: ['jun-zuki', 'uchi-uke', 'gyaku-zuki'] })],

@@ -136,11 +136,21 @@ export function assertContentIntegrity(content: ContentBundle = REAL_CONTENT): v
     const rowSide = /\(([A-Z]+)\)/.exec(row.item)?.[1] ?? '';
     if (rowSide !== bout.side) problems.push(`kumite ${bout.n} side "${bout.side}" is not its syllabus row's "${rowSide}"`);
     if (row.grade !== bout.belt) problems.push(`kumite ${bout.n} belt "${bout.belt}" is not its syllabus row's "${row.grade}"`);
-    const [attack = '', responses = ''] = row.detail.split('>>>');
+    // Exactly one `>>>`: none means the row is not written as a sequence; two
+    // means a `>>` was mistyped, and everything after the second would otherwise
+    // be silently dropped.
+    const halves = row.detail.split('>>>');
+    if (halves.length !== 2) {
+      problems.push(`kumite ${bout.n}'s syllabus row is not written as "attack >>> response >> response": "${row.detail}"`);
+      continue;
+    }
+    const [attack = '', responses = ''] = halves;
     const rowSteps = [attack, ...responses.split('>>')].map((step) => step.trim().toLowerCase());
     const dataSteps = bout.steps.map((step) => step.toLowerCase());
     if (rowSteps.join('|') !== dataSteps.join('|')) {
-      problems.push(`kumite ${bout.n} steps differ from its syllabus row: "${bout.steps.join(' » ')}" vs "${row.detail}"`);
+      problems.push(
+        `kumite ${bout.n} steps differ from its syllabus row: ${JSON.stringify(bout.steps)} vs "${row.detail}"`,
+      );
     }
   }
 

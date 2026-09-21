@@ -20,6 +20,8 @@ const positionOf = (needle: string): number => {
   return index;
 };
 
+const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 describe('the kumite reference (/kumite)', () => {
   it('lists every kumite once, in order, each with an anchor by number', () => {
     const positions = ordered.map((kumite) => positionOf(`id="kumite-${kumite.n}"`));
@@ -28,24 +30,41 @@ describe('the kumite reference (/kumite)', () => {
   });
 
   it('groups them under the belt banners, in belt order, with the belt colour', () => {
+    const bannerAt = (slug: string): number => positionOf(`belt-colour" data-slug="${slug}"`);
     const positions = beltsWithKumite.map((grade) => {
       positionOf(astroEscapeText(grade.banner));
-      return positionOf(`belt-colour" data-slug="${grade.slug}"`);
+      return bannerAt(grade.slug);
     });
     expect(positions).toEqual([...positions].sort((a, b) => a - b));
+
+    // Each kumite sits between its own belt's banner and the next banner on the
+    // page — under its belt, not merely somewhere after it.
+    const banners = [...html.matchAll(/belt-colour" data-slug="/g)].map((match) => match.index ?? 0);
     for (const kumite of ordered) {
       const grade = GRADES.find((entry) => entry.key === kumite.belt);
       expect(grade).toBeDefined();
       if (!grade) return;
-      expect(positionOf(`id="kumite-${kumite.n}"`)).toBeGreaterThan(positionOf(`data-slug="${grade.slug}"`));
+      const own = bannerAt(grade.slug);
+      const next = banners.find((position) => position > own) ?? html.length;
+      const block = positionOf(`id="kumite-${kumite.n}"`);
+      expect(block, `Kumite ${kumite.n} is not under ${grade.key}`).toBeGreaterThan(own);
+      expect(block, `Kumite ${kumite.n} is not under ${grade.key}`).toBeLessThan(next);
     }
   });
 
   it('shows each kumite as its attack and then its responses, joined as the quiz joins them', () => {
+    // The split itself is pinned — an "Attack" term followed by the attack, a
+    // "Response" term followed by the joined responses — not just the texts'
+    // presence, which a page listing the steps unsplit would also satisfy.
     for (const kumite of ordered) {
       const [attack, ...responses] = kumite.steps;
-      expect(html).toContain(astroEscapeText(attack ?? ''));
-      expect(html).toContain(astroEscapeText(responses.join(STEP_JOIN)));
+      const block = html.slice(positionOf(`id="kumite-${kumite.n}"`));
+      expect(block, `Kumite ${kumite.n}`).toMatch(
+        new RegExp(`Attack</dt><dd[^>]*>${escapeRegExp(astroEscapeText(attack ?? ''))}</dd>`),
+      );
+      expect(block, `Kumite ${kumite.n}`).toMatch(
+        new RegExp(`Response</dt><dd[^>]*>${escapeRegExp(astroEscapeText(responses.join(STEP_JOIN)))}</dd>`),
+      );
     }
   });
 

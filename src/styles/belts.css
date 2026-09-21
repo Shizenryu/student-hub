@@ -1,8 +1,8 @@
 /* Per-belt colour, transcribed from src/data/grades.json (hex/white per grade).
-   Keyed by slug rather than by element type so the same rule colours both the
-   /belts list tile and the /belts/<slug> banner — see BeltGuide.astro and
-   src/pages/belts/index.astro, both of which apply class="belt-colour"
-   data-slug="<slug>" to the element that needs it.
+   Keyed by slug rather than by element type so the same rule colours the /belts
+   list tile and every belt banner — src/pages/belts/index.astro and
+   src/components/BeltBanner.astro (used by the belt guides and /kumite) apply
+   class="belt-colour" data-slug="<slug>" to the element that needs it.
 
    grades.json is the source of truth; tests/unit/belt-colours.test.ts reads
    both this file and GRADES and fails if they diverge, so this file cannot

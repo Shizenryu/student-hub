@@ -2,7 +2,11 @@
 // as practice-labels.ts and quiz-labels.ts.
 
 // The expansion of a side, in the words the quiz's side question already uses:
-// "Same side (SS) or opposite side (OS)?". A side the syllabus does not write is
-// shown as it is, rather than invented an expansion for.
-export const sideLabel = (side: string): string =>
-  side === 'OS' ? 'opposite side' : side === 'SS' ? 'same side' : side;
+// "Same side (SS) or opposite side (OS)?". The content guard admits no other side,
+// so the fallback to the side itself is for the type, not for a page.
+const SIDE_LABELS: Readonly<Record<string, string>> = {
+  OS: 'opposite side',
+  SS: 'same side',
+};
+
+export const sideLabel = (side: string): string => SIDE_LABELS[side] ?? side;

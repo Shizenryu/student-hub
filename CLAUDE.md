@@ -89,8 +89,9 @@ src/
 │                    against a content collection schema at build time
 ├── components/      shared pieces a route composes, e.g. BeltGuide.astro,
 │                    KataGuide.astro, and BeltBanner.astro — a belt's banner,
-│                    which the belt guides and /kumite both open a belt with.
-│                    kumite-labels.ts is /kumite's one pure function. Practice.tsx, Flashcards.tsx and Quiz.tsx
+│                    which the belt guides and /kumite both open a belt with
+│                    (it imports belts.css itself). kumite-labels.ts is
+│                    /kumite's one pure function. Practice.tsx, Flashcards.tsx and Quiz.tsx
 │                    are the three React islands; practice-labels.ts,
 │                    flashcards-labels.ts and quiz-labels.ts hold their strings
 │                    as pure functions so the wording is testable without a
