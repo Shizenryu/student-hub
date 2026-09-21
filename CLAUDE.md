@@ -79,15 +79,18 @@ public/            no pages left — only what a built page loads at runtime
 └── docs/           printable PDFs
 src/
 ├── pages/index.astro, 404.astro, practice.astro, flashcards.astro,
-│                    quiz.astro, belts/index.astro, belts/[slug].astro,
-│                    kata/index.astro, kata/[slug].astro
+│                    quiz.astro, kumite.astro, belts/index.astro,
+│                    belts/[slug].astro, kata/index.astro, kata/[slug].astro
 │                    every page the site has, in migration order: belts, kata,
-│                    home, practice, flashcards, quiz. The last three hydrate
+│                    home, practice, flashcards, quiz — and kumite, the first
+│                    page added after it. Practice, flashcards and quiz hydrate
 │                    an island; the rest ship no JavaScript at all
 ├── content/kata/    kata prose as markdown, one file per kata, validated
 │                    against a content collection schema at build time
 ├── components/      shared pieces a route composes, e.g. BeltGuide.astro,
-│                    KataGuide.astro. Practice.tsx, Flashcards.tsx and Quiz.tsx
+│                    KataGuide.astro, and BeltBanner.astro — a belt's banner,
+│                    which the belt guides and /kumite both open a belt with.
+│                    kumite-labels.ts is /kumite's one pure function. Practice.tsx, Flashcards.tsx and Quiz.tsx
 │                    are the three React islands; practice-labels.ts,
 │                    flashcards-labels.ts and quiz-labels.ts hold their strings
 │                    as pure functions so the wording is testable without a
@@ -255,7 +258,13 @@ TERMS   = { 1:[[japanese, english], ...], 2:[...], 3:[...], 4:[...] }
           // Quiz levels are cumulative: level N includes tiers 1..N.
 
 KUMITE  = [ {n:1, side:"OS"|"SS", belt:"9th Kyu", steps:["jun-zuki", ...]}, ... ]
-          // steps in order: attack first, then responses. Source: Syllabus 2026.
+          // steps in order: attack first, then responses — the syllabus's own
+          // `attack >>> response >> response`. Source: Syllabus 2026. The quiz
+          // asks about them and /kumite lists them (kumiteSequence() in
+          // src/data/index.ts reads steps[0] as the attack); the "Kihon Kumite"
+          // syllabus rows are the second copy, and assertContentIntegrity()
+          // fails the build if a kumite's steps, side or belt differ from its
+          // row, case aside. Edit both or the build says so.
 
 MAXIMS  = [ "string", ... ]   // shown randomly after quiz rounds; the home route
                               // shows MAXIMS[Store.today() % length] as "maxim of

@@ -40,7 +40,7 @@ const allTwelve = SYLLABUS.find((item) => item.grade === '2nd Kyu' && item.item 
   {
     groups.map(({ grade, kumite }) => (
       <section>
-        <BeltBanner grade={grade} label="KIHON KUMITE" />
+        <BeltBanner grade={grade} label="KUMITE" />
         <div class="card">
           {kumite.map((each) => {
             const { attack, responses } = kumiteSequence(each);
@@ -69,7 +69,7 @@ const allTwelve = SYLLABUS.find((item) => item.grade === '2nd Kyu' && item.item 
   {
     secondKyu && allTwelve && (
       <section>
-        <BeltBanner grade={secondKyu} label="KIHON KUMITE" />
+        <BeltBanner grade={secondKyu} label="KUMITE" />
         <div class="card">
           <p class="all-twelve">
             <b>{expandAbbreviations(allTwelve.item)}</b> — {expandAbbreviations(allTwelve.detail)}

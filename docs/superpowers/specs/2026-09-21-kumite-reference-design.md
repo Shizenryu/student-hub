@@ -69,7 +69,7 @@ agrees. One small function, `kumiteSequence()`, is the only place that reading i
 | "Each is one attack and the responses to it." | the notation, as confirmed |
 | "Attack" / "Response" labels | "The attack that starts it" is already the quiz's hint; "response" is Rich's word for `>>` |
 | "OS — opposite side", "SS — same side" | the quiz's side question: "Same side (SS) or opposite side (OS)?" |
-| Banner sub-label "KIHON KUMITE" | the syllabus section name |
+| Banner sub-label "KUMITE" | the syllabus section name, shortened to its second word so the wider belt names ("ORANGE BELT · 8TH KYU") do not wrap beside it on a phone |
 
 No "sparring", no "worked on", no description of what any technique is.
 

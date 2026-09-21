@@ -68,6 +68,11 @@ describe('the home route (/)', () => {
       description:
         'Mara, Sanchin, Rokushu, Naifuanchin — what each kata is, what its name means, and where it lives in the syllabus.',
     },
+    {
+      title: 'Kumite Reference',
+      href: '/kumite',
+      description: 'The twelve Kihon Kumite — one attack and its responses, belt by belt.',
+    },
   ];
 
   it.each(tiles)('shows the $title tile linking to $href with its description', ({ title, href, description }) => {
@@ -76,11 +81,11 @@ describe('the home route (/)', () => {
     expect(html).toContain(description);
   });
 
-  it('shows exactly five train tiles, one per gradient class', () => {
-    for (const gradientClass of ['practice', 'quiz', 'cards', 'belts', 'kata']) {
+  it('shows exactly six train tiles, one per gradient class', () => {
+    for (const gradientClass of ['practice', 'quiz', 'cards', 'belts', 'kata', 'kumite']) {
       expect(html).toContain(`class="tile ${gradientClass}"`);
     }
-    expect((html.match(/class="tile /g) ?? []).length).toBe(5);
+    expect((html.match(/class="tile /g) ?? []).length).toBe(6);
   });
 
   const docs: ReadonlyArray<{ readonly href: string; readonly name: string; readonly subtitle: string }> = [
