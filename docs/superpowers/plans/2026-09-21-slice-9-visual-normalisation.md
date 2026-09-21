@@ -91,9 +91,10 @@ Recommended here, for Rich to veto in the plan PR or on the sheet:
 11. **The streak chip is one chip.** The base rule becomes centred at .75rem with
     `margin-top: var(--space-2)`; inside a centred `<header>` nothing changes on the islands.
     Home loses its `.app--home .streak-chip` override (.8rem, −14px/20px): to keep the chip
-    close under the maxim, `.maxim`'s margin-bottom on home drops from 24px to `--space-3`,
-    so the chip sits 20px below it (was 10) and the tiles follow at the chip's bottom margin
-    of `--space-5`. One row on the sheet.
+    close under the maxim, `.maxim`'s margin-bottom on home drops from 24px to `--space-3`.
+    *Corrected at review:* the maxim's 12px and the chip's 8px are adjacent block margins
+    and collapse, so the chip sits 12px below the maxim (was 10), and the "Train" heading's
+    own 22px top margin, unchanged, follows it. One row on the sheet.
 12. **One heading pair for inner pages:** h1 1.3rem, .sub .72rem, `.intro` .85rem. The quiz
     drops from 1.35/.75/.9. **One section-heading size:** .78rem/.2em; home's h2 .8 → .78 and
     the quiz's `.modehead` .15em → .2em. Margins stay per page (decision 10).

@@ -6,13 +6,21 @@
 // main's and the branch's:
 //
 //   git worktree add ../student-hub-main main
-//   npx astro build --root ../student-hub-main        # main's dist, this toolchain
-//   npm run build                                     # the branch's dist
+//   (cd ../student-hub-main && npm ci && npm run build)   # main's dist
+//   npm run build                                          # the branch's dist
 //   node scripts/capture-routes.mjs ../student-hub-main/dist dist
+//
+// (`npx astro build --root ../student-hub-main` from here also works, but only
+// once the worktree has its own node_modules — Astro resolves integrations from
+// the config file's directory, not from where you run it.)
+//
+// Every page is captured with a stored streak, so the chip has something to
+// show; a page with no progress would paint an empty line where the chip goes.
 //
 // The sheet lands in dist/__visual/index.html with the PNGs beside it. Every
 // route the sheet marks "changed" should have one line in the PR saying what
 // changed and why — that is the review artefact for a slice a student can see.
+// A route that exists in only one build is marked missing, not changed.
 //
 // This is the capture half that scripts/compare-pixels.mjs's header said would
 // outlive the migration: that script proves a port is pixel-identical to the
@@ -74,9 +82,22 @@ const fileNameFor = (route, viewport) =>
 
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex').slice(0, 12);
 
+// The same seeded state scripts/compare-pixels.mjs uses: a four-day streak whose
+// last day was yesterday, so every chip reads "train today to keep it".
+const localDayNumber = () => {
+  const now = new Date();
+  return Math.floor(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 86400000);
+};
+const seededProgress = () => ({ streak: { last: localDayNumber() - 1, count: 4, best: 9 } });
+
+// Returns the screenshot's hash, or null when the route is not in this build.
 async function capture(context, origin, route, file) {
   const page = await context.newPage();
-  await page.goto(`${origin}${route}`, { waitUntil: 'networkidle' });
+  const response = await page.goto(`${origin}${route}`, { waitUntil: 'networkidle' });
+  if (!response || response.status() !== 200) {
+    await page.close();
+    return null;
+  }
   await page.waitForTimeout(300);
   const png = await page.screenshot({ fullPage: true, animations: 'disabled' });
   await page.close();
@@ -102,22 +123,22 @@ const sheet = (rows) => `<title>Shizenryu Route Sheet</title>
   .row { display: grid; grid-template-columns: minmax(160px, 220px) 1fr 1fr; gap: 16px; align-items: start; padding: 16px 0; border-top: 1px solid var(--line); }
   .row img { max-width: 100%; border: 1px solid var(--line); background: var(--surface); }
   .route { font-weight: 700; } .viewport { color: var(--muted); font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
-  .changed { color: var(--red); font-weight: 700; } .same { color: var(--good); }
+  .changed { color: var(--red); font-weight: 700; } .identical { color: var(--good); } .missing { color: var(--muted); font-weight: 700; }
   code { font-size: .75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
   @media (max-width: 720px) { .row { grid-template-columns: 1fr; } }
 </style>
 <main>
 <h1>Shizenryu route sheet</h1>
-<p class="lede">${rows.filter((r) => r.changed).length} of ${rows.length} captures changed. Left is before, right is after; phone captures are 390×900 at 2×, tablet 768×1024 at 1×. A capture is "changed" when a single pixel differs.</p>
+<p class="lede">${rows.filter((r) => r.status === 'changed').length} of ${rows.length} captures changed. Left is before, right is after; phone captures are 390×900 at 2×, tablet 768×1024 at 1×. A capture is "changed" when a single pixel differs; a route in only one build is marked missing. Every page carries a stored four-day streak, so the chip is drawn.</p>
 ${rows
   .map(
     (r) => `<section class="row"><div><div class="route">${escapeHtml(r.route)}</div><div class="viewport">${
       r.viewport
-    }</div><span class="${r.changed ? 'changed' : 'same'}">${r.changed ? 'changed' : 'identical'}</span><br><code>${
+    }</div><span class="${r.status.startsWith('missing') ? 'missing' : r.status}">${r.status}</span><br><code>${
       r.before
-    } → ${r.after}</code></div><img src="before/${r.file}" alt="before, ${escapeHtml(r.route)} on ${
-      r.viewport
-    }"><img src="after/${r.file}" alt="after, ${escapeHtml(r.route)} on ${r.viewport}"></section>`,
+    } → ${r.after}</code></div>${
+      r.before === '—' ? '<div></div>' : `<img src="before/${r.file}" alt="before, ${escapeHtml(r.route)} on ${r.viewport}">`
+    }${r.after === '—' ? '<div></div>' : `<img src="after/${r.file}" alt="after, ${escapeHtml(r.route)} on ${r.viewport}">`}</section>`,
   )
   .join('\n')}
 </main>
@@ -137,13 +158,17 @@ for (const viewport of VIEWPORTS) {
     viewport: { width: viewport.width, height: viewport.height },
     deviceScaleFactor: viewport.scale,
   });
+  await context.addInitScript((progress) => {
+    localStorage.setItem('shizenryu-progress-v1', JSON.stringify(progress));
+  }, seededProgress());
   for (const route of routes) {
     const file = fileNameFor(route, viewport);
     const hashBefore = await capture(context, before.origin, route, join(OUT, 'before', file));
     const hashAfter = await capture(context, after.origin, route, join(OUT, 'after', file));
-    const changed = hashBefore !== hashAfter;
-    rows.push({ route, viewport: viewport.name, file, before: hashBefore, after: hashAfter, changed });
-    console.log(`${changed ? 'CHANGED  ' : 'identical'}  ${viewport.name.padEnd(6)}  ${route}`);
+    const status =
+      hashBefore === null ? 'missing before' : hashAfter === null ? 'missing after' : hashBefore === hashAfter ? 'identical' : 'changed';
+    rows.push({ route, viewport: viewport.name, file, before: hashBefore ?? '—', after: hashAfter ?? '—', status });
+    console.log(`${status.padEnd(14)}  ${viewport.name.padEnd(6)}  ${route}`);
   }
   await context.close();
 }
@@ -152,4 +177,4 @@ await browser.close();
 before.server.close();
 after.server.close();
 writeFileSync(join(OUT, 'index.html'), sheet(rows));
-console.log(`\n${rows.filter((r) => r.changed).length} of ${rows.length} captures changed — ${join(OUT, 'index.html')}`);
+console.log(`\n${rows.filter((r) => r.status === 'changed').length} of ${rows.length} captures changed — ${join(OUT, 'index.html')}`);

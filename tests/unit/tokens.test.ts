@@ -35,6 +35,7 @@ const REQUIRED_TOKENS: ReadonlyArray<readonly [name: string, value: string]> = [
   ['--radius-banner', '12px'],
   ['--radius-tag', '6px'],
   ['--shadow-card', '0 2px 10px rgba(0, 0, 0, .08)'],
+  ['--font-stack', "-apple-system, 'Segoe UI', Roboto, Arial, sans-serif"],
   ['--app-max', '520px'],
   ['--space-1', '4px'],
   ['--space-2', '8px'],

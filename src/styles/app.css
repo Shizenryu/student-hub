@@ -118,6 +118,9 @@ header .sub {
 footer {
   text-align: center;
   font-size: .7rem;
+  /* Two lines on every page — a link and the motto, or the home page's two —
+     so the leading is set rather than left to the browser's default. */
+  line-height: 1.6;
   color: var(--faint);
   margin-top: var(--space-5);
 }

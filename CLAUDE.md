@@ -326,8 +326,9 @@ for a static route. Nothing new belongs in `public/`, which holds no pages at al
 
 `src/styles/tokens.css` is the design system and the only place a colour, radius,
 shadow, width or shell spacing is written. `tests/unit/tokens.test.ts` pins every
-token and its value; `tests/unit/design-drift.test.ts` fails the build on a colour
-or radius literal in any rule that could use a token instead, comments excepted.
+token and its value; `tests/unit/design-drift.test.ts` fails `npm test` (and so the
+PR gate) on a colour or radius literal in any rule that could use a token instead,
+comments excepted.
 The only literals a rule may carry are the palettes that mirror data — belt
 colours in `belts.css`, kata colours in `kata.css`, deck colours d1–d7 in
 `flashcards.css`, the quiz level gradients b1–b5 in `quiz.css`, the home tiles'
@@ -341,10 +342,11 @@ practice day dot's 50%). Add a value by adding a token.
   `#888`, `--muted-light` `#999`, `--faint` `#bbb`. Text on a coloured tile or
   button is `--on-colour` `#fff`, never a literal.
 - Surfaces and lines: `--surface` `#fff`, `--surface-warm` `#fbf7f1`, `--rule`
-  `#f0ebe2` (also the pressed state and the progress track), `--line` `#e5e0d8`
-  (every border).
-- Belt colours: red `#C8102E`, orange `#ED8B00`, yellow `#E3BC00`,
-  green `#00843D`, blue `#0072CE`, purple `#702F8A`, brown `#8B5A2B`, black `#1A1A1A`
+  `#f0ebe2` (row dividers, the pressed state, the progress track), `--line`
+  `#e5e0d8` (the practice tile and quiz option borders).
+- Belt colours, from `grades.json` and pinned to it: red `#C8102E`, orange
+  `#ED8B00`, yellow `#E3BC00`, green `#00843D`, blue `#0072CE`, purple `#702F8A`,
+  three browns `#8B5A2B` / `#7A4A21` / `#6B3F1D`, black `#1A1A1A`
 - Radii: card 14px, control 10px, banner 12px, tag 6px. One shadow, `--shadow-card`.
 - One column, `--app-max: 520px`, on every page. The shell — frame, header, cards,
   chip, lede, footer — is spaced on `--space-1`…`--space-10` (4, 8, 12, 16, 20, 24,

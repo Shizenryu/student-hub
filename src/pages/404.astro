@@ -11,5 +11,16 @@ import PageShell from '../layouts/PageShell.astro';
   heading="NOT FOUND"
   subheading="Shizenryu Karate"
 >
-  <p class="intro">That page isn't here. It may have moved, or the link may be mistyped.</p>
+  <p class="body">That page isn't here. It may have moved, or the link may be mistyped.</p>
 </PageShell>
+
+<style>
+  /* Body text, not a lede: the same weight of grey as every other paragraph a
+     student reads, centred because the page is two lines and a link. */
+  .body {
+    font-size: .92rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    text-align: center;
+  }
+</style>
