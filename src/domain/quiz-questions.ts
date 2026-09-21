@@ -24,8 +24,10 @@ const OPTIONS_PER_QUESTION = 4;
 const WRONG_PER_QUESTION = OPTIONS_PER_QUESTION - 1;
 
 // Two spaces either side, as the legacy page wrote it. The separator is part of
-// what the page looks like, so it is transcribed rather than tidied.
-const STEP_JOIN = '  »  ';
+// what the page looks like, so it is transcribed rather than tidied. Exported
+// because /kumite joins a sequence's responses with it too: a sequence reads
+// the same on the reference page and in a quiz question.
+export const STEP_JOIN = '  »  ';
 
 // `options` always contains `correct`, which the type cannot say. `correct` is the
 // answer's TEXT rather than its index: the options are distinct, so the text names

@@ -1,0 +1,138 @@
+---
+// The kumite reference: all twelve Kihon Kumite in syllabus order under their
+// belts, each as one attack and the responses to it. A static page from the same
+// data the quiz asks about — see docs/superpowers/specs/2026-09-21-kumite-reference-design.md.
+//
+// Every technique, side, belt and syllabus sentence here is data. The page's own
+// words are the lede, the two labels and the side expansions, each with its
+// source in the spec's Wording table; nothing else is coined.
+import BeltBanner from '../components/BeltBanner.astro';
+import { sideLabel } from '../components/kumite-labels';
+import { GRADES, KUMITE, SYLLABUS, kumiteSequence } from '../data';
+import { expandAbbreviations } from '../data/display';
+import { STEP_JOIN } from '../domain/quiz-questions';
+import PageShell from '../layouts/PageShell.astro';
+import '../styles/belts.css';
+
+// Belt order is GRADES order; a belt appears only if a kumite is learned at it.
+const groups = GRADES.map((grade) => ({
+  grade,
+  kumite: [...KUMITE].filter((each) => each.belt === grade.key).sort((a, b) => a.n - b.n),
+})).filter((group) => group.kumite.length > 0);
+
+// Where the twelve lead, in the syllabus's words. Selected by grade AND item:
+// 1st Kyu carries an identical row, and that repeat stays in the belt guides.
+const secondKyu = GRADES.find((grade) => grade.key === '2nd Kyu');
+const allTwelve = SYLLABUS.find((item) => item.grade === '2nd Kyu' && item.item === 'Kumite 1 to 12');
+---
+
+<PageShell
+  title="Shizenryu Kumite Reference"
+  description="The twelve Kihon Kumite of Shizenryu Karate, belt by belt: each as one attack and the responses to it."
+  heading="KUMITE REFERENCE"
+  subheading="Kihon Kumite 1–12"
+>
+  <p class="intro">
+    The twelve Kihon Kumite — basic partner work — in the order they are learned.<br />
+    Each is one attack and the responses to it. OS — opposite side. SS — same side.
+  </p>
+
+  {
+    groups.map(({ grade, kumite }) => (
+      <section>
+        <BeltBanner grade={grade} label="KIHON KUMITE" />
+        <div class="card">
+          {kumite.map((each) => {
+            const { attack, responses } = kumiteSequence(each);
+            return (
+              <article class="kumite" id={`kumite-${each.n}`}>
+                <h2>
+                  Kumite {each.n}
+                  <span class="side">
+                    {each.side} · {sideLabel(each.side)}
+                  </span>
+                </h2>
+                <dl>
+                  <dt>Attack</dt>
+                  <dd>{attack}</dd>
+                  <dt>Response</dt>
+                  <dd>{responses.join(STEP_JOIN)}</dd>
+                </dl>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+    ))
+  }
+
+  {
+    secondKyu && allTwelve && (
+      <section>
+        <BeltBanner grade={secondKyu} label="KIHON KUMITE" />
+        <div class="card">
+          <p class="all-twelve">
+            <b>{expandAbbreviations(allTwelve.item)}</b> — {expandAbbreviations(allTwelve.detail)}
+          </p>
+        </div>
+      </section>
+    )
+  }
+</PageShell>
+
+<style>
+  .kumite + .kumite {
+    border-top: 1px solid var(--rule);
+    padding-top: 14px;
+    margin-top: 14px;
+  }
+
+  h2 {
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: .03em;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .side {
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 6px 14px;
+    align-items: baseline;
+  }
+
+  dt {
+    font-size: .68rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--red);
+  }
+
+  dd {
+    font-size: 1rem;
+    color: var(--ink);
+  }
+
+  dd:first-of-type {
+    font-weight: 700;
+  }
+
+  .all-twelve {
+    font-size: .95rem;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+</style>

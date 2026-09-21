@@ -77,6 +77,18 @@ export const SYLLABUS: readonly SyllabusItem[] = syllabusJson;
 export const KATA: readonly Kata[] = kataJson;
 export const PRACTICE: readonly PracticeActivity[] = practiceJson;
 
+// A kumite's steps as the syllabus writes them: one attack, then the responses
+// to it (`attack >>> response >> response`). The data lists them in that order,
+// attack first, and assertContentIntegrity() in ./integrity.ts proves every
+// sequence agrees with its syllabus row — so this is the one place that reading
+// of `steps` is written, and it is a fact about the content, not a guess.
+export const kumiteSequence = (
+  kumite: Kumite,
+): { readonly attack: string; readonly responses: readonly string[] } => ({
+  attack: kumite.steps[0] ?? '',
+  responses: kumite.steps.slice(1),
+});
+
 // noUncheckedIndexedAccess makes TERMS[String(tier)] possibly undefined. The throw
 // below is genuinely unreachable — assertContentIntegrity() already fails the build
 // when a belt points at a missing tier — but this narrows the value honestly for
