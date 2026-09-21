@@ -25,7 +25,36 @@ export type HeaderRule = {
   readonly values: Readonly<Record<string, string>>;
 };
 
+export type RedirectRule = {
+  readonly from: string;
+  readonly to: string;
+  readonly status: number;
+  // Netlify fires an ordinary rule only when no real file answers the path; a
+  // forced one wins even when one does. `/index.html` needs that, because Astro
+  // emits a real dist/index.html which would otherwise be served directly.
+  readonly force: boolean;
+};
+
 const HEADERS_TABLE = /^\[\[headers\]\]\s*$/m;
+const REDIRECTS_TABLE = /^\[\[redirects\]\]\s*$/m;
+const BUILD_ENVIRONMENT_TABLE = /^\[build\.environment\]\s*$/m;
+const STATUS_LINE = /^\s*status\s*=\s*(\d+)\s*$/m;
+const FORCE_LINE = /^\s*force\s*=\s*(true|false)\s*$/m;
+const ENVIRONMENT_LINE = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*"([^"]*)"\s*$/gm;
+
+const quoted = (key: string): RegExp => new RegExp(`^\\s*${key}\\s*=\\s*"([^"]*)"\\s*$`, 'm');
+
+// A `#` line is a comment wherever it appears, so it is removed before anything
+// is split on a table header — otherwise a table name mentioned in a comment
+// would read as a table.
+const withoutComments = (toml: string): string => toml.replace(/^\s*#.*$/gm, '');
+
+// Everything from one table header up to the next table of any kind.
+const blocksUnder = (toml: string, table: RegExp): readonly string[] =>
+  withoutComments(toml)
+    .split(table)
+    .slice(1)
+    .map((block) => block.split(/^\[/m)[0] ?? '');
 const FOR_LINE = /^\s*for\s*=\s*"([^"]*)"\s*$/m;
 const HEADER_LINE = /^\s*([A-Za-z][A-Za-z0-9-]*)\s*=\s*(.*?)\s*$/gm;
 const ONE_LINE_BASIC_STRING = /^"((?:[^"\\]|\\["\\])*)"$/;
@@ -49,12 +78,38 @@ function valuesOf(block: string): Readonly<Record<string, string>> {
 }
 
 export function headerRules(toml: string): readonly HeaderRule[] {
-  const withoutComments = toml.replace(/^\s*#.*$/gm, '');
-  return withoutComments
+  // Headers are the one table whose block runs past a nested `[headers.values]`
+  // header, so this stops at the next `[[` rather than the next `[`.
+  return withoutComments(toml)
     .split(HEADERS_TABLE)
     .slice(1)
     .map((block) => block.split(/^\[\[/m)[0] ?? '')
     .map((block) => ({ for: FOR_LINE.exec(block)?.[1] ?? '', values: valuesOf(block) }));
+}
+
+// The rules that keep an old bookmark working. Every field is required except
+// `force`, and a rule missing one is a mistake worth naming rather than
+// defaulting: a redirect with no status is not a redirect.
+export function redirectRules(toml: string): readonly RedirectRule[] {
+  return blocksUnder(toml, REDIRECTS_TABLE).map((block) => {
+    const from = quoted('from').exec(block)?.[1];
+    if (from === undefined) throw new Error('netlify.toml has a redirect with no "from"');
+    const to = quoted('to').exec(block)?.[1];
+    if (to === undefined) throw new Error(`netlify.toml redirect "${from}" has no "to"`);
+    const status = STATUS_LINE.exec(block)?.[1];
+    if (status === undefined) throw new Error(`netlify.toml redirect "${from}" has no status`);
+    return { from, to, status: Number(status), force: FORCE_LINE.exec(block)?.[1] === 'true' };
+  });
+}
+
+// The build environment, which is where the Node version Netlify builds on is
+// declared — the one value in this file that a second place (.nvmrc) also states.
+export function buildEnvironment(toml: string): Readonly<Record<string, string>> {
+  const [block] = blocksUnder(toml, BUILD_ENVIRONMENT_TABLE);
+  if (block === undefined) return {};
+  return Object.fromEntries(
+    [...block.matchAll(ENVIRONMENT_LINE)].map((match) => [match[1] ?? '', match[2] ?? ''] as const),
+  );
 }
 
 // The rule for one path, or a clear failure naming the file — every consumer
