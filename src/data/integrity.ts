@@ -120,6 +120,30 @@ export function assertContentIntegrity(content: ContentBundle = REAL_CONTENT): v
     problems.push(`kumite number ${n} is used more than once`);
   }
 
+  // kumite.json and the "Kihon Kumite" syllabus rows are two copies of the same
+  // twelve sequences: the quiz and /kumite read the first, the belt guides render
+  // the second. The syllabus writes each as `attack >>> response >> response`;
+  // the data lists the same tokens in the same order, attack first — which is
+  // what lets /kumite show steps[0] as the attack. Case is ignored (11 and 12 are
+  // capitalised in the syllabus and not in the data, and the quiz has always
+  // shown the data's casing); nothing else is.
+  for (const bout of kumite) {
+    const row = syllabus.find((item) => item.section === 'Kihon Kumite' && item.item.startsWith(`Kumite ${bout.n} (`));
+    if (!row) {
+      problems.push(`kumite ${bout.n} has no "Kihon Kumite" syllabus row`);
+      continue;
+    }
+    const rowSide = /\(([A-Z]+)\)/.exec(row.item)?.[1] ?? '';
+    if (rowSide !== bout.side) problems.push(`kumite ${bout.n} side "${bout.side}" is not its syllabus row's "${rowSide}"`);
+    if (row.grade !== bout.belt) problems.push(`kumite ${bout.n} belt "${bout.belt}" is not its syllabus row's "${row.grade}"`);
+    const [attack = '', responses = ''] = row.detail.split('>>>');
+    const rowSteps = [attack, ...responses.split('>>')].map((step) => step.trim().toLowerCase());
+    const dataSteps = bout.steps.map((step) => step.toLowerCase());
+    if (rowSteps.join('|') !== dataSteps.join('|')) {
+      problems.push(`kumite ${bout.n} steps differ from its syllabus row: "${bout.steps.join(' » ')}" vs "${row.detail}"`);
+    }
+  }
+
   // A card's front is its identity everywhere: the store keys misses by a hash of
   // it, and the flashcards island counts the cards a session missed by it. Two
   // cards sharing a front — across decks, which the Everything deck merges — would
