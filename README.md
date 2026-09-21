@@ -36,6 +36,7 @@ npm run dev   # local site at http://localhost:4321/
 | `npm run test:browser` | Browser tests in Chromium (see below) |
 | `npm run test:deploy` | Serves the built `dist/` with the exact headers in `netlify.toml` and walks every page in Chromium, failing on any Content-Security-Policy violation (run `npm run build` first; needs Chromium, see below) |
 | `node scripts/compare-pixels.mjs --page <name> --ref <git-ref>` | Proves a migrated route still renders identically to the page it replaced |
+| `node scripts/capture-routes.mjs <before-dist> <after-dist>` | Screenshots every route from two builds side by side into `dist/__visual/index.html`, marking each identical or changed — the review artefact for a deliberate visual change |
 
 Pages cannot be opened directly from disk any more — use `npm run dev`.
 
