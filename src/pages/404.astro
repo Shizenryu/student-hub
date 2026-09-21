@@ -1,32 +1,26 @@
 ---
-const title = 'Not found — Shizenryu Karate';
+// Netlify serves this for any path that has no page. It wraps in the same shell
+// as every other route — it used to carry its own hand-written copy, with its
+// own widths and greys, and was the one page the design system could not reach.
+import PageShell from '../layouts/PageShell.astro';
 ---
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{title}</title>
-<meta name="description" content="That page could not be found on the Shizenryu Karate student hub.">
-<link rel="icon" href="/assets/img/icon.png">
-<link rel="apple-touch-icon" href="/assets/img/icon.png">
+
+<PageShell
+  title="Not found — Shizenryu Karate"
+  description="That page could not be found on the Shizenryu Karate student hub."
+  heading="NOT FOUND"
+  subheading="Shizenryu Karate"
+>
+  <p class="body">That page isn't here. It may have moved, or the link may be mistyped.</p>
+</PageShell>
+
 <style>
-  *{box-sizing:border-box; margin:0; padding:0;}
-  body{font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif; background:#faf7f2; color:#222;
-       min-height:100vh; display:flex; justify-content:center;}
-  .app{width:100%; max-width:520px; padding:28px 16px 40px; text-align:center;}
-  h1{font-size:1.7rem; letter-spacing:.14em; color:#161616; margin-top:40px;}
-  .sub{font-size:.75rem; letter-spacing:.25em; color:#C8102E; text-transform:uppercase; margin:10px 0 22px;}
-  p{font-size:.92rem; color:#555; line-height:1.6;}
-  a{display:inline-block; margin-top:22px; font-size:.8rem; color:#999;}
+  /* Body text, not a lede: the same weight of grey as every other paragraph a
+     student reads, centred because the page is two lines and a link. */
+  .body {
+    font-size: .92rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    text-align: center;
+  }
 </style>
-</head>
-<body>
-  <div class="app">
-    <h1>Not Found</h1>
-    <div class="sub">Shizenryu Karate</div>
-    <p>That page isn't here. It may have moved, or the link may be mistyped.</p>
-    <a href="/">← Shizenryu home</a>
-  </div>
-</body>
-</html>

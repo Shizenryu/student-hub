@@ -1,11 +1,7 @@
 ---
-// width applies a modifier class, not a style="" attribute or Astro's
-// define:vars — both of those compile to an inline style="" attribute (Astro
-// injects it on the component's parent element), which the CSP this site
-// adopts later forbids: style-src covers attribute styles, and unlike a
-// <style> element an inline attribute cannot be hashed. A narrow union keeps
-// every width this site uses enumerable in app.css instead of scattering
-// ad-hoc CSS across each consuming route.
+// No style="" attribute and no define:vars anywhere in the shell: both compile
+// to an inline style attribute, which the Content-Security-Policy refuses and
+// cannot hash. Anything the shell styles is a class in app.css.
 import '../styles/tokens.css';
 import '../styles/app.css';
 
@@ -13,21 +9,21 @@ import '../styles/app.css';
 // page adds, so a page can APPEND to the header rather than replace it — quiz,
 // flashcards and practice all put a streak chip after the subheading. Belts and
 // kata pass only the props; the home page passes only the slot, replacing the pair
-// with its crest and three lines. `footer` is the same shape of override. `variant` is the shell's spacing scale, carried as an enumerated
-// modifier class exactly as `width` already is — so a route adjusts the shell
-// through the shell's own vocabulary instead of reaching into its elements
-// with :global(). Today only the home page differs, and only until Slice 9
-// normalises the spacing; see .app--home in app.css.
+// with its crest and three lines. `footer` is the same shape of override.
+//
+// There is no width or variant prop: the shell is one shell, and a page that
+// wants to look different from the others has no vocabulary for it here. That is
+// deliberate — the migration carried each page's drift across as a variant so
+// the port could be reviewed as a port, and its last slice collapsed them — and
+// tests/build/page-shell.test.ts keeps it so.
 type Props = {
   title: string;
   description: string;
   heading?: string;
   subheading?: string;
-  width?: 'default' | 'narrow' | 'wide';
-  variant?: 'inner' | 'home' | 'practice' | 'flashcards' | 'quiz';
 };
 
-const { title, description, heading, subheading, width, variant } = Astro.props;
+const { title, description, heading, subheading } = Astro.props;
 
 // heading/subheading are optional only because a page may supply the header slot
 // instead. Nothing in the type system ties those two facts together, so a route
@@ -53,19 +49,7 @@ if (!Astro.slots.has('header') && (!heading || !subheading)) {
 <link rel="apple-touch-icon" href="/assets/img/icon.png">
 </head>
 <body>
-<div
-  class:list={[
-    'app',
-    {
-      'app--narrow': width === 'narrow',
-      'app--wide': width === 'wide',
-      'app--home': variant === 'home',
-      'app--practice': variant === 'practice',
-      'app--flashcards': variant === 'flashcards',
-      'app--quiz': variant === 'quiz',
-    },
-  ]}
->
+<div class="app">
   <header>
     {heading && <h1>{heading}</h1>}
     {subheading && <div class="sub">{subheading}</div>}

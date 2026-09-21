@@ -136,7 +136,7 @@ const syllabusRows = SYLLABUS.filter((item) => {
   .prose {
     font-size: .9rem;
     line-height: 1.6;
-    color: #333;
+    color: var(--ink);
   }
 
   .prose :global(h2:first-child) {
@@ -163,8 +163,8 @@ const syllabusRows = SYLLABUS.filter((item) => {
     padding: 12px 14px;
     font-style: italic;
     font-size: .88rem;
-    color: #555;
-    border-radius: 0 10px 10px 0;
+    color: var(--ink-soft);
+    border-radius: 0 var(--radius-control) var(--radius-control) 0;
     margin: 14px 0;
   }
 

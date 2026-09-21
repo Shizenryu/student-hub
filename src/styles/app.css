@@ -1,7 +1,9 @@
-/* Shared page-shell styles, transcribed from public/belts.html's <style> block —
-   only the reset, body, .app wrapper, header and footer belong here. Belt-specific
-   rules (.belts, .belt-btn, .banner, .item, .tag, .terms, .mind, .maxim, .nav,
-   .home-link, .hidden, h2) stay with the belt route that uses them. */
+/* The page shell every route wraps in: the reset, body, .app column, header,
+   card and footer, plus the three things more than one page shares — the
+   streak chip, the lede and the "← back" control. One shell, no variants: a
+   page cannot ask for its own width, spacing, heading size or colour, and
+   tests/build/page-shell.test.ts holds every built page to that. Page-specific
+   rules stay with the route or island that uses them. */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -20,136 +22,13 @@ body {
 
 .app {
   width: 100%;
-  max-width: var(--app-max, 520px);
-  padding: 20px 16px 40px;
-}
-
-.app--narrow {
-  --app-max: 480px;
-}
-
-.app--wide {
-  --app-max: 560px;
-}
-
-/* The flashcards page's subheading is gold where every other page's is red. A
-   variant rather than a rule in flashcards.css because PageShell renders the
-   .sub element, so a page-level `header .sub` would tie against app.css's own and
-   be decided by stylesheet order. Slice 9 decides whether the site has one
-   subheading colour or two. */
-.app--flashcards header .sub {
-  color: var(--gold);
-}
-
-/* The quiz page's heading pair is a size larger than every other page's, and its
-   column narrower. Three values, carried across so the migrated page matches the
-   one it replaced; the width goes through the shell's own `width` vocabulary
-   above, and these two have to live here because PageShell renders the elements.
-   DEFER(slice-9): one heading scale, and one column width. */
-.app--quiz header h1 {
-  font-size: 1.35rem;
-}
-
-.app--quiz header .sub {
-  font-size: .75rem;
-}
-
-/* The two-size decision the .intro rule below anticipated: quiz's lede is .9rem.
-   DEFER(slice-9). */
-.app--quiz .intro {
-  font-size: .9rem;
-}
-
-/* The practice page's header sits 4px closer to its card than every other page's.
-   Quiz and flashcards both use the shared 18px, so this is a one-off rather than
-   the start of a family — carried across so the migrated page matches the one it
-   replaced, and collapsed into one scale by Slice 9. It has to live here rather
-   than in practice.css because PageShell renders the <header>, so the route
-   cannot reach it with a scoped selector. */
-.app--practice header {
-  margin-bottom: 14px;
-}
-
-/* The home page's shell spacing predates the shared values above, which were
-   transcribed from belts.html: 28px of top padding rather than 20px, and a
-   slightly larger, looser footer. Carried across verbatim so the migrated page
-   renders pixel-identically to the one it replaced. Only the declarations that
-   actually differ are restated — colour and alignment already match. Slice 9
-   owns collapsing this, along with the 480/520/560 max-width drift, and deletes
-   this block when it does. */
-.app--home {
-  padding-top: 28px;
-}
-
-.app--home footer {
-  font-size: .72rem;
-  margin-top: 28px;
-  line-height: 1.7;
+  max-width: var(--app-max);
+  padding: var(--space-5) var(--space-4) var(--space-10);
 }
 
 header {
   text-align: center;
-  margin-bottom: 18px;
-}
-
-/* The streak chip, on every page that has one. Its element is rendered by
-   src/components/StreakChipSlot.astro; islands portal their text into it and
-   public/assets/home.js writes the home page's. The min-height reserves the line
-   before that happens, so nothing below it jumps.
-
-   Practice, flashcards and (in slice 6) quiz all use these four values, so they are
-   the default rather than three copies. The home page is the odd one out and says
-   so through the shell's variant vocabulary below — a modifier selector, not a
-   :global() rule that would tie on specificity with this one and be decided by
-   whichever stylesheet the bundler emitted last. */
-.streak-chip {
-  color: var(--gold);
-  min-height: 1em;
-  font-size: .75rem;
-  margin-top: 6px;
-}
-
-.app--home .streak-chip {
-  text-align: center;
-  font-size: .8rem;
-  margin: -14px 0 20px;
-}
-
-/* The centred grey lede a page opens with, above its first card. Three pages had
-   this rule character for character before it was hoisted; quiz makes four, at
-   its own size — see .app--quiz .intro above. */
-.intro {
-  font-size: .85rem;
-  color: #666;
-  margin-bottom: 14px;
-  text-align: center;
-}
-
-/* The "← back to" control at the foot of a card. An anchor on the belt and kata
-   guides, a button on the islands; text-decoration is inert on the latter. */
-.home-link {
-  display: block;
-  text-align: center;
-  margin-top: 16px;
-  font-size: .8rem;
-  color: var(--muted-light);
-  text-decoration: none;
-  background: none;
-  border: none;
-  cursor: pointer;
-  width: 100%;
-}
-
-/* A card with more room inside it. The flashcards page and (in slice 6) the quiz
-   use 20px where the rest of the site uses 18px.
-
-   Written `.card.card-roomy`, not `.card-roomy`. A lone class ties with `.card` on
-   specificity and is then decided by source order — which is exactly what went
-   wrong when this rule was first written above `.card` and silently lost, taking
-   the flashcards card back to 18px. Two classes settle it in both directions.
-   DEFER(slice-9): one padding or two. */
-.card.card-roomy {
-  padding: 20px;
+  margin-bottom: var(--space-4);
 }
 
 header h1 {
@@ -163,22 +42,87 @@ header .sub {
   letter-spacing: .2em;
   color: var(--red);
   text-transform: uppercase;
-  margin-top: 4px;
+  margin-top: var(--space-1);
+}
+
+/* The streak chip, on every page that has one. Its element is rendered by
+   src/components/StreakChipSlot.astro; islands portal their text into it and
+   public/assets/home.js writes the home page's. The min-height reserves the line
+   before that happens, so nothing below it jumps. Centred here rather than by
+   its surroundings: inside the <header> that changes nothing, and on the home
+   page — where it sits in the column under the maxim — it is what centres it. */
+.streak-chip {
+  color: var(--gold);
+  min-height: 1em;
+  font-size: .75rem;
+  margin-top: var(--space-2);
+  text-align: center;
+}
+
+/* The centred grey lede a page opens with, above its first card. */
+.intro {
+  font-size: .85rem;
+  color: var(--muted);
+  margin-bottom: var(--space-4);
+  text-align: center;
+}
+
+/* The "← back to" control at the foot of a card. An anchor on the belt and kata
+   guides, a button on the islands; text-decoration is inert on the latter. */
+.home-link {
+  display: block;
+  text-align: center;
+  margin-top: var(--space-4);
+  font-size: .8rem;
+  color: var(--muted-light);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+}
+
+/* The menu tiles — a belt on /belts, a kata on /kata, a deck on /flashcards, a
+   level or range on /quiz — are one control at one scale. Each page keeps only
+   its colour (from its data palette) and its layout: the belt grid centres its
+   text, the kata tile is two lines, decks and levels put a count on the right.
+   A selector list rather than a shared class, so no page's markup changes. */
+.belt-btn,
+.kata-btn,
+.deck-btn {
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 14px 16px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--on-colour);
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform .08s;
+}
+
+.belt-btn:active,
+.kata-btn:active,
+.deck-btn:active {
+  transform: scale(.97);
 }
 
 .card {
   background: var(--surface);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
-  padding: 18px;
-  margin-bottom: 14px;
+  padding: var(--space-5);
+  margin-bottom: var(--space-4);
 }
 
 footer {
   text-align: center;
   font-size: .7rem;
+  /* Two lines on every page — a link and the motto, or the home page's two —
+     so the leading is set rather than left to the browser's default. */
+  line-height: 1.6;
   color: var(--faint);
-  margin-top: 20px;
+  margin-top: var(--space-5);
 }
 
 footer a {

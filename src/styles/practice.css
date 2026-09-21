@@ -9,11 +9,8 @@
    this page alone, so the bare `h2` and `.summary` selectors reach no other
    route.
 
-   Values come from tokens.css wherever one matches the original exactly. Four
-   literals are left because no token matches them: #e5e0d8 and #e9f7ef (the tile
-   border and its ticked fill) and #555/#777 (--ink-soft is #444, not #555).
-   Inventing tokens for one page's palette is Slice 9's job, and doing it here
-   would change values rather than move them.
+   Every value comes from tokens.css: the tile border is --line and its ticked
+   fill --good-tint, both shared with the quiz's answer buttons.
 
    Four rules below carry a min-height. The island fills them after hydration and
    without a floor the card jumps --- 116px, measured, before these were added. Each
@@ -54,9 +51,9 @@
 }
 
 .act {
-  border: 2px solid #e5e0d8;
+  border: 2px solid var(--line);
   background: var(--surface);
-  border-radius: 12px;
+  border-radius: var(--radius-banner);
   padding: 13px 12px;
   text-align: left;
   cursor: pointer;
@@ -78,15 +75,15 @@
 
 .act.on {
   border-color: var(--good);
-  background: #e9f7ef;
+  background: var(--good-tint);
 }
 
 /* Generated content IS part of the accessible name in Chromium and WebKit, so a
    ticked tile announces as `button "Stretch ✓ Even Part 1 counts" [pressed]` —
    verified, not assumed. The tick is therefore redundant with aria-pressed rather
-   than invisible to it. Kept because it is what the page this replaces showed, and
-   removing it would change the pixels; worth revisiting in Slice 9 alongside the
-   rest of this page's visual language. */
+   than invisible to it. Kept on purpose: it is what the page has always shown, and
+   a tick a student can see beside a state a screen reader already announces is
+   not a cost. */
 .act.on .n::after {
   content: " ✓";
   color: var(--good);
@@ -112,7 +109,7 @@ h2 {
   height: 34px;
   margin: 0 auto 5px;
   border-radius: 50%;
-  border: 2px solid #e5e0d8;
+  border: 2px solid var(--line);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -124,7 +121,7 @@ h2 {
 .day.hit .dot {
   background: var(--good);
   border-color: var(--good);
-  color: #fff;
+  color: var(--on-colour);
 }
 
 .day.today .dot {
@@ -147,7 +144,7 @@ h2 {
 
 .summary {
   font-size: .82rem;
-  color: #777;
+  color: var(--muted);
   margin-top: 12px;
   text-align: center;
   min-height: 1.29em;
@@ -159,7 +156,7 @@ h2 {
   padding: 12px 14px;
   font-size: .85rem;
   font-style: italic;
-  color: #555;
+  color: var(--ink-soft);
   border-radius: 0 var(--radius-control) var(--radius-control) 0;
   margin-top: 14px;
 }

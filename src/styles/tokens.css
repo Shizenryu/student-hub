@@ -1,10 +1,9 @@
-/* The Shizenryu design system, as it actually is today.
-   Values are transcribed from the hand-written pages so the migration renders
-   identically. Where pages currently disagree with each other — .app max-width
-   is 480px on quiz, 520px on index, 560px on belts and kata — that drift is
-   deliberately NOT resolved here. Slice 9 normalises it as its own reviewable
-   change, so that any visual difference during the migration is a bug rather
-   than a decision. */
+/* The Shizenryu design system: every colour, radius, shadow, width and shell
+   spacing the site uses, and the only place any of them is written. The values
+   began as a transcription of the hand-written pages; where those pages
+   disagreed with each other, one value was chosen and every page took it.
+   tests/unit/tokens.test.ts pins each token, and tests/unit/design-drift.test.ts
+   fails on a colour or radius literal anywhere a rule could use one instead. */
 :root {
   --red: #C8102E;
   --dark: #161616;
@@ -22,6 +21,15 @@
 
   --surface: #fff;
   --surface-warm: #fbf7f1;
+  /* Text on a coloured tile, level, deck or button. Not --surface: that is a
+     background, and a page reading `color: var(--surface)` says the wrong thing. */
+  --on-colour: #fff;
+
+  /* The one border colour, and the two tints an answer or a tile turns when it
+     is right or wrong. --good and --bad are the strong forms above. */
+  --line: #e5e0d8;
+  --good-tint: #e9f7ef;
+  --bad-tint: #fdecea;
 
   --track-adult: #0072CE;
   --track-junior: #ED8B00;
@@ -35,10 +43,21 @@
 
   --font-stack: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
 
-  /* Default .app width. Most legacy pages use 520px; PageShell's optional
-     `width?: 'default' | 'wide'` prop overrides this per-instance (belts.html
-     and kata.html use 560px) by applying the .app--wide modifier class in
-     app.css, not an inline style — a plain CSS class stays compatible with
-     the CSP this site adopts later. */
+  /* The shell's spacing scale: what the page frame, the header, the cards and
+     the footer are spaced by. A page's own rhythm — tile gaps, row padding —
+     is that page's business and may sit off this scale. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* The one column width. The hand-written pages had three (480, 520, 560);
+     520 is the middle and the one most of them used, and on a phone none of
+     the three ever applied. tests/build/page-shell.test.ts holds every page
+     to the bare shell, so a page cannot ask for another. */
   --app-max: 520px;
 }

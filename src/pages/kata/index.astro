@@ -11,7 +11,6 @@ import '../../styles/kata.css';
   description="Four kata carry the art: one to build you, one to root you, one to free your hands, one to close the distance."
   heading="KATA REFERENCE"
   subheading="The root forms of Shizenryu"
-  width="wide"
 >
   <div class="card">
     <p class="intro">
@@ -44,29 +43,21 @@ import '../../styles/kata.css';
     gap: 10px;
   }
 
+  /* Scale and colour are the shell's menu-tile rule in app.css; this is the
+     layout: two lines, the name at the tile's size and the translation under it. */
   .kata-btn {
     display: block;
-    border: none;
-    border-radius: var(--radius-control);
-    padding: 16px;
-    cursor: pointer;
     text-align: left;
-    transition: transform .08s;
-    text-decoration: none;
-  }
-
-  .kata-btn:active {
-    transform: scale(.97);
   }
 
   .kata-btn .n {
-    font-size: 1.1rem;
-    font-weight: 800;
     letter-spacing: .04em;
   }
 
   .kata-btn .t {
     font-size: .75rem;
+    /* The tile's weight is the name's; the translation under it is ordinary text. */
+    font-weight: 400;
     opacity: .85;
     margin-top: 2px;
   }
