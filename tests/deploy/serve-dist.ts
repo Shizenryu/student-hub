@@ -1,13 +1,17 @@
 // Serves the built site the way Netlify will: every file under dist/, a
 // directory's index.html at its trailing-slash URL, 404.html for anything else,
-// and the headers netlify.toml declares on every response.
+// the headers netlify.toml declares on every response, and the redirects it
+// declares — an ordinary rule only when no file answers the path, a forced one
+// even when one does, which is Netlify's documented order and the reason the
+// /index.html rule is forced at all.
 //
-// Two honest limits. It applies the `/*` rule to its own 404 responses, which
-// is an assumption about Netlify that only a curl against the live site can
-// confirm (CLAUDE.md lists that check). And it serves only the canonical form
-// of each URL: Netlify 301s /quiz to /quiz/, so a link written without the
-// slash is a redirect in production, and this server answers it 404 rather
-// than quietly serving what production would not.
+// It also emulates Netlify's pretty URLs, which 301 /quiz to /quiz/ — without
+// that, following a retired URL through its rule would land on a 404 here while
+// production served the page.
+//
+// One honest limit is left: it applies the `/*` rule to its own 404 responses,
+// which is an assumption about Netlify that only a curl against the live site
+// can confirm (CLAUDE.md lists that check).
 //
 // `astro preview` cannot stand in for this: it does not read netlify.toml, so
 // it serves the pages with no headers and the browser has nothing to violate.
@@ -18,7 +22,7 @@ import { createServer, type Server } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 
-import { headerRules, rule } from '../support/netlify-config';
+import { headerRules, redirectRules, rule } from '../support/netlify-config';
 
 const DIST_DIR = 'dist';
 
@@ -40,11 +44,13 @@ export type BuiltSite = {
 
 const filePathFor = (pathname: string): string => (pathname.endsWith('/') ? `${pathname}index.html` : pathname);
 
-async function readOr404(path: string): Promise<{ readonly path: string; readonly body: Buffer; readonly status: number }> {
+type Served = { readonly path: string; readonly body: Buffer };
+
+async function readIfPresent(path: string): Promise<Served | null> {
   try {
-    return { path, body: await readFile(join(DIST_DIR, normalize(path))), status: 200 };
+    return { path, body: await readFile(join(DIST_DIR, normalize(path))) };
   } catch {
-    return { path: '/404.html', body: await readFile(join(DIST_DIR, '404.html')), status: 404 };
+    return null;
   }
 }
 
@@ -63,14 +69,36 @@ const listen = (server: Server): Promise<number> =>
   });
 
 export async function serveBuiltSite(): Promise<BuiltSite> {
-  const rules = headerRules(await readFile('netlify.toml', 'utf8'));
+  const toml = await readFile('netlify.toml', 'utf8');
+  const rules = headerRules(toml);
+  const redirects = redirectRules(toml);
   const everyResponse = rule(rules, '/*');
   const hashedAssets = rule(rules, '/_astro/*');
 
   const server = createServer(async (request, response) => {
     const pathname = decodeURIComponent(new URL(request.url ?? '/', 'http://localhost').pathname);
-    const served = await readOr404(filePathFor(pathname));
-    response.writeHead(served.status, {
+    const found = await readIfPresent(filePathFor(pathname));
+
+    // A file beats an ordinary rule; a forced rule beats the file.
+    const redirect = redirects.find((candidate) => candidate.from === pathname);
+    if (redirect && (redirect.force || found === null)) {
+      response.writeHead(redirect.status, { ...everyResponse, Location: redirect.to });
+      response.end();
+      return;
+    }
+
+    // Netlify's pretty URLs: a path with no file of its own, but a directory
+    // holding an index.html, is 301'd to its trailing-slash form. It is how
+    // /quiz reaches dist/quiz/index.html, and why a retired URL pointing at
+    // /quiz takes two hops to arrive.
+    if (found === null && !pathname.endsWith('/') && (await readIfPresent(`${pathname}/index.html`)) !== null) {
+      response.writeHead(301, { ...everyResponse, Location: `${pathname}/` });
+      response.end();
+      return;
+    }
+
+    const served = found ?? { path: '/404.html', body: await readFile(join(DIST_DIR, '404.html')) };
+    response.writeHead(found === null ? 404 : 200, {
       ...everyResponse,
       ...(pathname.startsWith('/_astro/') ? hashedAssets : {}),
       'Content-Type': CONTENT_TYPES[extname(served.path)] ?? 'application/octet-stream',
