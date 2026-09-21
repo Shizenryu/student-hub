@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { headerRules, rule } from '../support/netlify-headers';
+import { buildEnvironment, headerRules, redirectRules, rule } from '../support/netlify-config';
 
 // netlify.toml is what Netlify serves from, so the tests that pin the deployed
 // headers have to read the same file rather than a copy of its values. Node has
@@ -66,5 +66,54 @@ describe('picking the rule for one path', () => {
 
   it('fails naming the missing path rather than returning nothing', () => {
     expect(() => rule(headerRules(table('    X-Frame-Options = "DENY"')), '/docs/*')).toThrow(/no \[\[headers\]\] rule for "\/docs\/\*"/);
+  });
+});
+
+// The rules that keep old bookmarks alive. Unlike a header value, a redirect
+// mixes types: two quoted paths, an integer status and an optional boolean.
+describe('reading [[redirects]] rules out of netlify.toml', () => {
+  const redirect = (body: string): string => `[[redirects]]\n${body}\n`;
+
+  it('returns each rule with its paths and status', () => {
+    const toml = `${redirect('  from = "/old.html"\n  to = "/old"\n  status = 301')}${redirect('  from = "/gone"\n  to = "/"\n  status = 302')}`;
+
+    expect(redirectRules(toml)).toEqual([
+      { from: '/old.html', to: '/old', status: 301, force: false },
+      { from: '/gone', to: '/', status: 302, force: false },
+    ]);
+  });
+
+  it('reads force, which decides whether a rule beats a real file', () => {
+    const toml = redirect('  from = "/index.html"\n  to = "/"\n  status = 301\n  force = true');
+
+    expect(redirectRules(toml)[0]?.force).toBe(true);
+  });
+
+  it('ignores headers and build tables, and comments', () => {
+    const toml = `[build]\n  publish = "dist"\n\n# [[redirects]] in a comment is not a rule\n${redirect('  from = "/a"\n  to = "/b"\n  status = 301')}[[headers]]\n  for = "/*"\n  [headers.values]\n    X-Frame-Options = "DENY"\n`;
+
+    expect(redirectRules(toml)).toEqual([{ from: '/a', to: '/b', status: 301, force: false }]);
+  });
+
+  it('returns no rules when the file has none', () => {
+    expect(redirectRules('[build]\n  publish = "dist"\n')).toEqual([]);
+  });
+
+  it('refuses a rule missing a path or a status, rather than inventing one', () => {
+    expect(() => redirectRules(redirect('  from = "/a"\n  to = "/b"'))).toThrow(/redirect "\/a" has no status/);
+    expect(() => redirectRules(redirect('  to = "/b"\n  status = 301'))).toThrow(/redirect with no "from"/);
+  });
+});
+
+// The one value that varies by deploy: which Node Netlify builds on.
+describe('reading [build.environment] out of netlify.toml', () => {
+  it('returns the table as strings', () => {
+    const toml = '[build]\n  command = "npm run build"\n\n[build.environment]\n  NODE_VERSION = "22"\n\n[[headers]]\n  for = "/*"\n';
+
+    expect(buildEnvironment(toml)).toEqual({ NODE_VERSION: '22' });
+  });
+
+  it('is empty when the file declares no build environment', () => {
+    expect(buildEnvironment('[build]\n  publish = "dist"\n')).toEqual({});
   });
 });
