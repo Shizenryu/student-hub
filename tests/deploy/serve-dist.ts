@@ -18,7 +18,7 @@ import { createServer, type Server } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 
-import { headerRules, rule } from '../support/netlify-headers';
+import { headerRules, rule } from '../support/netlify-config';
 
 const DIST_DIR = 'dist';
 

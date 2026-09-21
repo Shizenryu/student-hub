@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { headerRules, rule } from '../support/netlify-headers';
+import { headerRules, rule } from '../support/netlify-config';
 
 // netlify.toml is what Netlify serves from, so the tests that pin the deployed
 // headers have to read the same file rather than a copy of its values. Node has

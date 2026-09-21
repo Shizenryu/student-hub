@@ -145,8 +145,9 @@ tests/
 │                   Content-Security-Policy violation. serve-dist.ts is the
 │                   stand-in for Netlify (see Security)
 ├── support/        helpers more than one suite imports and vitest does not
-│                   collect: files.ts (one directory walk), netlify-headers.ts
-│                   (the [[headers]] reader). Helpers one suite family owns stay
+│                   collect: files.ts (one directory walk), netlify-config.ts
+│                   (reads netlify.toml's headers, redirects and build
+│                   environment). Helpers one suite family owns stay
 │                   beside it, e.g. build/astro-html.ts
 └── unit/           content integrity and kata-prose-parity tests, plus the
                     src/domain suites (Node, no browser). The kata-prose one
@@ -389,7 +390,7 @@ Every page ships a strict Content-Security-Policy, in two halves that intersect:
   `Referrer-Policy`, `Cross-Origin-Opener-Policy` and `Permissions-Policy`, on
   every response. A second rule caches `/_astro/*` for a year — every file there
   is named by content hash. Each value is one line; an HTTP header cannot hold a
-  newline, and `tests/support/netlify-headers.ts` refuses any other TOML string
+  newline, and `tests/support/netlify-config.ts` refuses any other TOML string
   form so the mistake fails in a test rather than at the edge.
 
 What that means for anyone changing a page:

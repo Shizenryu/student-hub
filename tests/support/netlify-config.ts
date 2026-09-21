@@ -1,16 +1,22 @@
-// Reads the `[[headers]]` rules out of netlify.toml, the file Netlify serves
-// from. Two suites need them: tests/build/security-headers.test.ts pins what the
-// file says against the built pages, and tests/deploy/csp-violations.test.ts
-// serves the built pages WITH those headers to a real browser. Both must read
-// the real file, not a copy of its values.
+// Reads netlify.toml, the file the deploy is configured by, so that a test can
+// assert what the edge will do rather than a copy of its values. Three kinds of
+// table matter, and each has a consumer:
 //
-// This is not a TOML parser. It reads exactly the subset the file uses — a
-// `for` path and one-line basic-string values with `\"` and `\\` escapes — and
-// refuses anything else by name. An HTTP header value cannot contain a newline,
-// and Netlify's own parser only trims a value and normalises whitespace around
-// commas, so a multi-line TOML string would reach the edge with newlines inside
-// it and whatever happened next would happen in production, not here. A value
-// written any other way must fail in this file first.
+//   [[headers]]         tests/build/security-headers.test.ts pins every value;
+//                       tests/deploy/serve-dist.ts serves the built pages with
+//                       them so a real browser can violate the policy.
+//   [[redirects]]       tests/build/netlify-redirects.test.ts pins the rules that
+//                       keep old bookmarks alive; serve-dist.ts applies them, so
+//                       the deploy walk follows one end to end.
+//   [build.environment] tests/unit/node-version.test.ts checks the Node version
+//                       Netlify builds on against the one CI builds on.
+//
+// This is not a TOML parser. It reads exactly the subset the file uses and
+// refuses anything else by name. A header value must be a one-line basic string
+// with `\"` and `\\` escapes: an HTTP header value cannot contain a newline, and
+// Netlify's own parser only trims a value and normalises whitespace around
+// commas, so a multi-line string would reach the edge with newlines inside it
+// and whatever happened next would happen in production, not here.
 //
 // Not a *.test.ts file, so vitest does not collect it as a suite.
 

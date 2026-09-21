@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { filesUnder } from '../support/files';
-import { headerRules, rule } from '../support/netlify-headers';
+import { headerRules, rule } from '../support/netlify-config';
 import { builtPages, decodeAttribute } from './astro-html';
 
 // The security headers a student's browser receives, pinned at build time from
