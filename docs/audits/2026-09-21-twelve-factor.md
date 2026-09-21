@@ -65,6 +65,8 @@ redirects, which leads to finding 1.
 
 ### 1. Six redirect rules, zero automated coverage — Factor X
 
+**Status: fixed** in the PR that added this report (`bb8154c`, `cb1ecf9`).
+
 `netlify.toml` declares six `[[redirects]]`, one of them `force = true` with a comment
 explaining a subtlety (`/index.html` would otherwise be served by the real file Astro emits).
 Nothing asserts any of them. Every match for "redirect" or "301" under `tests/` is prose in a
@@ -75,13 +77,22 @@ comment; `tests/support/netlify-headers.ts` parses `[[headers]]` only and
 with an old `/quiz.html` bookmark gets a 404 — the exact breakage the rules exist to prevent.
 The migration's whole promise to old bookmarks rests on untested config.
 
-**Fix, in proportion:** teach `tests/support/netlify-headers.ts` to return `[[redirects]]` the
-way it already returns `[[headers]]`, and add a build test asserting the six rules' `from`,
-`to`, `status` and `force`. Optionally have `serve-dist.ts` honour them so the deploy walk
-exercises `/quiz.html` → `/quiz` end to end in Chromium, which also removes the stand-in's
-second documented limitation.
+**Fixed by:** the reader (renamed `tests/support/netlify-config.ts`, since it now reads three
+kinds of table) returns `[[redirects]]`; `tests/build/netlify-redirects.test.ts` pins where
+each retired URL goes, that only `/index.html` is forced, and — derived from the build rather
+than restated — that every rule points at a page the build produces;
+`tests/deploy/redirects.test.ts` follows them through the stand-in server, which now applies
+both the declared rules and Netlify's pretty URLs, closing the second of the two limits its
+header comment listed. Proven to bite: a typo'd `from`, a dropped `force`, and a `to` naming a
+route that does not exist each fail.
+
+**Noted while fixing, not changed:** a retired URL takes two hops today, `/quiz.html` → `/quiz`
+→ `/quiz/`, because the rules target the un-slashed form. Writing `to = "/quiz/"` would make it
+one. Harmless either way, and a change to deploy config is not the audit's to make.
 
 ### 2. The Node version is declared four ways, and nothing checks they agree — Factors II, X
+
+**Status: fixed** in the PR that added this report.
 
 `.nvmrc` says `22`; `netlify.toml` says `NODE_VERSION = "22"`; `package.json` says
 `engines.node: ">=22.12.0"`; `devDependencies` pins `@types/node: "^22"`. CI reads `.nvmrc`,
@@ -91,9 +102,11 @@ Netlify reads its own value, and neither knows about the other two.
 deploy still builds on Node 22 — the classic parity break, invisible until something behaves
 differently in production.
 
-**Fix:** one unit test reading `.nvmrc` and `netlify.toml`'s `NODE_VERSION` and asserting they
-match, reusing the TOML reader that already exists. Optionally assert `engines.node` and
-`@types/node` name the same major.
+**Fixed by:** `tests/unit/node-version.test.ts` compares the major in all four declarations —
+`.nvmrc`, `netlify.toml`'s `NODE_VERSION`, `engines.node` and `@types/node` — naming which pair
+disagrees when one does. Only the major is compared, because `.nvmrc` naming a bare major is
+deliberate: it takes security patches without a commit. Proven to bite: bumping `.nvmrc` to 24
+fails three of the four assertions.
 
 ### 3. Nothing reports that the site is broken — Factor XI, accepted risk
 
@@ -149,7 +162,8 @@ filesystem state between requests, because there are no requests; admin scripts 
 same dependencies; the CSP's build-time half generated rather than hand-copied, so an Astro
 upgrade cannot leave a stale hash.
 
-## If you act on one thing
+## What is left
 
-Finding 1. It is the only one where a silent, student-visible failure is possible today, and
-the fix reuses machinery the repo already has.
+Findings 1 and 2 were fixed in the PR that added this report. Findings 4 and 5 are small and
+touch only tooling. Finding 3 is a standing decision rather than a task: it stays open by
+choice, and the cheapest thing that would change it is the deploy-preview curl described above.
