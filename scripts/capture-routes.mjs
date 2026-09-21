@@ -86,30 +86,41 @@ async function capture(context, origin, route, file) {
 
 const escapeHtml = (text) => text.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
-const sheet = (rows) => `<!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><title>Before and after — every route</title>
+// A page fragment, not a whole document: it renders as a file straight from
+// dist/, and it can be published as-is as a review page, which wraps it itself.
+// The colours are the site's own paper and ink, with a dark set for a viewer
+// whose screen is dark.
+const sheet = (rows) => `<title>Shizenryu Route Sheet</title>
 <style>
-  body { font: 14px/1.4 -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; margin: 24px; color: #222; background: #fafafa; }
-  h1 { font-size: 18px; } p { color: #666; }
-  .row { display: grid; grid-template-columns: 200px 1fr 1fr; gap: 16px; align-items: start; padding: 16px 0; border-top: 1px solid #ddd; }
-  .row img { width: 100%; border: 1px solid #ccc; background: #fff; }
-  .changed { color: #b00020; font-weight: 700; } .same { color: #1e8a4c; }
-  code { font-size: 12px; }
-</style></head><body>
-<h1>Before and after — every route</h1>
-<p>${rows.filter((r) => r.changed).length} of ${rows.length} captures changed. Left: before. Right: after. Phone is 390×900 @2x; tablet is 768×1024.</p>
+  :root { --paper: #faf7f2; --ink: #222; --ink-soft: #444; --muted: #888; --line: #e5e0d8; --surface: #fff; --red: #C8102E; --good: #1e8a4c; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --paper: #161616; --ink: #f2ede4; --ink-soft: #cfc8bc; --muted: #9a9389; --line: #3a3630; --surface: #222; --good: #4fbf7d; --red: #ff5a6e; } }
+  :root[data-theme="dark"] { --paper: #161616; --ink: #f2ede4; --ink-soft: #cfc8bc; --muted: #9a9389; --line: #3a3630; --surface: #222; --good: #4fbf7d; --red: #ff5a6e; }
+  body { font: 14px/1.45 -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; margin: 0; padding-block: 24px; padding-inline: 16px; color: var(--ink); background: var(--paper); }
+  main { max-width: 1400px; margin-inline: auto; }
+  h1 { font-size: 1.3rem; letter-spacing: .06em; text-transform: uppercase; margin: 0 0 4px; text-wrap: balance; }
+  .lede { color: var(--ink-soft); margin: 0 0 20px; max-width: 65ch; }
+  .row { display: grid; grid-template-columns: minmax(160px, 220px) 1fr 1fr; gap: 16px; align-items: start; padding: 16px 0; border-top: 1px solid var(--line); }
+  .row img { max-width: 100%; border: 1px solid var(--line); background: var(--surface); }
+  .route { font-weight: 700; } .viewport { color: var(--muted); font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+  .changed { color: var(--red); font-weight: 700; } .same { color: var(--good); }
+  code { font-size: .75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  @media (max-width: 720px) { .row { grid-template-columns: 1fr; } }
+</style>
+<main>
+<h1>Shizenryu route sheet</h1>
+<p class="lede">${rows.filter((r) => r.changed).length} of ${rows.length} captures changed. Left is before, right is after; phone captures are 390×900 at 2×, tablet 768×1024 at 1×. A capture is "changed" when a single pixel differs.</p>
 ${rows
   .map(
-    (r) => `<div class="row"><div><strong>${escapeHtml(r.route)}</strong> <small>${r.viewport}</small><br><span class="${
-      r.changed ? 'changed' : 'same'
-    }">${r.changed ? 'CHANGED' : 'identical'}</span><br><code>${r.before} → ${r.after}</code></div><img src="before/${
-      r.file
-    }" alt="before ${escapeHtml(r.route)} ${r.viewport}"><img src="after/${r.file}" alt="after ${escapeHtml(r.route)} ${
+    (r) => `<section class="row"><div><div class="route">${escapeHtml(r.route)}</div><div class="viewport">${
       r.viewport
-    }"></div>`,
+    }</div><span class="${r.changed ? 'changed' : 'same'}">${r.changed ? 'changed' : 'identical'}</span><br><code>${
+      r.before
+    } → ${r.after}</code></div><img src="before/${r.file}" alt="before, ${escapeHtml(r.route)} on ${
+      r.viewport
+    }"><img src="after/${r.file}" alt="after, ${escapeHtml(r.route)} on ${r.viewport}"></section>`,
   )
   .join('\n')}
-</body></html>
+</main>
 `;
 
 mkdirSync(join(OUT, 'before'), { recursive: true });

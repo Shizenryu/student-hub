@@ -101,10 +101,10 @@ src/
 │                    the `header` slot, so a page appends to the header rather
 │                    than replacing it (practice keeps the pair and adds a streak
 │                    chip; home passes no props and supplies only the slot).
-│                    Spacing that predates the shared scale is an enumerated
-│                    `variant` applied as a modifier class, never a route
-│                    reaching in with :global() — see .app--home, .app--practice
-│                    and .app--quiz in app.css, all of which Slice 9 deletes
+│                    It has no width or variant prop: one shell, and a route
+│                    that wants to differ has no vocabulary for it here —
+│                    tests/build/page-shell.test.ts holds every page, the 404
+│                    included, to the bare `<div class="app">`
 ├── styles/          tokens.css (design tokens, the source of truth for colours,
 │                    radii and widths) and app.css (shell/reset styles); routes
 │                    and components add their own scoped <style> alongside this
@@ -187,10 +187,12 @@ before committing it rather than shrinking it in CSS, and add
 ## Migration rules
 
 **Deferrals are written `DEFER(slice-N):`.** Work put off to a named later slice — a
-value Slice 9 will normalise, a defect Slice 8 fixed, a file Slice 6 retired —
-carries that literal token in its comment. It is the difference between slice 9
-starting with `grep -rn "DEFER(slice-9)"` and reading six stylesheets hoping the
-phrasing was consistent. It was not: "Slice 9" and "slice 9" both appear today.
+defect slice 8 fixed, a file slice 6 retired, a value the normalisation slice
+collapsed — carries that literal token in its comment. It is the difference between
+a slice starting with one `grep -rn "DEFER(slice-N)"` and reading six stylesheets
+hoping the phrasing was consistent. It was not, once: "Slice N" and "slice N" both
+appeared. Every deferral the migration wrote has now been discharged; the rule
+stands for the next one.
 
 **Accessibility during a port.** Semantics that change no pixels — an `aria-pressed`
 on a toggle, a `type="button"`, a role — are in scope for a migration and should be
@@ -322,18 +324,42 @@ for a static route. Nothing new belongs in `public/`, which holds no pages at al
 
 ## Design system
 
-`src/styles/tokens.css` is the single source of truth for these values now — read it
-before hand-copying a hex code or width into a new page.
+`src/styles/tokens.css` is the design system and the only place a colour, radius,
+shadow, width or shell spacing is written. `tests/unit/tokens.test.ts` pins every
+token and its value; `tests/unit/design-drift.test.ts` fails the build on a colour
+or radius literal in any rule that could use a token instead, comments excepted.
+The only literals a rule may carry are the palettes that mirror data — belt
+colours in `belts.css`, kata colours in `kata.css`, deck colours d1–d7 in
+`flashcards.css`, the quiz level gradients b1–b5 in `quiz.css`, the home tiles'
+four gradient stops — plus two named shapes (the quiz progress track's 4px, the
+practice day dot's 50%). Add a value by adding a token.
 
-- Colours: red `#C8102E`, dark `#161616`, paper bg `#faf7f2`, gold `#9A7D00`,
-  good `#1e8a4c`, bad `#c0392b`
-- Belt colours: red `#C8102E`, orange `#ED8B00`, yellow `#E3BC00`/`#FFD100`,
+- Brand: red `#C8102E`, dark `#161616`, paper `#faf7f2`, gold `#9A7D00` (the one
+  gold), good `#1e8a4c`, bad `#c0392b`; their tints `--good-tint` `#e9f7ef` and
+  `--bad-tint` `#fdecea`.
+- Text greys, five and no more: `--ink` `#222`, `--ink-soft` `#444`, `--muted`
+  `#888`, `--muted-light` `#999`, `--faint` `#bbb`. Text on a coloured tile or
+  button is `--on-colour` `#fff`, never a literal.
+- Surfaces and lines: `--surface` `#fff`, `--surface-warm` `#fbf7f1`, `--rule`
+  `#f0ebe2` (also the pressed state and the progress track), `--line` `#e5e0d8`
+  (every border).
+- Belt colours: red `#C8102E`, orange `#ED8B00`, yellow `#E3BC00`,
   green `#00843D`, blue `#0072CE`, purple `#702F8A`, brown `#8B5A2B`, black `#1A1A1A`
-- System font stack, mobile-first, content max-width 480–560px (drifts by page —
-  480px on quiz, 520px on index, 560px on belts and kata; a later slice normalises
-  this), cards with 14px radius and soft shadows. Buttons are big and thumb-friendly.
+- Radii: card 14px, control 10px, banner 12px, tag 6px. One shadow, `--shadow-card`.
+- One column, `--app-max: 520px`, on every page. The shell — frame, header, cards,
+  chip, lede, footer — is spaced on `--space-1`…`--space-10` (4, 8, 12, 16, 20, 24,
+  32, 40px); a page's own rhythm inside a card may sit off the scale.
+- One heading pair for inner pages (h1 1.3rem, .sub .72rem, both from `app.css`);
+  the home masthead's larger lockup is the brand mark and deliberately its own.
+  Section headings are .78rem/.2em everywhere. Menu tiles — belt, kata, deck, level —
+  are one rule in `app.css` (14px 16px, 1rem, 700); a page adds only layout and colour.
+- System font stack, mobile-first. Buttons are big and thumb-friendly.
 - No emojis in content except the existing streak flame and the ☯ the flashcards
   island shows on deck completion. The club mark is the Ki logo (see Imagery), not ☯.
+
+A visible change is reviewed as a picture: `node scripts/capture-routes.mjs
+<before-dist> <after-dist>` screenshots every route from two builds into a contact
+sheet, phone and tablet, marking each identical or changed.
 
 ## Security
 

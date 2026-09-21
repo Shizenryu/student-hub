@@ -261,6 +261,10 @@ deploys a working site.
 CSP lands at 7 rather than earlier because the legacy inline-script pages in `public/` would
 violate it, and path-scoping the policy mid-migration is machinery for no gain.
 
+*All nine slices have shipped (slice 9 in the PR that references this line); the migration
+this spec describes is complete. The `DEFER(slice-N)` markers it introduced are all
+discharged.*
+
 Slice 6 leaves no *pages* in `public/`, not an empty directory: `assets/store.js`,
 `assets/home.js`, `assets/legacy-hash.js`, the images and the PDFs remain. The home page's
 maxim and streak chip are classic scripts reading `store.js`, and replacing them with an
