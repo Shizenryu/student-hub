@@ -82,6 +82,31 @@ header .sub {
   width: 100%;
 }
 
+/* The menu tiles — a belt on /belts, a kata on /kata, a deck on /flashcards, a
+   level or range on /quiz — are one control at one scale. Each page keeps only
+   its colour (from its data palette) and its layout: the belt grid centres its
+   text, the kata tile is two lines, decks and levels put a count on the right.
+   A selector list rather than a shared class, so no page's markup changes. */
+.belt-btn,
+.kata-btn,
+.deck-btn {
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 14px 16px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--on-colour);
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform .08s;
+}
+
+.belt-btn:active,
+.kata-btn:active,
+.deck-btn:active {
+  transform: scale(.97);
+}
+
 .card {
   background: var(--surface);
   border-radius: var(--radius-card);

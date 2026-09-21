@@ -17,14 +17,8 @@
   gap: 10px;
 }
 
+/* Scale and colour are the shell's menu-tile rule in app.css; this is the layout. */
 .deck-btn {
-  border: none;
-  border-radius: var(--radius-control);
-  padding: 14px 16px;
-  font-size: .98rem;
-  font-weight: 600;
-  color: var(--on-colour);
-  cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -44,7 +38,6 @@
    the precedent: a palette that mirrors data is transcribed whole and pinned by a
    test, because tokenising the four that happen to match and leaving three literal
    would read as an accident rather than a decision.
-   DEFER(slice-9): whether decks, belts and kata should share one scale.
    d7 is not a deck; it is the "Everything" button. */
 .d1 { background: #C8102E; }
 .d2 { background: #161616; }

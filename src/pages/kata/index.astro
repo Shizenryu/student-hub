@@ -43,24 +43,14 @@ import '../../styles/kata.css';
     gap: 10px;
   }
 
+  /* Scale and colour are the shell's menu-tile rule in app.css; this is the
+     layout: two lines, the name at the tile's size and the translation under it. */
   .kata-btn {
     display: block;
-    border: none;
-    border-radius: var(--radius-control);
-    padding: 16px;
-    cursor: pointer;
     text-align: left;
-    transition: transform .08s;
-    text-decoration: none;
-  }
-
-  .kata-btn:active {
-    transform: scale(.97);
   }
 
   .kata-btn .n {
-    font-size: 1.1rem;
-    font-weight: 800;
     letter-spacing: .04em;
   }
 

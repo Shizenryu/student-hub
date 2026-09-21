@@ -20,26 +20,12 @@
   gap: 10px;
 }
 
-/* The level buttons. Nearly the flashcards page's .deck-btn, and deliberately not
-   shared with it: the two differ in three values, and a shared rule with three
-   overrides is harder to read than two transcriptions.
-   DEFER(slice-9): one button scale for decks, levels and ranges. */
+/* The level and range buttons. Scale and colour are the shell's menu-tile rule
+   in app.css, shared with the decks, belts and kata; this is the layout. */
 .belt-btn {
-  border: none;
-  border-radius: var(--radius-control);
-  padding: 14px 16px;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--on-colour);
-  cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: transform .08s;
-}
-
-.belt-btn:active {
-  transform: scale(.97);
 }
 
 .belt-btn small {

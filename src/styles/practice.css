@@ -81,9 +81,9 @@
 /* Generated content IS part of the accessible name in Chromium and WebKit, so a
    ticked tile announces as `button "Stretch ✓ Even Part 1 counts" [pressed]` —
    verified, not assumed. The tick is therefore redundant with aria-pressed rather
-   than invisible to it. Kept because it is what the page this replaces showed, and
-   removing it would change the pixels; worth revisiting in Slice 9 alongside the
-   rest of this page's visual language. */
+   than invisible to it. Kept on purpose: it is what the page has always shown, and
+   a tick a student can see beside a state a screen reader already announces is
+   not a cost. */
 .act.on .n::after {
   content: " ✓";
   color: var(--good);

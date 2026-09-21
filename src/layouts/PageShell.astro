@@ -13,7 +13,8 @@ import '../styles/app.css';
 //
 // There is no width or variant prop: the shell is one shell, and a page that
 // wants to look different from the others has no vocabulary for it here. That is
-// deliberate (slice 9 collapsed the drift the migration carried across), and
+// deliberate — the migration carried each page's drift across as a variant so
+// the port could be reviewed as a port, and its last slice collapsed them — and
 // tests/build/page-shell.test.ts keeps it so.
 type Props = {
   title: string;
