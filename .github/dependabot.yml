@@ -14,6 +14,18 @@ updates:
         update-types:
           - minor
           - patch
+    # Majors the repository holds back on purpose, so they stop arriving as PRs
+    # that can never go green. Lift each rule when its reason goes away.
+    ignore:
+      # @astrojs/check (npm run typecheck) declares typescript "^5.0.0 || ^6.0.0";
+      # TypeScript 7 breaks it outright. See CLAUDE.md.
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
+      # Tracks the Node major in .nvmrc, not the latest Node;
+      # tests/unit/node-version.test.ts fails if the two disagree. Bump it with
+      # .nvmrc, netlify.toml and engines when the site moves to a new Node.
+      - dependency-name: "@types/node"
+        update-types: [version-update:semver-major]
   - package-ecosystem: github-actions
     directory: /
     schedule:
